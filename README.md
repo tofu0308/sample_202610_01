@@ -13,6 +13,18 @@ npx prisma migrate dev
 npm run dev
 ```
 
+## 品質チェック（ローカル）
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run test:coverage   # coverage/ に HTML / json-summary
+```
+
+GitHub Actions（`.github/workflows/ci.yml`）でも同じ系統を自動実行する。  
+デプロイは Vercel。Actions は CI（品質ゲート）用。
+
 ## Vercel デプロイ（概要）
 
 1. [Vercel](https://vercel.com) で GitHub リポジトリを Import

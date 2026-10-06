@@ -4,14 +4,11 @@
  */
 
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import {
+  resolveNoteBodyUpdate,
+  updateNoteSchema,
+} from "@/lib/note-schemas";
 import { prisma } from "@/lib/prisma";
-
-/** PATCH ボディ（title 必須、body は省略可。空文字は null にして本文クリア） */
-const updateNoteSchema = z.object({
-  title: z.string().trim().min(1).max(200),
-  body: z.string().trim().max(5000).optional(),
-});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -43,10 +40,7 @@ export async function PATCH(request: Request, context: RouteParams) {
       where: { id },
       data: {
         title: parsed.data.title,
-        // body 未送信なら更新しない。空文字ならクリア（null）
-        ...(parsed.data.body !== undefined
-          ? { body: parsed.data.body === "" ? null : parsed.data.body }
-          : {}),
+        ...resolveNoteBodyUpdate(parsed.data.body),
       },
     });
 

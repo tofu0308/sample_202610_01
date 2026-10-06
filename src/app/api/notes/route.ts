@@ -4,14 +4,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import { createNoteSchema } from "@/lib/note-schemas";
 import { prisma } from "@/lib/prisma";
-
-/** POST ボディのスキーマ（境界での検証） */
-const createNoteSchema = z.object({
-  title: z.string().trim().min(1).max(200),
-  body: z.string().trim().max(5000).optional(),
-});
 
 /** 新しい順で全件返す（学習用の最小 GET） */
 export async function GET() {

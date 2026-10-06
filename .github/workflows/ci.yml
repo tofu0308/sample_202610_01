@@ -1,0 +1,50 @@
+# push / PR で lint・型・テスト（カバレッジ）を自動実行する。
+# デプロイは Vercel が担当。ここは品質チェック（CI）用。
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # prisma generate は接続不要だが、config が env を参照するためダミーを渡す
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DIRECT_URL: postgresql://user:pass@localhost:5432/postgres
+          DATABASE_URL: postgresql://user:pass@localhost:6543/postgres?pgbouncer=true
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore

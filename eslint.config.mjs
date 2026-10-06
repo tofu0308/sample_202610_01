@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 生成物・カバレッジは lint 対象外
+    "src/generated/**",
+    "coverage/**",
   ]),
 ]);
 
