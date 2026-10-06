@@ -5,6 +5,7 @@ alwaysApply: true
 
 # Project basics
 
+- **git commit / push は明示依頼があるときだけ**（詳細は `git-commit-push` ルール。修正依頼 ≠ commit 許可）
 - スタック: Next.js App Router + Prisma 7 + Supabase (PostgreSQL) + zod
 - 秘密情報は `.env` のみ。チャット・commit・ルール本文に接続文字列やキーを書かない
 - MCP Supabase は read-only のまま（スキーマ変更やデータ書き込みに使わない）
