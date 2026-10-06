@@ -1,6 +1,9 @@
+// Prisma schema（学習用）。
+// URL は prisma7.config.ts / アプリ側 env で渡す（schema 内に直書きしない）。
 // https://pris.ly/d/prisma-schema
 
 generator client {
+  // 生成物は gitignore（src/generated/prisma）
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }

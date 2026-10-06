@@ -6,6 +6,7 @@ alwaysApply: false
 
 # Prisma
 
+- `prisma.ts` / config / schema には URL の役割分担など「なぜ」を短くコメントする
 - アプリ実行時の接続は `DATABASE_URL`（pooler）。CLI（migrate 等）は `prisma7.config.ts` の `DIRECT_URL`
 - クライアント生成は `src/lib/prisma.ts` に集約（adapter-pg + 開発時の global 再利用）
 - import は `import { prisma } from "@/lib/prisma"`。`PrismaClient` を各所で new しない

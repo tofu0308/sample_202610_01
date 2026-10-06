@@ -6,6 +6,7 @@ alwaysApply: false
 
 # API Route Handlers
 
+- ファイル先頭に「役割・検証方針」の短いコメントを置く（詳細は `code-comments` ルール）
 - クライアント入力は境界で検証する。`request.json()` の結果は `unknown` として zod の `safeParse` を使う
 - Prisma クライアントは `@/lib/prisma` からのみ import する
 - 成功は `NextResponse.json`。作成は `201`、検証失敗は `400`、サーバエラーは `500`
