@@ -1,9 +1,10 @@
 /**
  * トップページ（Server Component）。
- * Note 一覧はサーバで Prisma 取得。作成フォームだけ Client Component に分離する。
+ * Note 一覧はサーバで Prisma 取得。作成・編集・削除の操作だけ Client Component に分離する。
  */
 
 import { NoteCreateForm } from "@/components/note-create-form";
+import { NoteListItem } from "@/components/note-list-item";
 import { prisma } from "@/lib/prisma";
 
 // 一覧を毎回最新にする（学習用。本番ではキャッシュ戦略を別途検討）
@@ -19,9 +20,9 @@ export default async function Home() {
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Notes</h1>
         <p className="text-zinc-600">
-          Prisma + Supabase 学習用。作成はフォーム →{" "}
+          Prisma + Supabase 学習用。CRUD は{" "}
           <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm">
-            POST /api/notes
+            /api/notes
           </code>
         </p>
       </header>
@@ -42,17 +43,14 @@ export default async function Home() {
         ) : (
           <ul className="space-y-4">
             {notes.map((note) => (
-              <li
+              <NoteListItem
                 key={note.id}
-                className="rounded-lg border border-zinc-200 px-4 py-3"
-              >
-                <h3 className="font-medium">{note.title}</h3>
-                {note.body ? (
-                  <p className="mt-1 whitespace-pre-wrap text-zinc-600">
-                    {note.body}
-                  </p>
-                ) : null}
-              </li>
+                note={{
+                  id: note.id,
+                  title: note.title,
+                  body: note.body,
+                }}
+              />
             ))}
           </ul>
         )}
