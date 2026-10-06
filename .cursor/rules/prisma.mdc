@@ -1,0 +1,21 @@
+---
+description: Prisma 7 + Supabase の接続・スキーマ・クライアント利用
+globs: prisma/**/*,src/lib/prisma.ts,prisma7.config.ts,src/app/**/*.tsx
+alwaysApply: false
+---
+
+# Prisma
+
+- アプリ実行時の接続は `DATABASE_URL`（pooler）。CLI（migrate 等）は `prisma7.config.ts` の `DIRECT_URL`
+- クライアント生成は `src/lib/prisma.ts` に集約（adapter-pg + 開発時の global 再利用）
+- import は `import { prisma } from "@/lib/prisma"`。`PrismaClient` を各所で new しない
+- スキーマは `prisma/schema.prisma`。変更後は migrate → `prisma generate`
+- Server Component / Route Handler / Server Action から DB に触る。Client Component に接続情報や Prisma を置かない
+
+```typescript
+// ✅
+import { prisma } from "@/lib/prisma";
+const notes = await prisma.note.findMany({ orderBy: { createdAt: "desc" } });
+
+// ❌ ファイルごとに new PrismaClient()
+```

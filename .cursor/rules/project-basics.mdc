@@ -1,0 +1,12 @@
+---
+description: この学習リポジトリのスタックと秘密情報の扱い
+alwaysApply: true
+---
+
+# Project basics
+
+- スタック: Next.js App Router + Prisma 7 + Supabase (PostgreSQL) + zod
+- 秘密情報は `.env` のみ。チャット・commit・ルール本文に接続文字列やキーを書かない
+- MCP Supabase は read-only のまま（スキーマ変更やデータ書き込みに使わない）
+- DB 変更は Prisma migrate。`db push` を既定にしない
+- 生成クライアント `src/generated/prisma` は commit しない（`prisma generate` で再生成）

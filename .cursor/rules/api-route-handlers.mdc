@@ -1,0 +1,23 @@
+---
+description: App Router の Route Handler（/api）の入出力とエラー処理
+globs: src/app/api/**/*.ts
+alwaysApply: false
+---
+
+# API Route Handlers
+
+- クライアント入力は境界で検証する。`request.json()` の結果は `unknown` として zod の `safeParse` を使う
+- Prisma クライアントは `@/lib/prisma` からのみ import する
+- 成功は `NextResponse.json`。作成は `201`、検証失敗は `400`、サーバエラーは `500`
+- `catch` では `console.error` に経路名を残し、クライアントには一般的な `error` メッセージだけ返す（内部詳細を晒さない）
+
+```typescript
+const json: unknown = await request.json();
+const parsed = schema.safeParse(json);
+if (!parsed.success) {
+  return NextResponse.json(
+    { error: "Invalid request body", details: parsed.error.flatten() },
+    { status: 400 },
+  );
+}
+```
