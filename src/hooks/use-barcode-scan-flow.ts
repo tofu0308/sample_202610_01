@@ -36,7 +36,10 @@ export function useBarcodeScanFlow() {
     null,
   );
 
+  /** 正規化後 JAN。追加済みなら絶対に再カウントしない */
   const codesInBatchRef = useRef<Set<string>>(new Set());
+  /** 照会キュー投入済み（処理中含む）。二重 fetch で結果を上書きしない */
+  const lookupEnqueuedRef = useRef<Set<string>>(new Set());
   const lookupQueueRef = useRef<string[]>([]);
   const lookupProcessingRef = useRef(false);
 
@@ -105,9 +108,19 @@ export function useBarcodeScanFlow() {
       >,
     ) => {
       setContinuousEntries((prev) =>
-        prev.map((entry) =>
-          entry.code === code ? { ...entry, ...patch } : entry,
-        ),
+        prev.map((entry) => {
+          if (entry.code !== code) {
+            return entry;
+          }
+          // ヒット済みを後続の not found / エラーで潰さない（二重照会の保険）
+          if (
+            entry.product?.found === true &&
+            (patch.product?.found === false || patch.lookupStatus === "error")
+          ) {
+            return entry;
+          }
+          return { ...entry, ...patch };
+        }),
       );
     },
     [],
@@ -148,6 +161,11 @@ export function useBarcodeScanFlow() {
 
   const enqueueContinuousLookup = useCallback(
     (code: string) => {
+      // 同一 JAN の二重照会は Yahoo レート制限で「商品なし」に見えやすい
+      if (lookupEnqueuedRef.current.has(code)) {
+        return;
+      }
+      lookupEnqueuedRef.current.add(code);
       lookupQueueRef.current.push(code);
       void processLookupQueue();
     },
@@ -182,6 +200,7 @@ export function useBarcodeScanFlow() {
 
   const resetContinuousBatch = useCallback(() => {
     codesInBatchRef.current = new Set();
+    lookupEnqueuedRef.current = new Set();
     lookupQueueRef.current = [];
     setContinuousEntries([]);
     setDuplicateNotice(null);
@@ -194,16 +213,7 @@ export function useBarcodeScanFlow() {
         return;
       }
 
-      const now = Date.now();
-      if (
-        lastRawRef.current === trimmed &&
-        now - lastAtRef.current < SAME_VALUE_COOLDOWN_MS
-      ) {
-        return;
-      }
-      lastRawRef.current = trimmed;
-      lastAtRef.current = now;
-
+      // カウント判定は正規化 JAN で先に行う（生文字列の差で二重追加しない）
       const code = normalizeBarcodeDigits(trimmed);
       if (!code) {
         setCameraError(
@@ -213,11 +223,22 @@ export function useBarcodeScanFlow() {
       }
 
       if (codesInBatchRef.current.has(code)) {
-        showDuplicateNotice(code);
+        // 同一フレーム連打でも件数に入れない。通知だけ間引く
+        const now = Date.now();
+        if (
+          lastRawRef.current !== code ||
+          now - lastAtRef.current >= SAME_VALUE_COOLDOWN_MS
+        ) {
+          lastRawRef.current = code;
+          lastAtRef.current = now;
+          showDuplicateNotice(code);
+        }
         return;
       }
 
       codesInBatchRef.current.add(code);
+      lastRawRef.current = code;
+      lastAtRef.current = Date.now();
       setCopied(false);
       setResult({
         rawValue: trimmed,
@@ -235,7 +256,13 @@ export function useBarcodeScanFlow() {
         product: null,
         lookupError: null,
       };
-      setContinuousEntries((prev) => [entry, ...prev]);
+      // 念のため state 側でも同一 code は弾く
+      setContinuousEntries((prev) => {
+        if (prev.some((item) => item.code === code)) {
+          return prev;
+        }
+        return [entry, ...prev];
+      });
       enqueueContinuousLookup(code);
     },
     [enqueueContinuousLookup, setCameraError, showDuplicateNotice],
@@ -351,12 +378,16 @@ export function useBarcodeScanFlow() {
       entry.lookupStatus === "pending" || entry.lookupStatus === "loading",
   );
 
+  /** オーバーレイは直近 1 件だけ表示し、カメラ領域を削らない */
+  const latestContinuousEntry = continuousEntries[0] ?? null;
+
   return {
     productLookupSectionId: PRODUCT_LOOKUP_SECTION_ID,
     continuousListSectionId: CONTINUOUS_LIST_SECTION_ID,
     scanMode,
     toggleScanMode,
     continuousEntries,
+    latestContinuousEntry,
     duplicateNotice,
     continuousLookupActive,
     regionId,

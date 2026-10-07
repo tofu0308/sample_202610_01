@@ -18,6 +18,7 @@ export function BarcodeScanner() {
     scanMode,
     toggleScanMode,
     continuousEntries,
+    latestContinuousEntry,
     duplicateNotice,
     continuousLookupActive,
     regionId,
@@ -95,28 +96,62 @@ export function BarcodeScanner() {
           >
             連続読取リスト（{continuousEntries.length} 件・JAN 重複なし）
           </h3>
-          <ul className="max-h-64 space-y-2 overflow-y-auto text-sm">
+          <ul className="max-h-80 space-y-2 overflow-y-auto text-sm">
             {continuousEntries.map((entry) => (
               <li
                 key={entry.id}
                 className="rounded border border-zinc-200 bg-white px-3 py-2"
               >
-                <p className="font-mono text-xs text-zinc-600">{entry.code}</p>
-                {entry.lookupStatus === "loading" ||
-                entry.lookupStatus === "pending" ? (
-                  <p className="text-zinc-500">商品検索中…</p>
-                ) : null}
-                {entry.lookupError ? (
-                  <p className="text-red-600">{entry.lookupError}</p>
-                ) : null}
                 {entry.product?.found === true ? (
-                  <p className="font-medium text-zinc-800">
-                    {entry.product.name}
-                  </p>
-                ) : null}
-                {entry.product?.found === false ? (
-                  <p className="text-zinc-500">商品情報なし</p>
-                ) : null}
+                  <div className="flex gap-3">
+                    {entry.product.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
+                      <img
+                        src={entry.product.imageUrl}
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="h-14 w-14 shrink-0 rounded border border-zinc-200 object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded border border-dashed border-zinc-200 bg-zinc-50 text-[10px] text-zinc-400"
+                        aria-hidden
+                      >
+                        画像なし
+                      </div>
+                    )}
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="font-mono text-xs text-zinc-500">
+                        {entry.code}
+                      </p>
+                      <p className="font-medium text-zinc-800">
+                        {entry.product.name}
+                      </p>
+                      {entry.product.brandName ? (
+                        <p className="text-xs text-zinc-500">
+                          {entry.product.brandName}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    <p className="font-mono text-xs text-zinc-600">
+                      {entry.code}
+                    </p>
+                    {entry.lookupStatus === "loading" ||
+                    entry.lookupStatus === "pending" ? (
+                      <p className="text-zinc-500">商品検索中…</p>
+                    ) : null}
+                    {entry.lookupError ? (
+                      <p className="text-red-600">{entry.lookupError}</p>
+                    ) : null}
+                    {entry.product?.found === false ? (
+                      <p className="text-zinc-500">商品情報なし</p>
+                    ) : null}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -280,62 +315,55 @@ export function BarcodeScanner() {
 
               <div
                 id={regionId}
-                className="min-h-0 flex-1 overflow-hidden [&_img]:mx-auto [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
+                className="min-h-0 flex-1 basis-0 overflow-hidden [&_img]:mx-auto [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
               />
 
-              <footer className="max-h-[40vh] shrink-0 space-y-2 overflow-y-auto bg-black/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              {/* 連続時は件数＋直近1件のみ。リストを積むとカメラ領域が潰れる */}
+              <footer className="shrink-0 space-y-2 bg-black/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 {cameraError ? (
                   <p className="text-sm text-red-300">{cameraError}</p>
-                ) : null}
-                {duplicateNotice ? (
-                  <p className="text-sm text-amber-200">{duplicateNotice}</p>
                 ) : null}
 
                 {isContinuous ? (
                   <div className="space-y-2 text-sm">
-                    <p className="text-zinc-400">
-                      {scanning
-                        ? "読み取り待機中…同じ JAN は追加しません"
-                        : starting
+                    {duplicateNotice ? (
+                      <p
+                        className="rounded bg-amber-500/20 px-2 py-1.5 text-amber-100"
+                        role="status"
+                      >
+                        {duplicateNotice}
+                      </p>
+                    ) : (
+                      <p className="text-zinc-400">
+                        {starting
                           ? "しばらくお待ちください"
-                          : null}
-                    </p>
-                    {continuousEntries.length > 0 ? (
-                      <ul className="space-y-1">
-                        {continuousEntries.slice(0, 5).map((entry) => (
-                          <li
-                            key={entry.id}
-                            className="rounded bg-white/10 px-2 py-1 font-mono text-xs"
-                          >
-                            {entry.code}
-                            {entry.product?.found === true
-                              ? ` — ${entry.product.name}`
-                              : entry.lookupStatus === "loading" ||
-                                  entry.lookupStatus === "pending"
-                                ? " …"
-                                : entry.product?.found === false
-                                  ? " — 商品なし"
-                                  : entry.lookupError
-                                    ? " — エラー"
-                                    : ""}
-                          </li>
-                        ))}
-                        {continuousEntries.length > 5 ? (
-                          <li className="text-zinc-500">
-                            他 {continuousEntries.length - 5} 件…
-                          </li>
-                        ) : null}
-                      </ul>
-                    ) : null}
-                    {continuousLookupActive ? (
-                      <p className="text-zinc-400">商品照会を実行中…</p>
+                          : scanning
+                            ? "読み取り待機中…同じ JAN は追加しません"
+                            : null}
+                      </p>
+                    )}
+                    {latestContinuousEntry ? (
+                      <p className="truncate rounded bg-white/10 px-2 py-1.5 font-mono text-xs text-white">
+                        直近: {latestContinuousEntry.code}
+                        {latestContinuousEntry.product?.found === true
+                          ? ` — ${latestContinuousEntry.product.name}`
+                          : latestContinuousEntry.lookupStatus === "loading" ||
+                              latestContinuousEntry.lookupStatus === "pending"
+                            ? " …"
+                            : latestContinuousEntry.product?.found === false
+                              ? " — 商品なし"
+                              : latestContinuousEntry.lookupError
+                                ? " — エラー"
+                                : ""}
+                        {continuousLookupActive ? "（照会中）" : ""}
+                      </p>
                     ) : null}
                     <button
                       type="button"
                       onClick={() => void finishContinuousScan()}
                       className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
                     >
-                      読取を終了してリストを見る
+                      読取を終了（{continuousEntries.length} 件）
                     </button>
                   </div>
                 ) : result ? (
