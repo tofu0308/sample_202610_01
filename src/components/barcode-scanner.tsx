@@ -1,323 +1,37 @@
 "use client";
 
 /**
- * QR / バーコード読み取り（Client Component）。
- * html5-qrcode の Html5Qrcode を使い、ボタン操作でのみカメラを開始する。
- * 撮影中は画面全体を覆うオーバーレイにし、スクロールなしで使えるようにする。
- * 読取後は POST /api/products/lookup で Yahoo!ショッピングから商品名を照会する（アフィ無し）。
+ * QR / バーコード読み取り UI（Client Component）。
+ * カメラ・照会・オーバーレイの状態は useBarcodeScanFlow に寄せ、ここは表示に集中する。
  * PC（md 以上）ではセクションごと非表示。
  */
 
-import { Html5Qrcode, type Html5QrcodeResult } from "html5-qrcode";
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
 import { createPortal } from "react-dom";
+import { useBarcodeScanFlow } from "@/hooks/use-barcode-scan-flow";
 
-/** 設計書どおりの読取結果（永続化しない） */
-export type ScanResult = {
-  rawValue: string;
-  format?: string;
-  scannedAt: string;
-};
-
-/** 同一値の連続コールバックで表示がチラつかないようにする間隔 */
-const SAME_VALUE_COOLDOWN_MS = 2000;
-
-/** /api/products/lookup の成功レスポンス（アフィ URL は含まない） */
-type ProductLookupResponse =
-  | {
-      found: true;
-      code: string;
-      name: string;
-      imageUrl?: string;
-      brandName?: string;
-      source: "yahoo_shopping";
-    }
-  | {
-      found: false;
-      code: string;
-      source: "yahoo_shopping";
-    }
-  | { error: string };
-
-function toFriendlyError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  const lower = message.toLowerCase();
-
-  if (
-    lower.includes("notallowed") ||
-    lower.includes("permission") ||
-    lower.includes("denied")
-  ) {
-    return "カメラの使用が許可されませんでした。ブラウザの設定を確認してください。";
-  }
-  if (
-    lower.includes("notfound") ||
-    lower.includes("requested device not found")
-  ) {
-    return "利用できるカメラが見つかりませんでした。";
-  }
-  if (lower.includes("notsupported") || lower.includes("secure")) {
-    return "この環境ではカメラを起動できません。HTTPS または localhost で開いてください。";
-  }
-  return message || "カメラの起動に失敗しました。";
-}
+export type { ScanResult } from "@/lib/scan/types";
 
 export function BarcodeScanner() {
-  const reactId = useId();
-  // html5-qrcode は elementId 文字列を要求する。useId の「:」は CSS セレクタで困るので除去する
-  const regionId = `barcode-reader-${reactId.replace(/:/g, "")}`;
-
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const lastRawRef = useRef<string | null>(null);
-  const lastAtRef = useRef(0);
-
-  const [overlayOpen, setOverlayOpen] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ScanResult | null>(null);
-  const [product, setProduct] = useState<Extract<
-    ProductLookupResponse,
-    { found: boolean }
-  > | null>(null);
-  const [lookupPending, setLookupPending] = useState(false);
-  const [lookupError, setLookupError] = useState<string | null>(null);
-  const [manualValue, setManualValue] = useState("");
-  const [copied, setCopied] = useState(false);
-
-  // オーバーレイ中は背面のスクロールを止める
-  useEffect(() => {
-    if (!overlayOpen) {
-      return;
-    }
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [overlayOpen]);
-
-  // アンマウント時は必ず stop してカメラインジケータを残さない
-  useEffect(() => {
-    return () => {
-      const scanner = scannerRef.current;
-      scannerRef.current = null;
-      if (scanner?.isScanning) {
-        void scanner.stop().catch(() => {
-          // アンマウント中の失敗は握りつぶす（表示先がない）
-        });
-      }
-    };
-  }, []);
-
-  /** カメラ画面を終了し、下の商品情報セクションへ視線を移す（「戻る」感を減らす） */
-  async function dismissOverlayToResults() {
-    await stopScanner();
-    setOverlayOpen(false);
-    setStarting(false);
-    // オーバーレイ解除後にスクロール（DOM が戻ってから）
-    requestAnimationFrame(() => {
-      document
-        .getElementById("product-lookup")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }
-
-  async function lookupProduct(
-    code: string,
-    options?: { dismissOverlayWhenDone?: boolean },
-  ) {
-    setLookupPending(true);
-    setLookupError(null);
-    setProduct(null);
-
-    try {
-      const response = await fetch("/api/products/lookup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json; charset=utf-8" },
-        body: JSON.stringify({ code }),
-      });
-      const data = (await response.json()) as ProductLookupResponse;
-
-      if (!response.ok || "error" in data) {
-        setLookupError(
-          "error" in data ? data.error : "商品情報の取得に失敗しました",
-        );
-        return;
-      }
-
-      setProduct(data);
-    } catch {
-      setLookupError("商品情報の取得中にネットワークエラーが発生しました");
-    } finally {
-      setLookupPending(false);
-      // スキャン成功後は自動でカメラを閉じ、結果を同じページ内で見せる
-      if (options?.dismissOverlayWhenDone) {
-        await dismissOverlayToResults();
-      }
-    }
-  }
-
-  function applyResult(rawValue: string, format?: string) {
-    const trimmed = rawValue.trim();
-    if (trimmed === "") {
-      return;
-    }
-
-    const now = Date.now();
-    if (
-      lastRawRef.current === trimmed &&
-      now - lastAtRef.current < SAME_VALUE_COOLDOWN_MS
-    ) {
-      return;
-    }
-    lastRawRef.current = trimmed;
-    lastAtRef.current = now;
-    setCopied(false);
-    setResult({
-      rawValue: trimmed,
-      format,
-      scannedAt: new Date().toISOString(),
-    });
-
-    // カメラ中の読取なら、すぐストリームを止め、照会後にオーバーレイを自動クローズ
-    const fromCamera = overlayOpen;
-    if (fromCamera) {
-      void stopScanner();
-    }
-    void lookupProduct(trimmed, { dismissOverlayWhenDone: fromCamera });
-  }
-
-  async function stopScanner() {
-    const scanner = scannerRef.current;
-    if (!scanner) {
-      setScanning(false);
-      return;
-    }
-
-    try {
-      if (scanner.isScanning) {
-        await scanner.stop();
-      }
-      scanner.clear();
-    } catch {
-      // 閉じる操作を優先。詳細は next start で分かるのでここでは握りつぶす
-    } finally {
-      scannerRef.current = null;
-      setScanning(false);
-    }
-  }
-
-  /** 未読取のままやめるとき（成功時は自動クローズするので主にキャンセル用） */
-  async function handleCancelOverlay() {
-    await stopScanner();
-    setOverlayOpen(false);
-    setStarting(false);
-  }
-
-  // PC 幅へリサイズしたらカメラを止める（md:hidden と表示方針を揃える）
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
-    const onChange = () => {
-      if (media.matches) {
-        void handleCancelOverlay();
-      }
-    };
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- リサイズ検知の一度きり登録
-  }, []);
-
-  async function handleStart() {
-    setError(null);
-    // 全画面を先に出してから start（寸法 0 / スクロール位置の問題を避ける）
-    setOverlayOpen(true);
-    setStarting(true);
-
-    try {
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-      });
-
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode(regionId, { verbose: false });
-      }
-      const scanner = scannerRef.current;
-
-      const onSuccess = (
-        decodedText: string,
-        decodedResult: Html5QrcodeResult,
-      ) => {
-        applyResult(decodedText, decodedResult.result.format?.formatName);
-      };
-
-      const cameraConfig = {
-        fps: 10,
-        // 全画面では広めの読取枠。バーコードは横長の方が読みやすい
-        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-          const width = Math.floor(Math.min(320, viewfinderWidth * 0.85));
-          const height = Math.floor(Math.min(200, viewfinderHeight * 0.3));
-          return { width, height };
-        },
-      };
-
-      try {
-        await scanner.start(
-          { facingMode: "environment" },
-          cameraConfig,
-          onSuccess,
-          () => {
-            // フレームごとの「見つからない」は正常系なので無視
-          },
-        );
-      } catch {
-        await scanner.start(
-          { facingMode: "user" },
-          cameraConfig,
-          onSuccess,
-          () => {},
-        );
-      }
-
-      setScanning(true);
-    } catch (err) {
-      setError(toFriendlyError(err));
-      setScanning(false);
-      scannerRef.current = null;
-      setOverlayOpen(false);
-    } finally {
-      setStarting(false);
-    }
-  }
-
-  function handleManualSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    const value = manualValue.trim();
-    if (value === "") {
-      setError("表示する値を入力してください。");
-      return;
-    }
-    applyResult(value, "MANUAL");
-  }
-
-  async function handleCopy() {
-    if (!result) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(result.rawValue);
-      setCopied(true);
-    } catch {
-      setError("クリップボードへのコピーに失敗しました。");
-    }
-  }
+  const {
+    productLookupSectionId,
+    regionId,
+    overlayOpen,
+    scanning,
+    starting,
+    cameraError,
+    result,
+    product,
+    lookupPending,
+    lookupError,
+    manualValue,
+    setManualValue,
+    copied,
+    startScan,
+    cancelOverlay,
+    dismissOverlayToResults,
+    handleManualSubmit,
+    handleCopy,
+  } = useBarcodeScanFlow();
 
   return (
     <div id="scan" className="space-y-4 md:hidden">
@@ -328,15 +42,15 @@ export function BarcodeScanner() {
 
       <button
         type="button"
-        onClick={() => void handleStart()}
+        onClick={() => void startScan()}
         disabled={overlayOpen || starting}
         className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {starting ? "起動中…" : "スキャン開始"}
       </button>
 
-      {error && !overlayOpen ? (
-        <p className="text-sm text-red-600">{error}</p>
+      {cameraError && !overlayOpen ? (
+        <p className="text-sm text-red-600">{cameraError}</p>
       ) : null}
 
       <section
@@ -379,7 +93,7 @@ export function BarcodeScanner() {
       </section>
 
       <section
-        id="product-lookup"
+        id={productLookupSectionId}
         className="space-y-2 rounded-md border border-zinc-200 bg-white px-4 py-3"
         aria-live="polite"
         aria-labelledby="product-lookup-heading"
@@ -399,7 +113,6 @@ export function BarcodeScanner() {
         {!lookupPending && !lookupError && product?.found === true ? (
           <div className="flex gap-3 text-sm text-zinc-700">
             {product.imageUrl ? (
-              // 外部画像。学習用に next/image は使わず素の img
               // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
               <img
                 src={product.imageUrl}
@@ -452,7 +165,6 @@ export function BarcodeScanner() {
         </div>
       </form>
 
-      {/* body 直下へ portal。md:hidden の親に閉じ込めるとリサイズ時にカメラだけ残るのを防ぐ */}
       {typeof document !== "undefined" && overlayOpen
         ? createPortal(
             <div
@@ -473,7 +185,7 @@ export function BarcodeScanner() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => void handleCancelOverlay()}
+                  onClick={() => void cancelOverlay()}
                   className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
                 >
                   キャンセル
@@ -486,7 +198,9 @@ export function BarcodeScanner() {
               />
 
               <footer className="shrink-0 space-y-2 bg-black/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                {error ? <p className="text-sm text-red-300">{error}</p> : null}
+                {cameraError ? (
+                  <p className="text-sm text-red-300">{cameraError}</p>
+                ) : null}
                 {result ? (
                   <div className="space-y-1 text-sm">
                     <p className="font-medium text-emerald-300">読み取りました</p>
@@ -504,7 +218,25 @@ export function BarcodeScanner() {
                       <p className="text-white">{product.name}</p>
                     ) : null}
                     {product?.found === false ? (
-                      <p className="text-zinc-400">商品情報なし</p>
+                      <div className="space-y-2">
+                        <p className="text-zinc-400">商品情報なし</p>
+                        <button
+                          type="button"
+                          onClick={() => void dismissOverlayToResults()}
+                          className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
+                        >
+                          結果を見る
+                        </button>
+                      </div>
+                    ) : null}
+                    {lookupError ? (
+                      <button
+                        type="button"
+                        onClick={() => void dismissOverlayToResults()}
+                        className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
+                      >
+                        閉じる
+                      </button>
                     ) : null}
                   </div>
                 ) : (

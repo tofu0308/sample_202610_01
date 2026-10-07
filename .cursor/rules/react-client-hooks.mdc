@@ -1,0 +1,40 @@
+---
+description: Client Component の肥大化を避け、hooks / lib へ責務分離する
+globs: src/components/**/*.tsx,src/hooks/**/*.ts
+alwaysApply: false
+---
+
+# React Client hooks
+
+学習用リポジトリでも、Client Component が「UI + デバイス + fetch + 複数 state」で肥大化したら分離する。
+
+## 置き場
+
+| 置き場 | 入れるもの |
+| --- | --- |
+| `src/components/*.tsx` | 表示とイベント結線。`"use client"` はここに置く |
+| `src/hooks/use-*.ts` | state / effect / ブラウザ API / 一連フロー |
+| `src/lib/**` | 純関数・型・外部 API ラッパ・zod（UI 非依存） |
+
+## 分割の目安
+
+- **画面（Component）**: JSX、aria、Tailwind。処理の詳細を書かない
+- **フロー hook**（例: `useBarcodeScanFlow`）: 複数 hook を束ね、画面が使う値とハンドラだけ返す
+- **単機能 hook**（例: `useProductLookup`, `useBarcodeCamera`）: 1 責務。副作用のクリーンアップを自分で持つ
+- コールバックを子 hook に渡すときは **ref + `useEffect` で最新化**する（render 中に `ref.current =` しない。eslint `react-hooks/refs`）
+
+## やってよい / よくない
+
+```typescript
+// ✅ UI は薄い
+export function BarcodeScanner() {
+  const flow = useBarcodeScanFlow();
+  return <button onClick={() => void flow.startScan()}>…</button>;
+}
+
+// ❌ 1 ファイルに Html5Qrcode + fetch + overlay + 手動入力が全部
+```
+
+- Prisma / 秘密情報を Client や hooks に置かない（Route Handler / Server 側）
+- hook 名は `use` で始め、ファイル名は `use-xxx.ts`（ケバブ）に揃える
+- コメントは「なぜ分けるか」を短く。処理の言い換えだけは書かない
