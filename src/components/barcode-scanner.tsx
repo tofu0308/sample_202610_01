@@ -116,7 +116,23 @@ export function BarcodeScanner() {
     };
   }, []);
 
-  async function lookupProduct(code: string) {
+  /** カメラ画面を終了し、下の商品情報セクションへ視線を移す（「戻る」感を減らす） */
+  async function dismissOverlayToResults() {
+    await stopScanner();
+    setOverlayOpen(false);
+    setStarting(false);
+    // オーバーレイ解除後にスクロール（DOM が戻ってから）
+    requestAnimationFrame(() => {
+      document
+        .getElementById("product-lookup")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  async function lookupProduct(
+    code: string,
+    options?: { dismissOverlayWhenDone?: boolean },
+  ) {
     setLookupPending(true);
     setLookupError(null);
     setProduct(null);
@@ -141,6 +157,10 @@ export function BarcodeScanner() {
       setLookupError("商品情報の取得中にネットワークエラーが発生しました");
     } finally {
       setLookupPending(false);
+      // スキャン成功後は自動でカメラを閉じ、結果を同じページ内で見せる
+      if (options?.dismissOverlayWhenDone) {
+        await dismissOverlayToResults();
+      }
     }
   }
 
@@ -165,8 +185,13 @@ export function BarcodeScanner() {
       format,
       scannedAt: new Date().toISOString(),
     });
-    // 読取値を Yahoo 側で商品名に解決する（未ヒットも画面で扱う）
-    void lookupProduct(trimmed);
+
+    // カメラ中の読取なら、すぐストリームを止め、照会後にオーバーレイを自動クローズ
+    const fromCamera = overlayOpen;
+    if (fromCamera) {
+      void stopScanner();
+    }
+    void lookupProduct(trimmed, { dismissOverlayWhenDone: fromCamera });
   }
 
   async function stopScanner() {
@@ -189,7 +214,8 @@ export function BarcodeScanner() {
     }
   }
 
-  async function handleCloseOverlay() {
+  /** 未読取のままやめるとき（成功時は自動クローズするので主にキャンセル用） */
+  async function handleCancelOverlay() {
     await stopScanner();
     setOverlayOpen(false);
     setStarting(false);
@@ -200,12 +226,11 @@ export function BarcodeScanner() {
     const media = window.matchMedia("(min-width: 768px)");
     const onChange = () => {
       if (media.matches) {
-        void handleCloseOverlay();
+        void handleCancelOverlay();
       }
     };
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
-    // handleCloseOverlay は毎回新しい参照になるが、リスナー登録はマウント時で足りる
     // eslint-disable-next-line react-hooks/exhaustive-deps -- リサイズ検知の一度きり登録
   }, []);
 
@@ -354,6 +379,7 @@ export function BarcodeScanner() {
       </section>
 
       <section
+        id="product-lookup"
         className="space-y-2 rounded-md border border-zinc-200 bg-white px-4 py-3"
         aria-live="polite"
         aria-labelledby="product-lookup-heading"
@@ -437,14 +463,20 @@ export function BarcodeScanner() {
             >
               <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
                 <p className="text-sm font-medium">
-                  {starting ? "カメラ起動中…" : "コードを枠に合わせてください"}
+                  {starting
+                    ? "カメラ起動中…"
+                    : result
+                      ? lookupPending
+                        ? "商品を調べています…"
+                        : "読み取り完了"
+                      : "コードを枠に合わせてください"}
                 </p>
                 <button
                   type="button"
-                  onClick={() => void handleCloseOverlay()}
+                  onClick={() => void handleCancelOverlay()}
                   className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
                 >
-                  閉じる
+                  キャンセル
                 </button>
               </header>
 
