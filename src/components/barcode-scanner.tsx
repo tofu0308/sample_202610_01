@@ -2,12 +2,20 @@
 
 /**
  * QR / バーコード読み取り（Client Component）。
- * html5-qrcode の Html5Qrcode を使い、ボタン操作でのみカメラを開始する（自動起動しない）。
- * Phase 1 は画面表示のみ。DB 保存はしない。
+ * html5-qrcode の Html5Qrcode を使い、ボタン操作でのみカメラを開始する。
+ * 撮影中は画面全体を覆うオーバーレイにし、スクロールなしで使えるようにする。
+ * Phase 1 は画面表示のみ。PC（md 以上）ではセクションごと非表示。
  */
 
 import { Html5Qrcode, type Html5QrcodeResult } from "html5-qrcode";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { createPortal } from "react-dom";
 
 /** 設計書どおりの読取結果（永続化しない） */
 export type ScanResult = {
@@ -51,12 +59,31 @@ export function BarcodeScanner() {
   const lastRawRef = useRef<string | null>(null);
   const lastAtRef = useRef(0);
 
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [manualValue, setManualValue] = useState("");
   const [copied, setCopied] = useState(false);
+  // portal はクライアント後だけ（SSR で document が無い）
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // オーバーレイ中は背面のスクロールを止める
+  useEffect(() => {
+    if (!overlayOpen) {
+      return;
+    }
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [overlayOpen]);
 
   // アンマウント時は必ず stop してカメラインジケータを残さない
   useEffect(() => {
@@ -94,9 +121,50 @@ export function BarcodeScanner() {
     });
   }
 
+  async function stopScanner() {
+    const scanner = scannerRef.current;
+    if (!scanner) {
+      setScanning(false);
+      return;
+    }
+
+    try {
+      if (scanner.isScanning) {
+        await scanner.stop();
+      }
+      scanner.clear();
+    } catch {
+      // 閉じる操作を優先。詳細は next start で分かるのでここでは握りつぶす
+    } finally {
+      scannerRef.current = null;
+      setScanning(false);
+    }
+  }
+
+  async function handleCloseOverlay() {
+    await stopScanner();
+    setOverlayOpen(false);
+    setStarting(false);
+  }
+
+  // PC 幅へリサイズしたらカメラを止める（md:hidden と表示方針を揃える）
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const onChange = () => {
+      if (media.matches) {
+        void handleCloseOverlay();
+      }
+    };
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+    // handleCloseOverlay は毎回新しい参照になるが、リスナー登録はマウント時で足りる
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- リサイズ検知の一度きり登録
+  }, []);
+
   async function handleStart() {
     setError(null);
-    // プレビュー領域を先に開いてから start する（display:none だと寸法 0 で失敗しうる）
+    // 全画面を先に出してから start（寸法 0 / スクロール位置の問題を避ける）
+    setOverlayOpen(true);
     setStarting(true);
 
     try {
@@ -104,7 +172,6 @@ export function BarcodeScanner() {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       });
 
-      // 背面カメラ優先（スマホ）。失敗時はインカメラへフォールバック
       if (!scannerRef.current) {
         scannerRef.current = new Html5Qrcode(regionId, { verbose: false });
       }
@@ -119,10 +186,10 @@ export function BarcodeScanner() {
 
       const cameraConfig = {
         fps: 10,
-        // バーコードは横長の方が読みやすい。画面幅に合わせて縮める
+        // 全画面では広めの読取枠。バーコードは横長の方が読みやすい
         qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-          const width = Math.floor(Math.min(320, viewfinderWidth * 0.9));
-          const height = Math.floor(Math.min(180, viewfinderHeight * 0.35));
+          const width = Math.floor(Math.min(320, viewfinderWidth * 0.85));
+          const height = Math.floor(Math.min(200, viewfinderHeight * 0.3));
           return { width, height };
         },
       };
@@ -150,29 +217,9 @@ export function BarcodeScanner() {
       setError(toFriendlyError(err));
       setScanning(false);
       scannerRef.current = null;
+      setOverlayOpen(false);
     } finally {
       setStarting(false);
-    }
-  }
-
-  async function handleStop() {
-    setError(null);
-    const scanner = scannerRef.current;
-    if (!scanner) {
-      setScanning(false);
-      return;
-    }
-
-    try {
-      if (scanner.isScanning) {
-        await scanner.stop();
-      }
-      scanner.clear();
-    } catch (err) {
-      setError(toFriendlyError(err));
-    } finally {
-      scannerRef.current = null;
-      setScanning(false);
     }
   }
 
@@ -200,42 +247,24 @@ export function BarcodeScanner() {
   }
 
   return (
-    <div id="scan" className="space-y-4">
+    <div id="scan" className="space-y-4 md:hidden">
       <p className="text-sm text-zinc-600">
-        「スキャン開始」を押すとカメラが起動します。カメラ許可が必要です。HTTPS
-        または localhost で開いてください。
+        「スキャン開始」を押すと画面全体でカメラが開きます。カメラ許可が必要です（HTTPS
+        推奨）。
       </p>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => void handleStart()}
-          disabled={scanning || starting}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {starting ? "起動中…" : "スキャン開始"}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handleStop()}
-          disabled={!scanning}
-          className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          停止
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => void handleStart()}
+        disabled={overlayOpen || starting}
+        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {starting ? "起動中…" : "スキャン開始"}
+      </button>
 
-      {/* html5-qrcode が video を差し込む領域。DOM には残し、非表示時は潰す */}
-      <div
-        id={regionId}
-        className={
-          scanning || starting
-            ? "min-h-48 overflow-hidden rounded-md border border-zinc-300 bg-black [&_video]:w-full"
-            : "h-0 overflow-hidden"
-        }
-      />
-
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error && !overlayOpen ? (
+        <p className="text-sm text-red-600">{error}</p>
+      ) : null}
 
       <section
         className="space-y-2 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3"
@@ -280,7 +309,7 @@ export function BarcodeScanner() {
         <label htmlFor="manual-scan-value" className="block text-sm font-medium">
           手動入力（カメラが使えないときの確認用）
         </label>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2">
           <input
             id="manual-scan-value"
             type="text"
@@ -297,6 +326,61 @@ export function BarcodeScanner() {
           </button>
         </div>
       </form>
+
+      {/* body 直下へ portal。md:hidden の親に閉じ込めるとリサイズ時にカメラだけ残るのを防ぐ */}
+      {mounted && overlayOpen
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-50 flex flex-col bg-black text-white"
+              role="dialog"
+              aria-modal="true"
+              aria-label="バーコードスキャン"
+            >
+              <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
+                <p className="text-sm font-medium">
+                  {starting ? "カメラ起動中…" : "コードを枠に合わせてください"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void handleCloseOverlay()}
+                  className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
+                >
+                  閉じる
+                </button>
+              </header>
+
+              <div
+                id={regionId}
+                className="min-h-0 flex-1 overflow-hidden [&_img]:mx-auto [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
+              />
+
+              <footer className="shrink-0 space-y-2 bg-black/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                {error ? <p className="text-sm text-red-300">{error}</p> : null}
+                {result ? (
+                  <div className="space-y-1 text-sm">
+                    <p className="font-medium text-emerald-300">読み取りました</p>
+                    <p className="break-all font-mono text-white">
+                      {result.rawValue}
+                    </p>
+                    <p className="text-zinc-400">
+                      {result.format ?? "不明"} /{" "}
+                      {new Date(result.scannedAt).toLocaleString("ja-JP")}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-400">
+                    {scanning
+                      ? "読み取り待機中…"
+                      : starting
+                        ? "しばらくお待ちください"
+                        : null}
+                  </p>
+                )}
+              </footer>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

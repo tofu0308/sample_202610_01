@@ -28,7 +28,11 @@ export default async function Home() {
         </p>
       </header>
 
-      <section className="space-y-3" aria-labelledby="scan-heading">
+      {/* スキャンはスマホ向け。PC（md 以上）ではセクションごと隠す */}
+      <section
+        className="space-y-3 md:hidden"
+        aria-labelledby="scan-heading"
+      >
         <h2 id="scan-heading" className="text-lg font-medium">
           スキャン
         </h2>
