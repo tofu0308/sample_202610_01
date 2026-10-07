@@ -4,7 +4,8 @@
  * QR / バーコード読み取り（Client Component）。
  * html5-qrcode の Html5Qrcode を使い、ボタン操作でのみカメラを開始する。
  * 撮影中は画面全体を覆うオーバーレイにし、スクロールなしで使えるようにする。
- * Phase 1 は画面表示のみ。PC（md 以上）ではセクションごと非表示。
+ * 読取後は POST /api/products/lookup で Yahoo!ショッピングから商品名を照会する（アフィ無し）。
+ * PC（md 以上）ではセクションごと非表示。
  */
 
 import { Html5Qrcode, type Html5QrcodeResult } from "html5-qrcode";
@@ -26,6 +27,23 @@ export type ScanResult = {
 
 /** 同一値の連続コールバックで表示がチラつかないようにする間隔 */
 const SAME_VALUE_COOLDOWN_MS = 2000;
+
+/** /api/products/lookup の成功レスポンス（アフィ URL は含まない） */
+type ProductLookupResponse =
+  | {
+      found: true;
+      code: string;
+      name: string;
+      imageUrl?: string;
+      brandName?: string;
+      source: "yahoo_shopping";
+    }
+  | {
+      found: false;
+      code: string;
+      source: "yahoo_shopping";
+    }
+  | { error: string };
 
 function toFriendlyError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -64,14 +82,14 @@ export function BarcodeScanner() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [product, setProduct] = useState<Extract<
+    ProductLookupResponse,
+    { found: boolean }
+  > | null>(null);
+  const [lookupPending, setLookupPending] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const [manualValue, setManualValue] = useState("");
   const [copied, setCopied] = useState(false);
-  // portal はクライアント後だけ（SSR で document が無い）
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // オーバーレイ中は背面のスクロールを止める
   useEffect(() => {
@@ -98,6 +116,34 @@ export function BarcodeScanner() {
     };
   }, []);
 
+  async function lookupProduct(code: string) {
+    setLookupPending(true);
+    setLookupError(null);
+    setProduct(null);
+
+    try {
+      const response = await fetch("/api/products/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({ code }),
+      });
+      const data = (await response.json()) as ProductLookupResponse;
+
+      if (!response.ok || "error" in data) {
+        setLookupError(
+          "error" in data ? data.error : "商品情報の取得に失敗しました",
+        );
+        return;
+      }
+
+      setProduct(data);
+    } catch {
+      setLookupError("商品情報の取得中にネットワークエラーが発生しました");
+    } finally {
+      setLookupPending(false);
+    }
+  }
+
   function applyResult(rawValue: string, format?: string) {
     const trimmed = rawValue.trim();
     if (trimmed === "") {
@@ -119,6 +165,8 @@ export function BarcodeScanner() {
       format,
       scannedAt: new Date().toISOString(),
     });
+    // 読取値を Yahoo 側で商品名に解決する（未ヒットも画面で扱う）
+    void lookupProduct(trimmed);
   }
 
   async function stopScanner() {
@@ -305,6 +353,57 @@ export function BarcodeScanner() {
         ) : null}
       </section>
 
+      <section
+        className="space-y-2 rounded-md border border-zinc-200 bg-white px-4 py-3"
+        aria-live="polite"
+        aria-labelledby="product-lookup-heading"
+      >
+        <h3
+          id="product-lookup-heading"
+          className="text-sm font-medium text-zinc-800"
+        >
+          商品情報
+        </h3>
+        {lookupPending ? (
+          <p className="text-sm text-zinc-500">Yahoo!ショッピングで検索中…</p>
+        ) : null}
+        {lookupError ? (
+          <p className="text-sm text-red-600">{lookupError}</p>
+        ) : null}
+        {!lookupPending && !lookupError && product?.found === true ? (
+          <div className="flex gap-3 text-sm text-zinc-700">
+            {product.imageUrl ? (
+              // 外部画像。学習用に next/image は使わず素の img
+              // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
+              <img
+                src={product.imageUrl}
+                alt=""
+                width={64}
+                height={64}
+                className="h-16 w-16 shrink-0 rounded border border-zinc-200 object-cover"
+              />
+            ) : null}
+            <div className="min-w-0 space-y-1">
+              <p className="font-medium">{product.name}</p>
+              {product.brandName ? (
+                <p className="text-zinc-500">ブランド: {product.brandName}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+        {!lookupPending && !lookupError && product?.found === false ? (
+          <p className="text-sm text-zinc-500">
+            商品情報が見つかりませんでした（Yahoo!ショッピング未出品の可能性）。
+          </p>
+        ) : null}
+        {!result && !lookupPending ? (
+          <p className="text-sm text-zinc-500">コードを読み取ると照会します。</p>
+        ) : null}
+        <p className="text-xs text-zinc-400">
+          データ出典: Yahoo!ショッピング（アフィリエイトなし）
+        </p>
+      </section>
+
       <form onSubmit={handleManualSubmit} className="space-y-2">
         <label htmlFor="manual-scan-value" className="block text-sm font-medium">
           手動入力（カメラが使えないときの確認用）
@@ -328,7 +427,7 @@ export function BarcodeScanner() {
       </form>
 
       {/* body 直下へ portal。md:hidden の親に閉じ込めるとリサイズ時にカメラだけ残るのを防ぐ */}
-      {mounted && overlayOpen
+      {typeof document !== "undefined" && overlayOpen
         ? createPortal(
             <div
               className="fixed inset-0 z-50 flex flex-col bg-black text-white"
@@ -366,6 +465,15 @@ export function BarcodeScanner() {
                       {result.format ?? "不明"} /{" "}
                       {new Date(result.scannedAt).toLocaleString("ja-JP")}
                     </p>
+                    {lookupPending ? (
+                      <p className="text-zinc-400">商品検索中…</p>
+                    ) : null}
+                    {product?.found === true ? (
+                      <p className="text-white">{product.name}</p>
+                    ) : null}
+                    {product?.found === false ? (
+                      <p className="text-zinc-400">商品情報なし</p>
+                    ) : null}
                   </div>
                 ) : (
                   <p className="text-sm text-zinc-400">
