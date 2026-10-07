@@ -1,8 +1,9 @@
 /**
  * トップページ（Server Component）。
- * Note 一覧はサーバで Prisma 取得。作成・編集・削除の操作だけ Client Component に分離する。
+ * Note 一覧はサーバで Prisma 取得。作成・編集・削除とバーコード読取は Client に分離する。
  */
 
+import { BarcodeScanner } from "@/components/barcode-scanner";
 import { NoteCreateForm } from "@/components/note-create-form";
 import { NoteListItem } from "@/components/note-list-item";
 import { prisma } from "@/lib/prisma";
@@ -26,6 +27,13 @@ export default async function Home() {
           </code>
         </p>
       </header>
+
+      <section className="space-y-3" aria-labelledby="scan-heading">
+        <h2 id="scan-heading" className="text-lg font-medium">
+          スキャン
+        </h2>
+        <BarcodeScanner />
+      </section>
 
       <section className="space-y-3" aria-labelledby="create-note-heading">
         <h2 id="create-note-heading" className="text-lg font-medium">
