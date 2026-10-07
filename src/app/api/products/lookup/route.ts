@@ -4,12 +4,12 @@
  */
 
 import { NextResponse } from "next/server";
-import { productLookupSchema } from "@/lib/product-lookup-schemas";
+import { productLookupSchema } from "@/lib/products/product-lookup-schemas";
 import {
   lookupProductByJan,
   YahooShoppingConfigError,
   YahooShoppingRequestError,
-} from "@/lib/yahoo-shopping";
+} from "@/lib/products/yahoo-shopping";
 
 /** 商品名などを返す（未ヒットも 200 + found:false） */
 export async function POST(request: Request) {

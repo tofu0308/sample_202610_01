@@ -4,9 +4,9 @@
  * Note 手動作成 UI は当面コメントアウト（スキャン／商品照会へ寄せる想定）。
  */
 
-import { BarcodeScanner } from "@/components/barcode-scanner";
-// import { NoteCreateForm } from "@/components/note-create-form";
-import { NoteListItem } from "@/components/note-list-item";
+import { NoteListItem } from "@/components/notes/note-list-item";
+import { BarcodeScanner } from "@/components/scan/barcode-scanner";
+// import { NoteCreateForm } from "@/components/notes/note-create-form";
 import { prisma } from "@/lib/prisma";
 
 // 一覧を毎回最新にする（学習用。本番ではキャッシュ戦略を別途検討）

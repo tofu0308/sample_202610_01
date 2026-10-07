@@ -8,19 +8,21 @@ alwaysApply: false
 
 学習用リポジトリでも、Client Component が「UI + デバイス + fetch + 複数 state」で肥大化したら分離する。
 
-## 置き場
+## 置き場（浅いドメイン分割）
 
 | 置き場 | 入れるもの |
 | --- | --- |
-| `src/components/*.tsx` | 表示とイベント結線。`"use client"` はここに置く |
-| `src/hooks/use-*.ts` | state / effect / ブラウザ API / 一連フロー |
-| `src/lib/**` | 純関数・型・外部 API ラッパ・zod（UI 非依存） |
+| `src/components/scan/` / `src/components/notes/` | 表示とイベント結線。`"use client"` はここに置く |
+| `src/hooks/scan/` | スキャン系の state / effect / ブラウザ API / 一連フロー |
+| `src/lib/scan/` / `src/lib/notes/` / `src/lib/products/` | 純関数・型・外部 API ラッパ・zod（UI 非依存） |
+| `src/lib/prisma.ts` | DB クライアント（横断） |
+| `src/**/__tests__/` | ユニットテスト（実装と同階層に置かない） |
 
 ## 分割の目安
 
-- **画面（Component）**: JSX、aria、Tailwind。処理の詳細を書かない
+- **画面（Component）**: JSX、aria、Tailwind。処理の詳細を書かない。肥大したら同じフォルダ内で子コンポーネントへ
 - **フロー hook**（例: `useBarcodeScanFlow`）: 複数 hook を束ね、画面が使う値とハンドラだけ返す
-- **単機能 hook**（例: `useProductLookup`, `useBarcodeCamera`）: 1 責務。副作用のクリーンアップを自分で持つ
+- **単機能 hook**（例: `useContinuousScan`, `useProductLookup`, `useBarcodeCamera`）: 1 責務。副作用のクリーンアップを自分で持つ
 - コールバックを子 hook に渡すときは **ref + `useEffect` で最新化**する（render 中に `ref.current =` しない。eslint `react-hooks/refs`）
 
 ## やってよい / よくない
@@ -29,7 +31,7 @@ alwaysApply: false
 // ✅ UI は薄い
 export function BarcodeScanner() {
   const flow = useBarcodeScanFlow();
-  return <button onClick={() => void flow.startScan()}>…</button>;
+  return <ScanModeControls onStart={() => void flow.startScan()} … />;
 }
 
 // ❌ 1 ファイルに Html5Qrcode + fetch + overlay + 手動入力が全部

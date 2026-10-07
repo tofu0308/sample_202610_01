@@ -1,10 +1,10 @@
 /**
  * Note の一覧取得・作成 API（Route Handler）。
- * 入力検証は zod、DB 操作は @/lib/prisma。信頼できない入力をそのまま DB に渡さない。
+ * 入力検証は zod（@/lib/notes）、DB 操作は @/lib/prisma。信頼できない入力をそのまま DB に渡さない。
  */
 
 import { NextResponse } from "next/server";
-import { createNoteSchema } from "@/lib/note-schemas";
+import { createNoteSchema } from "@/lib/notes/note-schemas";
 import { prisma } from "@/lib/prisma";
 
 /** 新しい順で全件返す（学習用の最小 GET） */

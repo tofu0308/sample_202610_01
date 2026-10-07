@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 import {
   resolveNoteBodyUpdate,
   updateNoteSchema,
-} from "@/lib/note-schemas";
+} from "@/lib/notes/note-schemas";
 import { prisma } from "@/lib/prisma";
 
 type RouteParams = { params: Promise<{ id: string }> };

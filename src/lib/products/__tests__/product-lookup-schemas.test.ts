@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { productLookupSchema } from "@/lib/product-lookup-schemas";
+import { productLookupSchema } from "@/lib/products/product-lookup-schemas";
 
 describe("productLookupSchema", () => {
   it("accepts a 13-digit JAN", () => {

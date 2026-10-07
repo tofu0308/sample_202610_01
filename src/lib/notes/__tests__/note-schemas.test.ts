@@ -3,7 +3,7 @@ import {
   createNoteSchema,
   resolveNoteBodyUpdate,
   updateNoteSchema,
-} from "./note-schemas";
+} from "@/lib/notes/note-schemas";
 
 describe("createNoteSchema", () => {
   it("タイトルと本文があれば成功する", () => {

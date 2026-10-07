@@ -14,13 +14,17 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/__tests__/**/*.test.ts", "src/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "./coverage",
-      include: ["src/lib/note-schemas.ts"],
-      exclude: ["src/**/*.test.ts", "node_modules/**"],
+      include: ["src/lib/notes/note-schemas.ts"],
+      exclude: [
+        "src/**/*.test.ts",
+        "src/**/__tests__/**",
+        "node_modules/**",
+      ],
       // Windows でパス表記ゆれによる二重集計を避ける
       all: false,
       thresholds: {
