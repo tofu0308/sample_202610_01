@@ -58,11 +58,11 @@ npm run test:coverage
 
 | 領域 | 内容 |
 |---|---|
-| 基盤 | Next.js 16 + Prisma 7 + Note CRUD + Vercel + GitHub Actions CI |
+| 基盤 | Next.js 16 + Prisma 7 + Vercel + GitHub Actions CI（旧 Note CRUD は削除済み） |
 | Phase 1 | `html5-qrcode` カメラ読取・全画面オーバーレイ・PC は `md:hidden` |
 | Phase 2 | Yahoo 商品検索 v3（`POST /api/products/lookup`、アフィなし） |
 | 連続スキャン | 単体/連続トグル、JAN 排他、照会キュー、オーバーレイは直近のみ、リストに画像 |
-| 構成 | `scan` / `notes` / `products` の浅い分割。テストは `__tests__/` |
+| 構成 | `scan` / `items` / `products` の浅い分割。テストは `__tests__/` |
 | ドキュメント | `docs/` に一時設計・引き継ぎ（削除前提）。学習メモ §7〜§9 |
 
 最近の commit 例: 連続読取修正 → リファクタ → `docs/` 保管。
@@ -71,11 +71,11 @@ npm run test:coverage
 
 ```
 src/components/scan/     # barcode-scanner（結線）+ 子 UI
-src/components/notes/    # Note UI（作成フォームは page でコメントアウト）
-src/hooks/scan/          # flow / continuous / camera / lookup
-src/lib/scan|notes|products/
+src/components/items/    # 登録一覧・登録ボタン
+src/hooks/scan|items/
+src/lib/scan|items|products/
 src/app/api/products/lookup/
-src/app/api/notes/
+src/app/api/items/
 docs/DESIGN_BARCODE_SCAN.md   # Phase 3 DB 案は §11
 docs/HANDOFF_NEXT_SESSION.md  # 本ファイル
 ```
@@ -105,6 +105,6 @@ docs/HANDOFF_NEXT_SESSION.md  # 本ファイル
 ## 注意
 
 - NestJS は未使用（API は Next Route Handlers）
-- Note 手動作成 UI はコメントアウト済み。Note モデル削除は依頼があるまでしない
+- Note モデル / API / UI は削除済み（`UserItem.note` コメント欄は別物で残置）
 - アフィリエイトは当面なし
 - Free 枠超過は自動課金より制限寄り

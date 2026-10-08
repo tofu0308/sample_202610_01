@@ -1,6 +1,6 @@
 # sample_202610_01
 
-Next.js（App Router）+ Prisma 7 + Supabase の学習用メモアプリ。
+Next.js（App Router）+ Prisma 7 + Supabase の学習用アプリ（バーコード登録）。
 
 ## ローカル
 
