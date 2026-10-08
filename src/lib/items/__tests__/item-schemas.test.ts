@@ -94,6 +94,19 @@ describe("updateItemSchema", () => {
     }
   });
 
+  it("候補外の status1 は拒否する", () => {
+    const parsed = updateItemSchema.safeParse({ status1: "所持中" });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("空文字の status1 は null にする（クリア）", () => {
+    const parsed = updateItemSchema.safeParse({ status1: "" });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.status1).toBeNull();
+    }
+  });
+
   it("空文字の note は null にする（クリア）", () => {
     const parsed = updateItemSchema.safeParse({ note: "   " });
     expect(parsed.success).toBe(true);
@@ -111,7 +124,7 @@ describe("updateItemSchema", () => {
 describe("toUserItemUpdateData", () => {
   it("送られたフィールドだけ返す", () => {
     const parsed = updateItemSchema.safeParse({
-      status1: "所持中",
+      status1: "要補充",
       note: "予備",
     });
     expect(parsed.success).toBe(true);
@@ -119,7 +132,7 @@ describe("toUserItemUpdateData", () => {
       return;
     }
     expect(toUserItemUpdateData(parsed.data)).toEqual({
-      status1: "所持中",
+      status1: "要補充",
       note: "予備",
     });
   });

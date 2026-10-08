@@ -23,7 +23,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-zinc-500">
-        表は横にスクロールできます。列見出しで並べ替え（既定はステータス）。「編集」でステータス・コメントを変更できます。
+        表は横にスクロールできます。列見出しで並べ替え（既定は残量）。「編集」で残量・コメントを変更できます。
       </p>
       <div className="-mx-1 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
         <table className="min-w-[56rem] w-full border-collapse text-sm">
@@ -50,7 +50,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
                 ブランド
               </th>
               <ItemsTableSortHeader
-                label="ステータス"
+                label="残量"
                 column="status1"
                 activeKey={table.sortKey}
                 activeDir={table.sortDir}

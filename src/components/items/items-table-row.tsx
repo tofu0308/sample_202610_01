@@ -6,9 +6,12 @@
 
 import {
   itemDangerButtonClass,
+  itemEditButtonClass,
   itemPrimaryButtonClass,
   itemSecondaryButtonClass,
 } from "@/components/items/item-action-styles";
+import { Status1Meter } from "@/components/items/status1-meter";
+import { STATUS1_OPTIONS } from "@/lib/items/constants";
 import type { ItemsTableRow } from "@/lib/items/items-table-sort";
 
 type ItemsTableRowViewProps = {
@@ -75,18 +78,34 @@ export function ItemsTableRowView({
       </td>
       <td className="px-3 py-2 text-zinc-700">
         {editing ? (
-          <input
-            type="text"
-            value={draftStatus1}
-            onChange={(event) => onDraftStatus1Change(event.target.value)}
-            maxLength={100}
-            disabled={pending}
-            placeholder="例: 残少"
-            aria-label={`${item.product.name} のステータス`}
-            className="w-28 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
-          />
+          <div className="space-y-1.5">
+            <select
+              value={draftStatus1}
+              onChange={(event) => onDraftStatus1Change(event.target.value)}
+              disabled={pending}
+              aria-label={`${item.product.name} の残量`}
+              className="w-36 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm outline-none focus:border-zinc-500"
+            >
+              <option value="">未設定</option>
+              {STATUS1_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+              {/* 旧データなど候補外の値があるときは、消さないよう一時表示 */}
+              {draftStatus1 !== "" &&
+              !(STATUS1_OPTIONS as readonly string[]).includes(draftStatus1) ? (
+                <option value={draftStatus1}>{draftStatus1}（旧）</option>
+              ) : null}
+            </select>
+            {/* 選択中の残量感をその場で確認できるようにする */}
+            <Status1Meter
+              value={draftStatus1 === "" ? null : draftStatus1}
+              compact
+            />
+          </div>
         ) : (
-          <span className="whitespace-nowrap">{item.status1 ?? "—"}</span>
+          <Status1Meter value={item.status1} />
         )}
       </td>
       <td className="max-w-[14rem] px-3 py-2 text-zinc-600">
@@ -134,7 +153,7 @@ export function ItemsTableRowView({
               type="button"
               onClick={onStartEdit}
               disabled={pending || anotherEditing}
-              className={itemSecondaryButtonClass.sm}
+              className={itemEditButtonClass.sm}
             >
               編集
             </button>

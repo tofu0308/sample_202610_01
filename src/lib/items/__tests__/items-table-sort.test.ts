@@ -25,25 +25,27 @@ function row(
 }
 
 describe("sortItemsTableRows", () => {
-  it("status1 の未設定は末尾に寄せる", () => {
+  it("status1 は残量順（満タン→要補充）、未設定は末尾", () => {
     const rows = [
       row({ id: "1", status1: null, createdAt: "2026-01-01" }),
       row({ id: "2", status1: "残少", createdAt: "2026-01-02" }),
-      row({ id: "3", status1: "十分", createdAt: "2026-01-03" }),
+      row({ id: "3", status1: "満タン", createdAt: "2026-01-03" }),
+      row({ id: "4", status1: "要補充", createdAt: "2026-01-04" }),
+      row({ id: "5", status1: "半分", createdAt: "2026-01-05" }),
     ];
 
     const sorted = sortItemsTableRows(rows, "status1", "asc");
-    expect(sorted.map((r) => r.id)).toEqual(["2", "3", "1"]);
+    expect(sorted.map((r) => r.id)).toEqual(["3", "5", "2", "4", "1"]);
   });
 
-  it("同じキーを desc にすると順序が反転する（null は末尾のまま）", () => {
+  it("status1 desc は残少側が先、未設定は末尾のまま", () => {
     const rows = [
-      row({ id: "1", status1: "十分", createdAt: "2026-01-01" }),
+      row({ id: "1", status1: "満タン", createdAt: "2026-01-01" }),
       row({ id: "2", status1: "残少", createdAt: "2026-01-02" }),
       row({ id: "3", status1: null, createdAt: "2026-01-03" }),
     ];
 
     const sorted = sortItemsTableRows(rows, "status1", "desc");
-    expect(sorted.map((r) => r.id)).toEqual(["1", "2", "3"]);
+    expect(sorted.map((r) => r.id)).toEqual(["2", "1", "3"]);
   });
 });

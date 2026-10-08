@@ -4,6 +4,7 @@
  */
 
 import { z } from "zod";
+import { STATUS1_OPTIONS } from "@/lib/items/constants";
 
 /** lookup と同じ JAN 正規化（数字のみ・8〜14 桁） */
 const janCodeSchema = z
@@ -31,7 +32,6 @@ export const createItemSchema = z.object({
 
 /**
  * 任意テキスト。未送信は undefined、空文字 / null は DB 上 null（クリア）。
- * プリセット候補は後続。いまは自由記述。
  */
 const optionalClearableText = (max: number) =>
   z
@@ -48,13 +48,30 @@ const optionalClearableText = (max: number) =>
     });
 
 /**
+ * status1 は候補のどれか、またはクリア（空 / null）。
+ * 未送信は undefined（PATCH で触らない）。
+ */
+const optionalClearableStatus1 = z
+  .union([z.enum(STATUS1_OPTIONS), z.literal(""), z.null()])
+  .optional()
+  .transform((value) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    if (value === null || value === "") {
+      return null;
+    }
+    return value;
+  });
+
+/**
  * PATCH /api/items/[id] 用。
  * note / status1 の少なくとも一方が必要。
  */
 export const updateItemSchema = z
   .object({
     note: optionalClearableText(2000),
-    status1: optionalClearableText(100),
+    status1: optionalClearableStatus1,
   })
   .refine(
     (data) => data.note !== undefined || data.status1 !== undefined,
