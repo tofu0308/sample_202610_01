@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 登録一覧の 1 行。閲覧／編集モードの切り替えと操作ボタンを担う。
+ * 登録一覧の 1 行。選択チェック・閲覧／編集・単行操作を担う。
  */
 
 import {
@@ -16,12 +16,14 @@ import type { ItemsTableRow } from "@/lib/items/items-table-sort";
 
 type ItemsTableRowViewProps = {
   item: ItemsTableRow;
+  selected: boolean;
   pending: boolean;
   editing: boolean;
-  /** 他行を編集中のとき「編集」を無効化するため */
-  anotherEditing: boolean;
+  /** 一括処理中など、行操作を止めるとき */
+  actionsDisabled: boolean;
   draftStatus1: string;
   draftNote: string;
+  onToggleSelect: () => void;
   onDraftStatus1Change: (value: string) => void;
   onDraftNoteChange: (value: string) => void;
   onStartEdit: () => void;
@@ -32,11 +34,13 @@ type ItemsTableRowViewProps = {
 
 export function ItemsTableRowView({
   item,
+  selected,
   pending,
   editing,
-  anotherEditing,
+  actionsDisabled,
   draftStatus1,
   draftNote,
+  onToggleSelect,
   onDraftStatus1Change,
   onDraftNoteChange,
   onStartEdit,
@@ -45,9 +49,24 @@ export function ItemsTableRowView({
   onDelete,
 }: ItemsTableRowViewProps) {
   const registeredAt = new Date(item.createdAt).toLocaleDateString("ja-JP");
+  const rowBusy = pending || actionsDisabled;
 
   return (
-    <tr className="border-b border-zinc-100 last:border-b-0">
+    <tr
+      className={`border-b border-zinc-100 last:border-b-0 ${
+        selected ? "bg-sky-50/70" : ""
+      }`}
+    >
+      <td className="px-3 py-2">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          disabled={actionsDisabled}
+          aria-label={`${item.product.name} を選択`}
+          className="h-4 w-4 rounded border-zinc-300"
+        />
+      </td>
       <td className="px-3 py-2">
         {item.product.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
@@ -82,7 +101,7 @@ export function ItemsTableRowView({
             <select
               value={draftStatus1}
               onChange={(event) => onDraftStatus1Change(event.target.value)}
-              disabled={pending}
+              disabled={rowBusy}
               aria-label={`${item.product.name} の残量`}
               className="w-36 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm outline-none focus:border-zinc-500"
             >
@@ -92,13 +111,11 @@ export function ItemsTableRowView({
                   {option}
                 </option>
               ))}
-              {/* 旧データなど候補外の値があるときは、消さないよう一時表示 */}
               {draftStatus1 !== "" &&
               !(STATUS1_OPTIONS as readonly string[]).includes(draftStatus1) ? (
                 <option value={draftStatus1}>{draftStatus1}（旧）</option>
               ) : null}
             </select>
-            {/* 選択中の残量感をその場で確認できるようにする */}
             <Status1Meter
               value={draftStatus1 === "" ? null : draftStatus1}
               compact
@@ -115,7 +132,7 @@ export function ItemsTableRowView({
             onChange={(event) => onDraftNoteChange(event.target.value)}
             maxLength={2000}
             rows={2}
-            disabled={pending}
+            disabled={rowBusy}
             placeholder="コメント（任意）"
             aria-label={`${item.product.name} のコメント`}
             className="w-full min-w-[10rem] rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
@@ -134,7 +151,7 @@ export function ItemsTableRowView({
               <button
                 type="button"
                 onClick={onSave}
-                disabled={pending}
+                disabled={rowBusy}
                 className={itemPrimaryButtonClass.sm}
               >
                 {pending ? "保存中…" : "保存"}
@@ -142,7 +159,7 @@ export function ItemsTableRowView({
               <button
                 type="button"
                 onClick={onCancelEdit}
-                disabled={pending}
+                disabled={rowBusy}
                 className={itemSecondaryButtonClass.sm}
               >
                 キャンセル
@@ -152,7 +169,7 @@ export function ItemsTableRowView({
             <button
               type="button"
               onClick={onStartEdit}
-              disabled={pending || anotherEditing}
+              disabled={rowBusy}
               className={itemEditButtonClass.sm}
             >
               編集
@@ -161,7 +178,7 @@ export function ItemsTableRowView({
           <button
             type="button"
             onClick={onDelete}
-            disabled={pending}
+            disabled={rowBusy}
             className={itemDangerButtonClass.sm}
           >
             {pending && !editing ? "削除中…" : "削除"}

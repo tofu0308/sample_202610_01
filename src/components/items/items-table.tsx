@@ -2,9 +2,10 @@
 
 /**
  * 登録一覧テーブル（Client Component）。
- * 並べ替え・編集・削除の state は useItemsTable、行 UI は ItemsTableRowView に委譲する。
+ * 並べ替え・編集・選択一括は useItemsTable、行 UI は ItemsTableRowView に委譲する。
  */
 
+import { ItemsTableBulkToolbar } from "@/components/items/items-table-bulk-toolbar";
 import { ItemsTableRowView } from "@/components/items/items-table-row";
 import { ItemsTableSortHeader } from "@/components/items/items-table-sort-header";
 import { itemsTableThClassName } from "@/components/items/item-action-styles";
@@ -23,12 +24,31 @@ export function ItemsTable({ items }: ItemsTableProps) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-zinc-500">
-        表は横にスクロールできます。列見出しで並べ替え（既定は残量）。「編集」で残量・コメントを変更できます。
+        表は横にスクロールできます。列見出しで並べ替え（既定は残量）。行を選んで残量の一括変更・選択削除ができます。コメントは行の「編集」から。
       </p>
+      <ItemsTableBulkToolbar
+        selectedCount={table.selectedCount}
+        bulkStatus1={table.bulkStatus1}
+        pending={table.bulkPending}
+        onBulkStatus1Change={table.setBulkStatus1}
+        onApplyStatus1={() => void table.applyBulkStatus1()}
+        onRemoveSelected={() => void table.removeSelected()}
+        onClearSelection={table.clearSelection}
+      />
       <div className="-mx-1 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
-        <table className="min-w-[56rem] w-full border-collapse text-sm">
+        <table className="min-w-[58rem] w-full border-collapse text-sm">
           <thead className="border-b border-zinc-200 bg-zinc-50">
             <tr>
+              <th scope="col" className={itemsTableThClassName}>
+                <input
+                  type="checkbox"
+                  checked={table.allVisibleSelected}
+                  onChange={table.toggleSelectAllVisible}
+                  disabled={table.busy || table.sorted.length === 0}
+                  aria-label="表示中の行をすべて選択"
+                  className="h-4 w-4 rounded border-zinc-300"
+                />
+              </th>
               <th scope="col" className={itemsTableThClassName}>
                 画像
               </th>
@@ -79,13 +99,16 @@ export function ItemsTable({ items }: ItemsTableProps) {
               <ItemsTableRowView
                 key={item.id}
                 item={item}
-                pending={table.pendingId === item.id}
-                editing={table.editingId === item.id}
-                anotherEditing={
-                  table.editingId !== null && table.editingId !== item.id
+                selected={table.selectedIds.has(item.id)}
+                pending={
+                  table.pendingId === item.id ||
+                  (table.bulkPending && table.selectedIds.has(item.id))
                 }
+                editing={table.editingId === item.id}
+                actionsDisabled={table.bulkPending}
                 draftStatus1={table.draftStatus1}
                 draftNote={table.draftNote}
+                onToggleSelect={() => table.toggleSelect(item.id)}
                 onDraftStatus1Change={table.setDraftStatus1}
                 onDraftNoteChange={table.setDraftNote}
                 onStartEdit={() => table.startEdit(item)}
