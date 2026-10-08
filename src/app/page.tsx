@@ -39,13 +39,9 @@ export default async function Home() {
         </p>
       </header>
 
-      {/* スキャンはスマホ向け。PC（md 以上）ではセクションごと隠す */}
-      <section
-        className="space-y-3 md:hidden"
-        aria-labelledby="scan-heading"
-      >
+      <section className="space-y-3" aria-labelledby="scan-heading">
         <h2 id="scan-heading" className="text-lg font-medium">
-          スキャン
+          スキャン / 登録
         </h2>
         <BarcodeScanner />
       </section>
@@ -56,7 +52,7 @@ export default async function Home() {
         </h2>
         {items.length === 0 ? (
           <p className="text-zinc-500">
-            まだ登録はありません。スキャンで商品を調べたあと、登録できるようにします。
+            商品を調べて登録すると一覧に表示されます。
           </p>
         ) : (
           <ul className="space-y-4">

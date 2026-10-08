@@ -3,7 +3,7 @@
 /**
  * QR / バーコード読み取り UI（Client Component）。
  * 状態は useBarcodeScanFlow、表示は子コンポーネントに分割する。
- * PC（md 以上）ではセクションごと非表示。
+ * PC でも手動入力→照会→登録の確認ができるように表示する（カメラはスマホ向き）。
  */
 
 import { createPortal } from "react-dom";
@@ -22,9 +22,10 @@ export function BarcodeScanner() {
   const isContinuous = flow.scanMode === "continuous";
 
   return (
-    <div id="scan" className="space-y-4 md:hidden">
+    <div id="scan" className="space-y-4">
       <p className="text-sm text-zinc-600">
-        左の「単体 / 連続」で読取モードを切り替え、「スキャン開始」でカメラを開きます（HTTPS
+        「単体 / 連続」で読取モードを切り替えられます。カメラはスマホ向けです。PC
+        では下の手動入力で JAN を入れて照会→登録できます（HTTPS
         推奨・カメラ許可が必要）。
       </p>
 

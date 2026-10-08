@@ -563,8 +563,8 @@ model UserItem {
 
 - [x] Prisma migrate（`Product` / `UserItem`）→ `20261008025638_add_product_user_item`
 - [x] 登録・一覧・削除 API（`/api/items` GET/POST、`/api/items/[id]` DELETE）
-- [x] 登録一覧 UI（表示・削除。編集は 3b）
-- [ ] スキャン成功 → 登録導線
+- [x] 登録一覧 UI（表示・削除。編集はあとで）
+- [x] スキャン成功 → 登録導線（単体・連続。PC は手動 JAN で確認可）
 - [ ] （3b・必須）`note` / `status1` 編集 API + UI
 - [ ] （3b・任意）`remaining`・`status2`/`3`・登録済み検索
 - [ ] （3c）カテゴリ階層＋複数選択登録

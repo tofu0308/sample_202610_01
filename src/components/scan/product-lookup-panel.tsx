@@ -1,7 +1,9 @@
 /**
  * 単体モードの商品照会結果。連続モードでは短い説明のみ。
+ * 照会成功時は登録ボタンを出す。
  */
 
+import { RegisterItemButton } from "@/components/items/register-item-button";
 import type { ProductLookupResult, ScanResult } from "@/lib/scan/types";
 
 type ProductLookupPanelProps = {
@@ -50,23 +52,26 @@ export function ProductLookupPanel({
         <p className="text-sm text-red-600">{lookupError}</p>
       ) : null}
       {!lookupPending && !lookupError && product?.found === true ? (
-        <div className="flex gap-3 text-sm text-zinc-700">
-          {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
-            <img
-              src={product.imageUrl}
-              alt=""
-              width={64}
-              height={64}
-              className="h-16 w-16 shrink-0 rounded border border-zinc-200 object-cover"
-            />
-          ) : null}
-          <div className="min-w-0 space-y-1">
-            <p className="font-medium">{product.name}</p>
-            {product.brandName ? (
-              <p className="text-zinc-500">ブランド: {product.brandName}</p>
+        <div className="space-y-3">
+          <div className="flex gap-3 text-sm text-zinc-700">
+            {product.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
+              <img
+                src={product.imageUrl}
+                alt=""
+                width={64}
+                height={64}
+                className="h-16 w-16 shrink-0 rounded border border-zinc-200 object-cover"
+              />
             ) : null}
+            <div className="min-w-0 space-y-1">
+              <p className="font-medium">{product.name}</p>
+              {product.brandName ? (
+                <p className="text-zinc-500">ブランド: {product.brandName}</p>
+              ) : null}
+            </div>
           </div>
+          <RegisterItemButton product={product} />
         </div>
       ) : null}
       {!lookupPending && !lookupError && product?.found === false ? (
