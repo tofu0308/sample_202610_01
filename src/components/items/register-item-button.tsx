@@ -20,7 +20,8 @@ export function RegisterItemButton({
   compact = false,
 }: RegisterItemButtonProps) {
   const { register, pending, error, successMessage } = useRegisterItem();
-  const wrapperClassName = compact ? "mt-2 space-y-1" : "space-y-1";
+  // compact はリスト行内向け（上マージンは付けない）
+  const wrapperClassName = "space-y-1";
   const buttonClassName = compact
     ? itemPrimaryButtonClass.compact
     : itemPrimaryButtonClass.md;

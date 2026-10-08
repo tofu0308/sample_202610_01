@@ -69,6 +69,12 @@ export function ItemsTable({ items }: ItemsTableProps) {
                 activeDir={table.sortDir}
                 onSort={table.handleSort}
               />
+              <th
+                scope="col"
+                className="min-w-[10rem] px-3 py-2 text-left text-xs font-medium text-zinc-600"
+              >
+                メモ
+              </th>
               <ItemsTableSortHeader
                 label="JAN"
                 column="jan"
@@ -76,12 +82,6 @@ export function ItemsTable({ items }: ItemsTableProps) {
                 activeDir={table.sortDir}
                 onSort={table.handleSort}
               />
-              <th
-                scope="col"
-                className="min-w-[10rem] px-3 py-2 text-left text-xs font-medium text-zinc-600"
-              >
-                メモ
-              </th>
               <ItemsTableSortHeader
                 label="登録日"
                 column="createdAt"

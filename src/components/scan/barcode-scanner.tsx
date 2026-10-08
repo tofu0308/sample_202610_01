@@ -2,17 +2,15 @@
 
 /**
  * QR / バーコード読み取り UI（Client Component）。
- * 状態は useBarcodeScanFlow、表示は子コンポーネントに分割する。
- * PC でも手動入力→照会→登録の確認ができるように表示する（カメラはスマホ向き）。
+ * 読取結果・商品情報の別パネルは出さず、リスト行（JAN コピー＋登録）に統一する。
  */
 
 import { createPortal } from "react-dom";
 import { ContinuousScanList } from "@/components/scan/continuous-scan-list";
 import { ManualScanForm } from "@/components/scan/manual-scan-form";
-import { ProductLookupPanel } from "@/components/scan/product-lookup-panel";
 import { ScanModeControls } from "@/components/scan/scan-mode-controls";
 import { ScanOverlay } from "@/components/scan/scan-overlay";
-import { ScanResultPanel } from "@/components/scan/scan-result-panel";
+import { SingleScanList } from "@/components/scan/single-scan-list";
 import { useBarcodeScanFlow } from "@/hooks/scan/use-barcode-scan-flow";
 
 export type { ScanResult } from "@/lib/scan/types";
@@ -25,8 +23,8 @@ export function BarcodeScanner() {
     <div id="scan" className="space-y-4">
       <p className="text-sm text-zinc-600">
         「単体 / 連続」で読取モードを切り替えられます。カメラはスマホ向けです。PC
-        では下の手動入力で JAN を入れて照会→登録できます（HTTPS
-        推奨・カメラ許可が必要）。
+        では下の手動入力で JAN を入れて登録できます（HTTPS
+        推奨・カメラ許可が必要）。各行の「JANをコピー」でコードを取れます。
       </p>
 
       <ScanModeControls
@@ -46,23 +44,15 @@ export function BarcodeScanner() {
           sectionId={flow.continuousListSectionId}
           entries={flow.continuousEntries}
         />
-      ) : null}
-
-      <ScanResultPanel
-        result={flow.result}
-        isContinuous={isContinuous}
-        copied={flow.copied}
-        onCopy={() => void flow.handleCopy()}
-      />
-
-      <ProductLookupPanel
-        sectionId={flow.productLookupSectionId}
-        isContinuous={isContinuous}
-        result={flow.result}
-        product={flow.product}
-        lookupPending={flow.lookupPending}
-        lookupError={flow.lookupError}
-      />
+      ) : (
+        <SingleScanList
+          sectionId={flow.productLookupSectionId}
+          result={flow.result}
+          product={flow.product}
+          lookupPending={flow.lookupPending}
+          lookupError={flow.lookupError}
+        />
+      )}
 
       <ManualScanForm
         value={flow.manualValue}

@@ -2,7 +2,7 @@
 
 /**
  * 登録一覧の 1 行。選択チェック・閲覧／編集・単行操作を担う。
- * 列順は「見たい情報」優先（商品名広め → 残量 → JAN / メモは後段）。
+ * 列順は「見たい情報」優先（商品名広め → 残量 → メモ → JAN）。
  */
 
 import {
@@ -13,8 +13,20 @@ import {
 } from "@/components/items/item-action-styles";
 import { Status1Meter } from "@/components/items/status1-meter";
 import { STATUS1_OPTIONS } from "@/lib/items/constants";
-import { formatDateTimeJst } from "@/lib/items/format-datetime-jst";
+import {
+  formatDateTimeJstParts,
+  type DateTimeJstParts,
+} from "@/lib/items/format-datetime-jst";
 import type { ItemsTableRow } from "@/lib/items/items-table-sort";
+
+function DateTimeTwoLine({ parts }: { parts: DateTimeJstParts }) {
+  return (
+    <span className="flex flex-col leading-tight">
+      <span>{parts.date}</span>
+      <span className="text-zinc-400">{parts.time}</span>
+    </span>
+  );
+}
 
 type ItemsTableRowViewProps = {
   item: ItemsTableRow;
@@ -50,8 +62,8 @@ export function ItemsTableRowView({
   onSave,
   onDelete,
 }: ItemsTableRowViewProps) {
-  const registeredAt = formatDateTimeJst(item.createdAt);
-  const updatedAt = formatDateTimeJst(item.updatedAt);
+  const registeredAt = formatDateTimeJstParts(item.createdAt);
+  const updatedAt = formatDateTimeJstParts(item.updatedAt);
   const rowBusy = pending || actionsDisabled;
 
   return (
@@ -125,9 +137,6 @@ export function ItemsTableRowView({
           <Status1Meter value={item.status1} />
         )}
       </td>
-      <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-zinc-500">
-        {item.product.jan}
-      </td>
       <td className="max-w-[14rem] px-3 py-2 text-zinc-600">
         {editing ? (
           <textarea
@@ -144,11 +153,14 @@ export function ItemsTableRowView({
           <span className="line-clamp-2">{item.note ?? "—"}</span>
         )}
       </td>
-      <td className="whitespace-nowrap px-3 py-2 text-zinc-500">
-        {registeredAt}
+      <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-zinc-500">
+        {item.product.jan}
       </td>
-      <td className="whitespace-nowrap px-3 py-2 text-zinc-500">
-        {updatedAt}
+      <td className="whitespace-nowrap px-3 py-2 text-xs text-zinc-500">
+        <DateTimeTwoLine parts={registeredAt} />
+      </td>
+      <td className="whitespace-nowrap px-3 py-2 text-xs text-zinc-500">
+        <DateTimeTwoLine parts={updatedAt} />
       </td>
       <td className="whitespace-nowrap px-3 py-2">
         <div className="flex flex-wrap gap-1">

@@ -40,7 +40,7 @@ export default async function Home() {
 
       <section className="space-y-3" aria-labelledby="item-list-heading">
         <h2 id="item-list-heading" className="text-lg font-medium">
-          登録
+          登録（{items.length} 件）
         </h2>
         {items.length === 0 ? (
           <p className="text-zinc-500">

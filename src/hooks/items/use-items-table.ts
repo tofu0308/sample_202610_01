@@ -172,6 +172,8 @@ export function useItemsTable(items: ItemsTableRow[]) {
     }
 
     setBulkPending(false);
+    // 適用後はパネルを閉じる（失敗があってもメッセージは残す）
+    clearSelection();
 
     if (failed > 0) {
       setError(

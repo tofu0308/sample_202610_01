@@ -23,7 +23,6 @@ export function useBarcodeScanFlow() {
   const [scanMode, setScanMode] = useState<ScanMode>("single");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [manualValue, setManualValue] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const {
     product,
@@ -67,7 +66,6 @@ export function useBarcodeScanFlow() {
     lookupOnce,
     setCameraError,
     onAccepted: (accepted) => {
-      setCopied(false);
       setResult(accepted);
     },
   });
@@ -114,7 +112,6 @@ export function useBarcodeScanFlow() {
       }
       lastRawRef.current = trimmed;
       lastAtRef.current = now;
-      setCopied(false);
       setResult({
         rawValue: trimmed,
         format,
@@ -191,18 +188,6 @@ export function useBarcodeScanFlow() {
     [applyResult, manualValue, setCameraError],
   );
 
-  const handleCopy = useCallback(async () => {
-    if (!result) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(result.rawValue);
-      setCopied(true);
-    } catch {
-      setCameraError("クリップボードへのコピーに失敗しました。");
-    }
-  }, [result, setCameraError]);
-
   return {
     productLookupSectionId: PRODUCT_LOOKUP_SECTION_ID,
     continuousListSectionId: CONTINUOUS_LIST_SECTION_ID,
@@ -223,12 +208,10 @@ export function useBarcodeScanFlow() {
     lookupError,
     manualValue,
     setManualValue,
-    copied,
     startScan,
     cancelOverlay,
     dismissOverlayToResults,
     finishContinuousScan,
     handleManualSubmit,
-    handleCopy,
   };
 }
