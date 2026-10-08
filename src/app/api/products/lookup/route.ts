@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { requireUserForApi } from "@/lib/auth/require-user";
 import { productLookupSchema } from "@/lib/products/product-lookup-schemas";
 import {
   lookupProductByJan,
@@ -11,9 +12,14 @@ import {
   YahooShoppingRequestError,
 } from "@/lib/products/yahoo-shopping";
 
-/** 商品名などを返す（未ヒットも 200 + found:false） */
+/** 商品名などを返す（未ヒットも 200 + found:false）。ログイン必須 */
 export async function POST(request: Request) {
   try {
+    const auth = await requireUserForApi();
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const json: unknown = await request.json();
     const parsed = productLookupSchema.safeParse(json);
 

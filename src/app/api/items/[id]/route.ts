@@ -1,10 +1,10 @@
 /**
  * 登録 1 件の更新・削除 API（Route Handler）。
- * 商品マスタ（Product）は消さず残す（あとから同じ JAN を再登録しやすくするため）。
+ * 商品マスタ（Product）は消さず残す。自分の行だけ操作可。
  */
 
 import { NextResponse } from "next/server";
-import { DEV_USER_ID } from "@/lib/items/constants";
+import { requireUserForApi } from "@/lib/auth/require-user";
 import {
   toUserItemUpdateData,
   updateItemSchema,
@@ -16,6 +16,11 @@ type RouteParams = { params: Promise<{ id: string }> };
 /** メモ・残量など、登録行の状態を更新する */
 export async function PATCH(request: Request, context: RouteParams) {
   try {
+    const auth = await requireUserForApi();
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { id } = await context.params;
 
     if (!id) {
@@ -33,8 +38,7 @@ export async function PATCH(request: Request, context: RouteParams) {
     }
 
     const existing = await prisma.userItem.findUnique({ where: { id } });
-    // TODO: ログイン機能を入れたら、ログイン中のユーザーの行だけ更新できるようにする
-    if (!existing || existing.userId !== DEV_USER_ID) {
+    if (!existing || existing.userId !== auth.user.id) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
@@ -57,6 +61,11 @@ export async function PATCH(request: Request, context: RouteParams) {
 /** 登録行を 1 件削除する（商品マスタは消さない） */
 export async function DELETE(_request: Request, context: RouteParams) {
   try {
+    const auth = await requireUserForApi();
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { id } = await context.params;
 
     if (!id) {
@@ -64,8 +73,7 @@ export async function DELETE(_request: Request, context: RouteParams) {
     }
 
     const existing = await prisma.userItem.findUnique({ where: { id } });
-    // TODO: ログイン機能を入れたら、ログイン中のユーザーの行だけ削除できるようにする
-    if (!existing || existing.userId !== DEV_USER_ID) {
+    if (!existing || existing.userId !== auth.user.id) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 

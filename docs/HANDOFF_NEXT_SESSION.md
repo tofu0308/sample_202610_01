@@ -5,7 +5,7 @@
 > 恒久ドキュメントではない。秘密情報（接続文字列・キーの値）は書かない。  
 > 次スレッドに貼ったあとも、リポジトリに残す必要がなければ削除してよい。
 
-最終更新: 2026-10-08（一覧 UI 強化・検索・一括操作まで反映）
+最終更新: 2026-10-08（管理者ログイン縦スライスまで）
 
 ---
 
@@ -17,10 +17,11 @@
 設計: docs/DESIGN_BARCODE_SCAN.md
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261008.md（§10〜§12）
 
-完了: スキャン→Yahoo照会→DB登録／一覧・削除・残量(status1)・メモ編集
-      残量プリセット＋バー／一括選択・適用・削除／フリーワード検索
-      スキャンUIは読取リスト＋JANコピーに統一／PC表は枠内縦横スクロール＋見出し固定
-次（任意）: 一括API・ページネーション・status2/3・カテゴリ探索・認証
+完了: スキャン→登録→一覧編集／検索・一括／残量バー
+      管理者ログイン（Supabase Auth・公開登録なし・ADMIN_EMAIL）
+次: .env に Supabase URL/anon・ADMIN_EMAIL を入れ、Dashboard で自分のユーザー作成
+      既存 UserItem の userId（local-dev-user）を Auth uid へ付け替え
+      （任意）一般ユーザー登録フロー・一括API・ページネーション
 注意: commit/push は明示依頼時のみ。秘密は .env のみ。MCP Supabase は read-only。
 ```
 
@@ -60,8 +61,9 @@ npm run test
 | DB / API | `Product` + `UserItem`。`GET/POST/PATCH/DELETE /api/items` |
 | 一覧 | 表・残量ソート／バー・メモバルーン・更新日・検索・一括操作 |
 | 分割 | `lib` / `hooks` / `components/items|scan` |
+| 認証 | Supabase Auth。`/login`・Proxy・`ADMIN_EMAIL`。公開サインアップ UI なし |
 
-学習メモの詳細: `課題対応_20261008.md` §10（migrate）§11（登録）§12（一覧強化）。
+学習メモ: `課題対応_20261008.md` §10〜§13。
 
 ## 構成（触るとき）
 
@@ -78,13 +80,28 @@ src/app/api/items/
 - 残量候補: `lib/items/constants.ts`（`STATUS1_OPTIONS`）
 - 画面ラベル「残量」「メモ」⇔ カラム `status1` / `note`
 
+## 管理者ログインのセットアップ（手元）
+
+1. Supabase Dashboard → Authentication → Users で **自分のユーザーを作成**（アプリから登録しない）
+2. `.env` / Vercel に追加（値はチャットに書かない）  
+   - `NEXT_PUBLIC_SUPABASE_URL`  
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+   - `ADMIN_EMAIL`（自分のメール）
+3. ログイン後、Auth の **User UID** を確認し、既存データを付け替え:
+
+```sql
+-- 例（uid は自分のものに置換）
+UPDATE "UserItem"
+SET "userId" = '<auth-uid>'
+WHERE "userId" = 'local-dev-user';
+```
+
 ## 次にやること（優先・任意）
 
-1. まとめて登録／一括 PATCH・DELETE の **一括 API**（いまは単件順呼び）
-2. 件数が増えたら **ページネーション**（いまは全件）
-3. `status2` / `status3` / `remaining` の本利用・プリセット UI
-4. カテゴリ探索登録（塗料 `category_id` 未決）
-5. 認証（仮 `DEV_USER_ID` → 本番 uid）
+1. 上記セットアップと既存データ付け替えの動作確認
+2. 一般ユーザー向け登録フロー（招待・サインアップ）の設計
+3. まとめて登録／一括 PATCH・DELETE の **一括 API**
+4. ページネーション / `status2`・`3` / カテゴリ探索
 
 ## 作業の進め方（エージェント向け）
 

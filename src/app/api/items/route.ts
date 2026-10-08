@@ -1,21 +1,24 @@
 /**
  * 登録の一覧取得・作成 API（Route Handler）。
- * 入力は zod で検証し、DB は @/lib/prisma。ユーザー ID はいまサーバ定数（ログイン前）。
+ * 入力は zod で検証し、DB は @/lib/prisma。userId はログイン中の Auth uid。
  */
 
 import { NextResponse } from "next/server";
-import {
-  DEFAULT_PRESET_KEY,
-  DEV_USER_ID,
-} from "@/lib/items/constants";
+import { requireUserForApi } from "@/lib/auth/require-user";
+import { DEFAULT_PRESET_KEY } from "@/lib/items/constants";
 import { createItemSchema } from "@/lib/items/item-schemas";
 import { prisma } from "@/lib/prisma";
 
-/** いまのユーザー定数に紐づく登録を、新しい順で返す（商品情報付き） */
+/** ログイン中ユーザーの登録を、新しい順で返す（商品情報付き） */
 export async function GET() {
   try {
+    const auth = await requireUserForApi();
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const items = await prisma.userItem.findMany({
-      where: { userId: DEV_USER_ID },
+      where: { userId: auth.user.id },
       orderBy: { createdAt: "desc" },
       include: { product: true },
     });
@@ -32,10 +35,15 @@ export async function GET() {
 /**
  * 商品照会の結果を受け取り、商品マスタを用意したうえで登録行を作る。
  * すでに同じ JAN のマスタがある場合、名前などは上書きしない。
- * 同じユーザーで同じ JAN が登録済みなら 409（データの重複。使い方の「持っているか」ではない）。
+ * 同じユーザーで同じ JAN が登録済みなら 409。
  */
 export async function POST(request: Request) {
   try {
+    const auth = await requireUserForApi();
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const json: unknown = await request.json();
     const parsed = createItemSchema.safeParse(json);
 
@@ -48,7 +56,6 @@ export async function POST(request: Request) {
 
     const { code, name, brandName, imageUrl, source } = parsed.data;
 
-    // 同じ JAN が既にあればマスタを再利用（店ごとの商品名の揺れで表示が変わらないよう update は空）
     const product = await prisma.product.upsert({
       where: { jan: code },
       create: {
@@ -64,7 +71,7 @@ export async function POST(request: Request) {
     const existing = await prisma.userItem.findUnique({
       where: {
         userId_productId: {
-          userId: DEV_USER_ID,
+          userId: auth.user.id,
           productId: product.id,
         },
       },
@@ -80,7 +87,7 @@ export async function POST(request: Request) {
 
     const item = await prisma.userItem.create({
       data: {
-        userId: DEV_USER_ID,
+        userId: auth.user.id,
         productId: product.id,
         presetKey: DEFAULT_PRESET_KEY,
       },
