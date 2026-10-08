@@ -7,6 +7,7 @@
 
 import { ItemsTableBulkToolbar } from "@/components/items/items-table-bulk-toolbar";
 import { ItemsTableRowView } from "@/components/items/items-table-row";
+import { ItemsTableSearch } from "@/components/items/items-table-search";
 import { ItemsTableSortHeader } from "@/components/items/items-table-sort-header";
 import { itemsTableThClassName } from "@/components/items/item-action-styles";
 import { useItemsTable } from "@/hooks/items/use-items-table";
@@ -26,6 +27,16 @@ export function ItemsTable({ items }: ItemsTableProps) {
       <p className="text-xs text-zinc-500">
         表は横にスクロールできます。列見出しで並べ替え（既定は残量）。行を選ぶと上部に一括バーが出ます（残量の適用・選択解除・一覧から削除）。メモは行の「編集」から。
       </p>
+      <ItemsTableSearch
+        query={table.searchQuery}
+        includeNote={table.searchIncludeNote}
+        includeJan={table.searchIncludeJan}
+        matchCount={table.matchCount}
+        totalCount={table.totalCount}
+        onQueryChange={table.setSearchQuery}
+        onIncludeNoteChange={table.setSearchIncludeNote}
+        onIncludeJanChange={table.setSearchIncludeJan}
+      />
       <ItemsTableBulkToolbar
         selectedCount={table.selectedCount}
         bulkStatus1={table.bulkStatus1}
@@ -102,28 +113,41 @@ export function ItemsTable({ items }: ItemsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {table.sorted.map((item) => (
-              <ItemsTableRowView
-                key={item.id}
-                item={item}
-                selected={table.selectedIds.has(item.id)}
-                pending={
-                  table.pendingId === item.id ||
-                  (table.bulkPending && table.selectedIds.has(item.id))
-                }
-                editing={table.editingId === item.id}
-                actionsDisabled={table.bulkPending}
-                draftStatus1={table.draftStatus1}
-                draftNote={table.draftNote}
-                onToggleSelect={() => table.toggleSelect(item.id)}
-                onDraftStatus1Change={table.setDraftStatus1}
-                onDraftNoteChange={table.setDraftNote}
-                onStartEdit={() => table.startEdit(item)}
-                onCancelEdit={table.cancelEdit}
-                onSave={() => void table.saveEdit(item)}
-                onDelete={() => void table.removeItem(item)}
-              />
-            ))}
+            {table.sorted.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={10}
+                  className="px-3 py-8 text-center text-sm text-zinc-500"
+                >
+                  {table.searchQuery.trim() !== ""
+                    ? "条件に一致する登録がありません。"
+                    : "表示できる登録がありません。"}
+                </td>
+              </tr>
+            ) : (
+              table.sorted.map((item) => (
+                <ItemsTableRowView
+                  key={item.id}
+                  item={item}
+                  selected={table.selectedIds.has(item.id)}
+                  pending={
+                    table.pendingId === item.id ||
+                    (table.bulkPending && table.selectedIds.has(item.id))
+                  }
+                  editing={table.editingId === item.id}
+                  actionsDisabled={table.bulkPending}
+                  draftStatus1={table.draftStatus1}
+                  draftNote={table.draftNote}
+                  onToggleSelect={() => table.toggleSelect(item.id)}
+                  onDraftStatus1Change={table.setDraftStatus1}
+                  onDraftNoteChange={table.setDraftNote}
+                  onStartEdit={() => table.startEdit(item)}
+                  onCancelEdit={table.cancelEdit}
+                  onSave={() => void table.saveEdit(item)}
+                  onDelete={() => void table.removeItem(item)}
+                />
+              ))
+            )}
           </tbody>
         </table>
       </div>

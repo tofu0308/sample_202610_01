@@ -9,6 +9,7 @@ import {
   deleteItem,
   patchItem,
 } from "@/lib/items/item-mutation-request";
+import { filterItemsTableRows } from "@/lib/items/filter-items-table";
 import {
   sortItemsTableRows,
   type ItemsTableRow,
@@ -21,6 +22,9 @@ export function useItemsTable(items: ItemsTableRow[]) {
   // 消耗品管理では残量でまとめて見ることが多いので既定ソートにする
   const [sortKey, setSortKey] = useState<ItemsTableSortKey>("status1");
   const [sortDir, setSortDir] = useState<ItemsTableSortDir>("asc");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchIncludeNote, setSearchIncludeNote] = useState(false);
+  const [searchIncludeJan, setSearchIncludeJan] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [bulkPending, setBulkPending] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,9 +34,18 @@ export function useItemsTable(items: ItemsTableRow[]) {
   const [bulkStatus1, setBulkStatus1] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const filtered = useMemo(
+    () =>
+      filterItemsTableRows(items, searchQuery, {
+        includeNote: searchIncludeNote,
+        includeJan: searchIncludeJan,
+      }),
+    [items, searchQuery, searchIncludeNote, searchIncludeJan],
+  );
+
   const sorted = useMemo(
-    () => sortItemsTableRows(items, sortKey, sortDir),
-    [items, sortKey, sortDir],
+    () => sortItemsTableRows(filtered, sortKey, sortDir),
+    [filtered, sortKey, sortDir],
   );
 
   // 一覧更新後に消えた id を選択から落とす
@@ -241,6 +254,14 @@ export function useItemsTable(items: ItemsTableRow[]) {
 
   return {
     sorted,
+    totalCount: items.length,
+    matchCount: filtered.length,
+    searchQuery,
+    setSearchQuery,
+    searchIncludeNote,
+    setSearchIncludeNote,
+    searchIncludeJan,
+    setSearchIncludeJan,
     sortKey,
     sortDir,
     handleSort,

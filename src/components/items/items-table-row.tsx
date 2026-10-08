@@ -11,6 +11,7 @@ import {
   itemPrimaryButtonClass,
   itemSecondaryButtonClass,
 } from "@/components/items/item-action-styles";
+import { MemoCell } from "@/components/items/memo-cell";
 import { Status1Meter } from "@/components/items/status1-meter";
 import { STATUS1_OPTIONS } from "@/lib/items/constants";
 import {
@@ -150,7 +151,7 @@ export function ItemsTableRowView({
             className="w-full min-w-[10rem] rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
           />
         ) : (
-          <span className="line-clamp-2">{item.note ?? "—"}</span>
+          <MemoCell note={item.note} label={item.product.name} />
         )}
       </td>
       <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-zinc-500">
