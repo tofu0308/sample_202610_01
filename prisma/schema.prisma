@@ -21,16 +21,16 @@ model Note {
   updatedAt DateTime @updatedAt
 }
 
-/// 商品マスタ（JAN 一意）。Yahoo 等のスナップショット。ドメイン非依存
+/// 商品マスタ（JAN 一意）。Yahoo などから取った名前・画像の控え
 model Product {
   id        String   @id @default(cuid())
   jan       String   @unique
   name      String
   brandName String?
   imageUrl  String?
-  /// "yahoo_shopping" | "manual"（3a は yahoo_shopping のみ想定）
+  /// データの出典。いまは "yahoo_shopping"。手入力マスタはあとで "manual" 等を足す想定
   source    String
-  /// Yahoo カテゴリの任意スナップショット（未取得なら null のまま）
+  /// Yahoo カテゴリの控え（取っていないときは null）
   genreId   String?
   genreName String?
   createdAt DateTime @default(now())
@@ -38,18 +38,18 @@ model Product {
   userItems UserItem[]
 }
 
-/// ユーザーの所持 1 件。状態（メモ・ステータス・残量）はこちらに置く
+/// ユーザーが登録した 1 件。メモ・ステータス・残量など「状態」はこちら
 model UserItem {
   id        String  @id @default(cuid())
-  /// Phase 4 で Auth uid に接続。3a はサーバ定数（仮 userId）
+  /// 誰の登録か。いまはサーバ定数。ログイン導入後は Auth のユーザー ID に差し替える
   userId    String
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  /// 用途プリセット（例: paint）。候補ラベル切替用。3a 既定は paint
+  /// 用途の種類（例: paint）。画面の候補ラベル切り替え用。既定は paint
   presetKey String  @default("paint")
   remaining String?
   note      String?
-  /// 予備ステータス。全て null 可。初期 UI は status1 のみ（編集は 3b）
+  /// 予備のステータス欄（全部空でもよい）。画面ではまず status1 だけ使う想定
   status1   String?
   status2   String?
   status3   String?

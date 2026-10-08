@@ -1,6 +1,6 @@
 /**
- * 登録（UserItem）の一覧取得・作成 API（Route Handler）。
- * 入力検証は zod（@/lib/items）、DB 操作は @/lib/prisma。仮 userId はサーバ定数のみ。
+ * 登録の一覧取得・作成 API（Route Handler）。
+ * 入力は zod で検証し、DB は @/lib/prisma。ユーザー ID はいまサーバ定数（ログイン前）。
  */
 
 import { NextResponse } from "next/server";
@@ -11,7 +11,7 @@ import {
 import { createItemSchema } from "@/lib/items/item-schemas";
 import { prisma } from "@/lib/prisma";
 
-/** 仮 userId の登録一覧を新しい順で返す（product 付き） */
+/** いまのユーザー定数に紐づく登録を、新しい順で返す（商品情報付き） */
 export async function GET() {
   try {
     const items = await prisma.userItem.findMany({
@@ -30,9 +30,9 @@ export async function GET() {
 }
 
 /**
- * 照会スナップショットから Product upsert + UserItem 作成。
- * 既存 Product の name 等は上書きしない。
- * 同一 userId+JAN（product）が既にあれば 409（データの一意制約。所持可否の判定ではない）。
+ * 商品照会の結果を受け取り、商品マスタを用意したうえで登録行を作る。
+ * すでに同じ JAN のマスタがある場合、名前などは上書きしない。
+ * 同じユーザーで同じ JAN が登録済みなら 409（データの重複。使い方の「持っているか」ではない）。
  */
 export async function POST(request: Request) {
   try {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     const { code, name, brandName, imageUrl, source } = parsed.data;
 
-    // 既存 JAN はマスタを再利用（店舗タイトルゆれで表示が変わらないように update は空）
+    // 同じ JAN が既にあればマスタを再利用（店ごとの商品名の揺れで表示が変わらないよう update は空）
     const product = await prisma.product.upsert({
       where: { jan: code },
       create: {

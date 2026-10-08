@@ -1,6 +1,6 @@
 /**
- * 単一 UserItem の削除 API（Route Handler）。
- * Product マスタは残す（再登録で再利用）。仮 userId 以外は 404 に寄せる。
+ * 登録 1 件の削除 API（Route Handler）。
+ * 商品マスタ（Product）は消さず残す（あとから同じ JAN を再登録しやすくするため）。
  */
 
 import { NextResponse } from "next/server";
@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-/** UserItem を 1 件削除する（Product は削除しない） */
+/** 登録行を 1 件削除する（商品マスタは消さない） */
 export async function DELETE(_request: Request, context: RouteParams) {
   try {
     const { id } = await context.params;
@@ -19,7 +19,7 @@ export async function DELETE(_request: Request, context: RouteParams) {
     }
 
     const existing = await prisma.userItem.findUnique({ where: { id } });
-    // TODO(auth): 認証導入後はセッション uid と照合する。いまは仮 userId 以外を 404 に寄せる
+    // TODO: ログイン機能を入れたら、ログイン中のユーザーの行だけ削除できるようにする
     if (!existing || existing.userId !== DEV_USER_ID) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
