@@ -562,7 +562,8 @@ model UserItem {
 ### 実装（3a 以降・未着手）
 
 - [x] Prisma migrate（`Product` / `UserItem`）→ `20261008025638_add_product_user_item`
-- [ ] 登録・一覧・削除 API + UI
+- [x] 登録・一覧・削除 API（`/api/items` GET/POST、`/api/items/[id]` DELETE）
+- [ ] 登録一覧 UI
 - [ ] スキャン成功 → 登録導線
 - [ ] （3b・必須）`note` / `status1` 編集 API + UI
 - [ ] （3b・任意）`remaining`・`status2`/`3`・登録済み検索
@@ -604,14 +605,14 @@ export const DEFAULT_PRESET_KEY = "paint";   // 消耗品・初期ユースケ�
   → Product upsert by jan（name 等は初回作成時に保存。既存行は jan 以外は当面更新しない）
   → UserItem create（userId=DEV_USER_ID, presetKey=DEFAULT, status/note/remaining=null）
   → 201 { item: UserItem & { product } }
-  → 既所持なら 409 { error, item? }
+  → 同一 user で同じ JAN が既登録なら 409 { error: "Duplicate JAN for this user", item? }
 ```
 
 選定理由（短く）:
 
 1. 照会結果をクライアントから送る → 登録がオフライン寄りでも動く／Yahoo 再ヒットを避ける
 2. Product 既存時に name を上書きしない → 店舗タイトルの揺らぎで表示が勝手に変わらない
-3. 重複は 409 → 学習で一意制約を意識しやすい（冪等 200 より明確）
+3. 重複は 409（登録済み JAN）。「所持しているか」は使い方の話で、API はデータの一意制約として返す
 
 #### 11.9.4 API
 
@@ -620,7 +621,7 @@ Notes と同様: Route Handler + zod 境界 + `@/lib/prisma`。パスは所持�
 | Method | Path | 役割 | 成功 |
 |---|---|---|---|
 | `GET` | `/api/items` | 仮 userId の所持一覧（新しい順、`product` include） | 200 `{ items }` |
-| `POST` | `/api/items` | Product upsert + UserItem 作成 | 201 `{ item }` / 409 重複 |
+| `POST` | `/api/items` | Product upsert + UserItem 作成 | 201 `{ item }` / 409 登録済み JAN 重複 |
 | `DELETE` | `/api/items/[id]` | UserItem 削除（Product は残す） | 200 `{ ok: true }` / 404 |
 
 **POST ボディ（zod 案）**

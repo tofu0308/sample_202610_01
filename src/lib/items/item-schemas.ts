@@ -24,7 +24,7 @@ export const createItemSchema = z.object({
   code: janCodeSchema,
   name: z.string().trim().min(1).max(500),
   brandName: z.string().trim().min(1).max(200).optional(),
-  // 厳密すぎると外部 URL の揺れで落ちるので、空でなければ長さだけ見る
+  // URL 形式は見るが、ホスト制限はしない（Yahoo 画像ホストが可変なため）
   imageUrl: z.string().trim().url().max(2000).optional(),
   source: z.literal("yahoo_shopping"),
 });
