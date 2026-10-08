@@ -20,3 +20,43 @@ model Note {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/// 商品マスタ（JAN 一意）。Yahoo 等のスナップショット。ドメイン非依存
+model Product {
+  id        String   @id @default(cuid())
+  jan       String   @unique
+  name      String
+  brandName String?
+  imageUrl  String?
+  /// "yahoo_shopping" | "manual"（3a は yahoo_shopping のみ想定）
+  source    String
+  /// Yahoo カテゴリの任意スナップショット（未取得なら null のまま）
+  genreId   String?
+  genreName String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userItems UserItem[]
+}
+
+/// ユーザーの所持 1 件。状態（メモ・ステータス・残量）はこちらに置く
+model UserItem {
+  id        String  @id @default(cuid())
+  /// Phase 4 で Auth uid に接続。3a はサーバ定数（仮 userId）
+  userId    String
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// 用途プリセット（例: paint）。候補ラベル切替用。3a 既定は paint
+  presetKey String  @default("paint")
+  remaining String?
+  note      String?
+  /// 予備ステータス。全て null 可。初期 UI は status1 のみ（編集は 3b）
+  status1   String?
+  status2   String?
+  status3   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([userId, presetKey])
+}

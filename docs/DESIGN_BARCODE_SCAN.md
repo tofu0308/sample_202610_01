@@ -5,7 +5,7 @@
 > 恒久ドキュメントではない。秘密情報（接続文字列・キーの値）は書かない。
 
 進捗は本ファイルのチェックリストとセッションの TODO で管理する。  
-最終更新: 2026-10-07（連続スキャンを追記 / `docs/` へ移動）
+最終更新: 2026-10-08（§11.10 編集を必須として追加。3a のあと）
 
 ---
 
@@ -285,7 +285,7 @@ type ProductLookupResponse =
 | 1 | カメラ読取 → 画面表示 | **完了** |
 | 2 | Yahoo JAN 照会 → 商品名表示 | **実装済**（実機・env は運用側） |
 | 2.5 | 連続スキャン | **実装済**（下記 §9c） |
-| 3 | 塗料所持の DB 管理（下記 §11） | **設計中** |
+| 3 | 所持の DB 管理・汎用モデル（下記 §11） | **設計中** |
 | 4 | 認証（ログイン・ユーザー別データ） | 未着手（Phase 3 のあと） |
 | 5 | PC ハンディスキャナ本対応 | 未着手 |
 | - | 未ヒット用の自前マスタ拡充 | 任意 |
@@ -380,25 +380,54 @@ type ProductLookupResponse =
 
 ---
 
-## 11. Phase 3 — 塗料所持管理（要件・DB）
+## 11. Phase 3 — 所持管理（汎用モデル・要件・DB）
 
 ### 11.1 解決する課題
 
-プラモデル用塗料の **保持状況をデータ管理**したい。
+バーコード付きの「もの」の **所持状況をデータ管理**したい。
 
-理由: 材質・メーカー・近しい色などが無数にあり、管理できないと **重複購入**が起きる。
+プロダクトの捉え方: **バーコード起点の個人インベントリ**。当面は **消耗品メイン**（重複購入・残量の把握）。
+
+| モード（将来） | 例 | いま |
+|---|---|---|
+| **消耗品系** | 塗料・絵の具・調味料・洗剤・トイレットペーパー等 | **ここを主戦場** |
+| **永続系** | 書籍（未読/読了）・コレクション等 | 将来。モード／プリセットで分ける想定 |
+
+最初の具体例はプラモデル用塗料。スキーマは汎用のまま、ドメイン固有はプリセット側に寄せる。
+
+### 11.1b 汎用化とプリセット（方針）
+
+| 層 | 役割 | 3a |
+|---|---|---|
+| `Product` | 商品マスタ（JAN 一意）。ドメイン非依存 | 入れる |
+| `UserItem` | ユーザーの所持 1 件（旧称 `UserPaint`）。状態はここ | 入れる |
+| `presetKey` | 用途の識別子（例: `paint` / `seasoning` / 将来 `book`） | 列だけ。初期値は `paint` でよい |
+| ステータスプリセット | 用途ごとの選択肢・ラベル（DB の enum にはしない） | **後続**。値は当面 `String?` |
+| 消耗 / 永続モード | UI・候補・文言の切替（将来） | **やらない**。設計メモのみ |
+
+プリセットのイメージ（アプリ設定・将来。DB テーブル必須ではない）:
+
+| presetKey | 系統 | status1 の例（ラベル） | 備考 |
+|---|---|---|---|
+| `paint` | 消耗 | 所持中 / 残少 / 使い切り | **初期ユースケース** |
+| `seasoning` 等 | 消耗 | 未開封 / 開封済 / 要補充 | 日用品へ横展開 |
+| `book` | 永続 | 未読 / 読書中 / 読了 | 将来モード |
+
+- `status1`〜`status3` は **自由な文字列（null 可）**のまま。プリセットは「UI が差し出す候補」であって、列型を用途ごとに分けない
+- 初期 UI は `status1` のみ。候補リストは `presetKey` に応じて後から差し替え可能にする
+- 3a ではプリセット UI・モード切替は作らない（スキーマと命名だけ汎用。画面・文言は消耗品前提でよい）
 
 ### 11.2 やりたいこと（暫定）
 
 | # | 内容 | 備考 |
 |---|---|---|
 | 1 | ユーザーは登録を経て、ログイン時に自分のデータを管理できる | **認証は Phase 4**。DB はユーザー単位を前提に設計 |
-| 2 | 保持状況をユーザー単位で登録・編集できる | `UserPaint`（仮称） |
-| 3 | 塗料の残量などを編集し、買い替えタイミングの指標にする | `remaining` 等 |
-| 4 | 登録済みの塗料を検索できる | 自 DB 検索 |
-| 5 | 登録済みの塗料を削除できる | |
+| 2 | 保持状況をユーザー単位で登録・編集できる | `UserItem` |
+| 3 | 残量などを編集し、買い替え・補充の指標にする | `remaining` 等（書籍では使わなくてもよい） |
+| 4 | 登録済みアイテムを検索できる | 自 DB 検索 |
+| 5 | 登録済みアイテムを削除できる | |
 | 6 | バーコードスキャン → 商品情報表示 → そのまま登録 | Phase 2 の延長 |
-| 7 | 検索で商品情報を複数件出し、複数選択してまとめて登録 | キーワード / **塗料カテゴリ階層** |
+| 7 | 検索で商品情報を複数件出し、複数選択してまとめて登録 | キーワード / **カテゴリ階層**（初期は塗料配下） |
 
 ### 11.3 データ取捨（いまのアプリ型ベース）
 
@@ -437,16 +466,17 @@ type ProductLookupResponse =
 | 制約 | 意味 |
 |---|---|
 | `Product.jan` `@unique` | **商品マスタ**が JAN でアプリ全体 1 件 |
-| `UserPaint` の `@@unique([userId, productId])` | **ユーザー単位の登録状況**が一意（二重所持行を防ぐ） |
+| `UserItem` の `@@unique([userId, productId])` | **ユーザー単位の登録状況**が一意（二重所持行を防ぐ） |
 
-JAN 一意だけでは「ユーザーごとの登録一意」にはならない。所持は別テーブル（または複合一意）が必要。
+JAN 一意だけでは「ユーザーごとの登録一意」にはならない。所持は別テーブル（または複合一意）が必要。  
+同一 JAN を「塗料コレクション」と「書籍コレクション」で二重に持ちたい場合は、将来 `@@unique([userId, productId, presetKey])` への拡張を検討（3a では userId+productId のみ）。
 
 ### 11.5 スキーマ案（Prisma・暫定）
 
 認証前でもカラムを用意し、単一ユーザー運用時は仮の `userId`（定数）でもよい。
 
 ```prisma
-/// Yahoo 等から得た商品マスタ（JAN 一意）。名前は店舗タイトル由来でありうる
+/// Yahoo 等から得た商品マスタ（JAN 一意）。ドメイン非依存
 model Product {
   id         String   @id @default(cuid())
   jan        String   @unique
@@ -458,50 +488,63 @@ model Product {
   genreName  String?  // 末端ジャンル名スナップショット（任意）
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  userPaints UserPaint[]
+  userItems  UserItem[]
 }
 
-/// ユーザーの所持。残量など「状態」はこちら
-model UserPaint {
+/// ユーザーの所持 1 件。状態はこちら（Product には載せない）
+model UserItem {
   id        String   @id @default(cuid())
   userId    String   // Phase 4 で Auth の uid に接続。それまでは仮値可
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  remaining String?  // 残量。数値厳密化は後続（まずは自由記述でも可）
-  note      String?
+  /// 用途プリセットキー。候補 UI の差替えに使う（例: paint / book）。3a 既定は "paint"
+  presetKey String   @default("paint")
+  remaining String?  // 残量など。用途によっては未使用でよい
+  note      String?  // コメント（任意）
+  // 予備ステータス 3 本。いずれも null 可。意味・ラベルは presetKey 側で後から定義
+  status1   String?  // 当面 UI で使う 1 本（登録時は未設定のまま可）
+  status2   String?  // 予備・未使用可
+  status3   String?  // 予備・未使用可
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, productId])
   @@index([userId])
+  @@index([userId, presetKey])
 }
 ```
 
-既存 `Note` は学習用として残してよい。塗料の主データには使わない。
+- ユーザー編集（`note` / `status*` / `remaining`）は **UserItem のみ**。商品マスタと混ぜない
+- 初期 UI は `status1` だけ表示・編集。`status2` / `status3` は列だけ先に用意
+- 登録時はステータス・メモとも全部 null でよい。`presetKey` はサーバ既定 `"paint"` でよい
+- プリセット定義（候補値・ラベル）は **コード上の設定**を先に検討。DB にプリセットマスタを置くのは必要になってから
 
-### 11.6 探索 UI 方針（塗料のみ）
+既存 `Note` は学習用として残してよい。所持の主データには使わない。
+
+### 11.6 探索 UI 方針（初期は塗料カテゴリ）
 
 ```text
-開始カテゴリ（塗料付近の固定 category_id）
+開始カテゴリ（用途に応じた固定 category_id。初期は塗料付近）
   → categorySearch で子を表示
   → ユーザーが階層を下る
   → 葉付近で itemSearch(genre_category_id) → 複数件
-  → 複数選択 → まとめて UserPaint 登録
+  → 複数選択 → まとめて UserItem 登録
 ```
 
-- 開始 ID は定数 or env（Yahoo 側変更でズレうる）
-- JAN スキャンは別入口（現行フロー）のまま
+- 開始 ID は定数 or env（Yahoo 側変更でズレうる）。将来は `presetKey` ごとに開始 ID を持てる
+- JAN スキャンは別入口（現行フロー）のまま（用途を問わず使える）
 
 ### 11.7 実装分割
 
 | Step | 内容 | 状態 |
 |---|---|---|
-| **3a** | `Product` + `UserPaint` migrate。スキャン／照会成功 → 登録。一覧・削除 | 未着手 |
-| **3b** | 残量・メモ編集、登録済み検索 | 未着手 |
-| **3c** | 塗料カテゴリ階層ブラウズ＋複数選択一括登録 | 未着手 |
+| **3a** | `Product` + `UserItem` migrate。スキャン／照会成功 → 登録。一覧・削除。登録時は note/status は null | 未着手 |
+| **3b** | **編集（必須）**: `note` + `status1`（一覧から）。`status2`/`status3`・`remaining`・登録済み検索は同 Step で任意／後回し可 | 未着手 |
+| **3c** | カテゴリ階層ブラウズ＋複数選択一括登録（初期は塗料） | 未着手 |
+| **3d** | ステータスプリセット（候補・ラベル）。消耗/永続モード切替は任意 | 未着手 |
 | **4** | Supabase Auth 等。仮 `userId` を本番 uid に置換。認可 | 未着手 |
 
-優先: **DB 構成（3a）→ 認証（4）**。認証を先にしない。
+優先: **3a（登録まで）→ 3b（編集）→ 認証（4）**。編集は登録が終わってからでよいが、コメント・ステータスがある以上 **3b は必須**。プリセット UI は 3d。
 
 ### 11.8 進捗チェックリスト（Phase 3）
 
@@ -509,14 +552,214 @@ model UserPaint {
 
 - [x] 課題・やりたいこと（暫定）を本ファイルに記載
 - [x] データ取捨・一意性・スキーマ案
-- [x] カテゴリは塗料階層のみ／全件 DB 保存しない
+- [x] カテゴリは用途配下のみ／全件 DB 保存しない（初期は塗料）
+- [x] ユーザー編集: `note` + `status1`〜`status3`（全て null 可。初期表示は status1 のみ）
+- [x] 汎用化: `UserItem` + `presetKey`。ステータス意味はプリセット側（後続）
 - [ ] 開始 `category_id` の確定（塗料ルート）
 - [ ] `remaining` を自由記述か数値かを決定
+- [ ] 各 preset の status 候補値・ラベル（3d。例: book = 未読 / 読書中 / 読了）
 
 ### 実装（3a 以降・未着手）
 
-- [ ] Prisma migrate（`Product` / `UserPaint`）
+- [x] Prisma migrate（`Product` / `UserItem`）→ `20261008025638_add_product_user_item`
 - [ ] 登録・一覧・削除 API + UI
 - [ ] スキャン成功 → 登録導線
-- [ ] （3b）残量編集・登録済み検索
+- [ ] （3b・必須）`note` / `status1` 編集 API + UI
+- [ ] （3b・任意）`remaining`・`status2`/`3`・登録済み検索
 - [ ] （3c）カテゴリ階層＋複数選択登録
+- [ ] （3d）ステータスプリセット UI / 設定
+
+### 11.9 Phase 3a 実装設計（改修用）
+
+> 消耗品メイン。プリセット UI・モード切替・カテゴリ探索は対象外。  
+> **編集（note / status）は 3b**（登録完了後）。スキーマ本体は §11.5。ここでは **3a の API / UI / 配置 / 順**。
+
+#### 11.9.1 スコープ
+
+| やる（3a） | やらない（後続） |
+|---|---|
+| `Product` + `UserItem` の migrate | **編集 UI / PATCH**（→ **3b・必須**。§11.10） |
+| 照会成功 → 所持登録 | 連続リストからの一括登録（単件ボタンのみ） |
+| 所持一覧・削除 | 未ヒットの手動マスタ登録 |
+| 一覧で note/status は表示のみ可（多くは null） | プリセット切替・永続系モード（3d） |
+| 仮 `userId` 定数 | 認証（Phase 4） |
+| | Yahoo 再照会を登録時に必須にしない |
+
+#### 11.9.2 定数
+
+```ts
+// src/lib/items/constants.ts（案）
+export const DEV_USER_ID = "local-dev-user"; // Phase 4 で Auth uid に置換
+export const DEFAULT_PRESET_KEY = "paint";   // 消耗品・初期ユースケース
+```
+
+- クライアントに秘密は置かない。仮 userId はサーバ側で付与（ボディで受け取らない）
+
+#### 11.9.3 登録時のデータ流れ
+
+```text
+[Client] ProductLookupResult (found:true)
+  → POST /api/items  { code, name, imageUrl?, brandName?, source }
+  → [Server] zod 検証
+  → Product upsert by jan（name 等は初回作成時に保存。既存行は jan 以外は当面更新しない）
+  → UserItem create（userId=DEV_USER_ID, presetKey=DEFAULT, status/note/remaining=null）
+  → 201 { item: UserItem & { product } }
+  → 既所持なら 409 { error, item? }
+```
+
+選定理由（短く）:
+
+1. 照会結果をクライアントから送る → 登録がオフライン寄りでも動く／Yahoo 再ヒットを避ける
+2. Product 既存時に name を上書きしない → 店舗タイトルの揺らぎで表示が勝手に変わらない
+3. 重複は 409 → 学習で一意制約を意識しやすい（冪等 200 より明確）
+
+#### 11.9.4 API
+
+Notes と同様: Route Handler + zod 境界 + `@/lib/prisma`。パスは所持ドメインを `items` とする。
+
+| Method | Path | 役割 | 成功 |
+|---|---|---|---|
+| `GET` | `/api/items` | 仮 userId の所持一覧（新しい順、`product` include） | 200 `{ items }` |
+| `POST` | `/api/items` | Product upsert + UserItem 作成 | 201 `{ item }` / 409 重複 |
+| `DELETE` | `/api/items/[id]` | UserItem 削除（Product は残す） | 200 `{ ok: true }` / 404 |
+
+**POST ボディ（zod 案）**
+
+```ts
+{
+  code: string;      // lookup と同じ 8–14 桁正規化
+  name: string;      // trim, 1..500
+  brandName?: string;
+  imageUrl?: string; // URL 文字列として緩く（https 推奨、厳密すぎない）
+  source: "yahoo_shopping"; // 3a はこれのみ。manual は後続
+}
+```
+
+**一覧 1 件の形（レスポンス）**
+
+```ts
+{
+  id: string;
+  userId: string;
+  presetKey: string;
+  remaining: string | null;
+  note: string | null;
+  status1: string | null;
+  status2: string | null;
+  status3: string | null;
+  createdAt: string; // JSON 化後
+  updatedAt: string;
+  product: {
+    id: string;
+    jan: string;
+    name: string;
+    brandName: string | null;
+    imageUrl: string | null;
+    source: string;
+  };
+}
+```
+
+- DELETE は `UserItem.id`。他ユーザー分は Phase 4 まで厳密認可しないが、削除前に `userId === DEV_USER_ID` を見て 404 に寄せる（学習用の最小ガード）
+- Product を消さない理由: 再登録時にマスタを再利用できる
+
+#### 11.9.5 UI
+
+トップ（`page.tsx`）は Server Component のまま。
+
+| 箇所 | 変更 |
+|---|---|
+| ヘッダ文言 | Notes 固定から、消耗品所持の学習アプリ寄りへ（過度なブランド作りはしない） |
+| スキャン（単体） | 照会成功パネルに「所持に登録」ボタン |
+| スキャン（連続） | リスト各行（`found:true`）に「登録」ボタン（1 件ずつ）。一括は後続 |
+| 所持一覧 | Note 一覧の下 or 差し替え位置に新セクション。Server で `userItem.findMany` |
+| 削除 | 一覧行に削除（Note と同様の確認でよい） |
+| Note | モデル・API は残置。一覧 UI は残すか折りたたみは実装時に最小変更（削除しない） |
+
+Client 側:
+
+- `src/hooks/items/use-register-item.ts`（案）: POST / 結果 / pending / エラー
+- 登録成功後は `router.refresh()` で Server 一覧を更新（Notes 作成と同パターン）
+
+PC（`md` 以上）はスキャン非表示のまま。手動入力は既存のまま → 照会 → 登録、で PC 検証可能。
+
+#### 11.9.6 ファイル配置（浅い分割に揃える）
+
+```text
+prisma/schema.prisma              # Product / UserItem 追加
+prisma/migrations/...             # migrate（db push しない）
+
+src/lib/items/
+  constants.ts
+  item-schemas.ts                 # zod
+  （必要なら）types.ts
+
+src/app/api/items/route.ts        # GET / POST
+src/app/api/items/[id]/route.ts   # DELETE（3b で PATCH 追加）
+
+src/components/items/             # 一覧・削除・登録ボタン周りの UI
+src/hooks/items/                  # 登録 fetch など
+
+src/components/scan/...           # 登録ボタンをパネル／リストへ結線（最小）
+src/app/page.tsx                  # 所持一覧のサーバ取得
+```
+
+テスト: `item-schemas` のユニットテストを Notes / product-lookup に揃えて追加。
+
+#### 11.9.7 実装順（提案）
+
+1. schema + migrate + `prisma generate`
+2. zod + `GET/POST/DELETE` API（curl / テストで確認）
+3. 所持一覧 UI（空状態）
+4. 単体スキャン「登録」結線
+5. 連続リスト「登録」結線
+6. lint / typecheck / test
+7. → **続けて 3b（§11.10）**: 編集
+
+#### 11.9.8 設計チェック（3a）
+
+- [x] API パス・メソッド・ステータス（201 / 409 / 404）
+- [x] POST はクライアント照会スナップショット。Product 既存時は name 非上書き
+- [x] 仮 userId はサーバ定数。連続は単件登録のみ
+- [x] UI: 登録ボタン + 一覧・削除。編集は 3b（必須）
+- [x] 本節承認。小項目ずつ実装（まず schema）
+
+### 11.10 Phase 3b 編集設計（登録のあと・必須）
+
+コメント（`note`）とステータスがあるため、**登録だけだと状態を変えられない**。3a 完了後に入れる。
+
+#### スコープ
+
+| 必須 | 任意（同 Step でも後でも可） |
+|---|---|
+| `PATCH /api/items/[id]` | `remaining` 編集 |
+| UI: 一覧から `note` / `status1` を編集 | `status2` / `status3` の表示・編集 |
+| 空文字 → null など Notes と同様の正規化 | 登録済み検索・絞り込み |
+| | ステータス候補のプリセット UI（→ 3d。当面は自由入力で可） |
+
+#### API（案）
+
+```ts
+// PATCH /api/items/[id]
+{
+  note?: string | null;
+  status1?: string | null;
+  // 任意で後から: status2?, status3?, remaining?
+}
+```
+
+- 存在確認 + `userId === DEV_USER_ID`（なければ 404）
+- 成功 200 `{ item }`（product include）
+- 3a の `[id]/route.ts` に PATCH を足す（Notes の `[id]` と同じ型）
+
+#### UI（案）
+
+- 所持一覧の各行で、Note の編集に近いインライン or 小さなフォーム
+- 初期は `status1` をテキスト入力（プリセット選択は 3d）
+- 保存後 `router.refresh()`
+
+#### 設計チェック（3b）
+
+- [x] 編集は 3a の後・必須（note + status1）
+- [x] PATCH を `[id]` に追加。status2/3・remaining・検索は任意
+- [ ] 3a 実装後、本節に沿って実装
