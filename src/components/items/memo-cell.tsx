@@ -129,7 +129,8 @@ export function MemoCell({ note, label }: MemoCellProps) {
       <button
         ref={triggerRef}
         type="button"
-        className="max-w-full cursor-pointer rounded text-left text-zinc-600 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-500"
+        // 表セル内では幅が不定だと line-clamp が効かず行が高さ伸びるため、幅を親に合わせる
+        className="block w-full min-w-0 cursor-pointer overflow-hidden rounded text-left text-zinc-600 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-500"
         aria-label={`${label}のメモ（全文を表示）`}
         aria-expanded={open}
         aria-controls={open ? balloonId : undefined}
@@ -145,7 +146,7 @@ export function MemoCell({ note, label }: MemoCellProps) {
         onClick={handleClick}
         onKeyDown={handleKeyDown}
       >
-        <span className="line-clamp-2">{note}</span>
+        <span className="line-clamp-2 break-words">{note}</span>
       </button>
       {open && pos && typeof document !== "undefined"
         ? createPortal(

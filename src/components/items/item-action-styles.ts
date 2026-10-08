@@ -30,6 +30,9 @@ export const itemDangerButtonClass = {
   sm: `${base} border border-red-200 px-2 py-1 text-xs text-red-700`,
 } as const;
 
-/** 表ヘッダの共通スタイル（ソート有無で th を揃える） */
+/**
+ * 表ヘッダの共通スタイル。
+ * PC の縦スクロール領域内で追従するため sticky（背景は行が透けないよう必須）。
+ */
 export const itemsTableThClassName =
-  "whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-zinc-600";
+  "sticky top-0 z-10 whitespace-nowrap bg-zinc-50 px-3 py-2 text-left text-xs font-medium text-zinc-600 shadow-[inset_0_-1px_0_0_#e4e4e7]";

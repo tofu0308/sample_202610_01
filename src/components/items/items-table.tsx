@@ -25,7 +25,8 @@ export function ItemsTable({ items }: ItemsTableProps) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-zinc-500">
-        表は横にスクロールできます。列見出しで並べ替え（既定は残量）。行を選ぶと上部に一括バーが出ます（残量の適用・選択解除・一覧から削除）。メモは行の「編集」から。
+        表は横スクロールできます（PC
+        では枠内で縦横スクロール・見出し固定）。列見出しで並べ替え（既定は残量）。行を選ぶと上部に一括バーが出ます。メモは行の「編集」から。
       </p>
       <ItemsTableSearch
         query={table.searchQuery}
@@ -46,9 +47,13 @@ export function ItemsTable({ items }: ItemsTableProps) {
         onRemoveSelected={() => void table.removeSelected()}
         onClearSelection={table.clearSelection}
       />
-      <div className="-mx-1 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
-        <table className="min-w-[64rem] w-full border-collapse text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50">
+      {/*
+        スマホ: 横スクロールのみ（ページ全体の縦スクロールを使う）。
+        PC: 枠に高さを設け、その中で縦横スクロール＋見出し sticky。
+      */}
+      <div className="-mx-1 overflow-x-auto rounded-lg border border-zinc-200 bg-white md:max-h-[min(70vh,36rem)] md:overflow-auto">
+        <table className="min-w-[64rem] w-full border-separate border-spacing-0 text-sm">
+          <thead>
             <tr>
               <th scope="col" className={itemsTableThClassName}>
                 <input
@@ -82,7 +87,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
               />
               <th
                 scope="col"
-                className="min-w-[10rem] px-3 py-2 text-left text-xs font-medium text-zinc-600"
+                className={`${itemsTableThClassName} w-40 min-w-[10rem] max-w-[10rem]`}
               >
                 メモ
               </th>

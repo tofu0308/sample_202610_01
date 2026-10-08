@@ -138,7 +138,8 @@ export function ItemsTableRowView({
           <Status1Meter value={item.status1} />
         )}
       </td>
-      <td className="max-w-[14rem] px-3 py-2 text-zinc-600">
+      {/* max-w だけでは表レイアウトで無視されがちなので幅＋ overflow を明示する */}
+      <td className="w-40 max-w-[10rem] min-w-[10rem] overflow-hidden px-3 py-2 align-top text-zinc-600">
         {editing ? (
           <textarea
             value={draftNote}
@@ -148,7 +149,7 @@ export function ItemsTableRowView({
             disabled={rowBusy}
             placeholder="メモ（任意）"
             aria-label={`${item.product.name} のメモ`}
-            className="w-full min-w-[10rem] rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
+            className="w-full rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
           />
         ) : (
           <MemoCell note={item.note} label={item.product.name} />

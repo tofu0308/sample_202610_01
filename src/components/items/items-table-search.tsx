@@ -29,7 +29,8 @@ export function ItemsTableSearch({
   const filtering = query.trim() !== "";
 
   return (
-    <div className="space-y-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
+    {/* 表ラッパと同じ -mx-1 にして横幅を揃える */}
+    <div className="-mx-1 space-y-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-zinc-600">
           <span className="font-medium text-zinc-800">フリーワード検索</span>
