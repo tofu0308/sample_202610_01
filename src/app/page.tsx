@@ -20,7 +20,7 @@ export default async function Home() {
   });
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-16">
+    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-6 py-16">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">登録一覧</h1>
         <p className="text-zinc-600">
@@ -53,6 +53,7 @@ export default async function Home() {
               note: item.note,
               status1: item.status1,
               createdAt: item.createdAt.toISOString(),
+              updatedAt: item.updatedAt.toISOString(),
               product: {
                 jan: item.product.jan,
                 name: item.product.name,

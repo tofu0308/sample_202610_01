@@ -14,6 +14,7 @@ export type ItemsTableRow = {
   note: string | null;
   status1: string | null;
   createdAt: string;
+  updatedAt: string;
   product: {
     jan: string;
     name: string;
@@ -22,7 +23,12 @@ export type ItemsTableRow = {
   };
 };
 
-export type ItemsTableSortKey = "status1" | "name" | "jan" | "createdAt";
+export type ItemsTableSortKey =
+  | "status1"
+  | "name"
+  | "jan"
+  | "createdAt"
+  | "updatedAt";
 export type ItemsTableSortDir = "asc" | "desc";
 
 /** 候補外の旧データは既知候補の後ろ（未設定よりは前） */
@@ -60,6 +66,15 @@ function compareNullableText(
   return dir === "asc" ? cmp : -cmp;
 }
 
+function compareIsoDate(
+  a: string,
+  b: string,
+  dir: ItemsTableSortDir,
+): number {
+  const cmp = a.localeCompare(b);
+  return dir === "asc" ? cmp : -cmp;
+}
+
 export function sortItemsTableRows(
   rows: ItemsTableRow[],
   key: ItemsTableSortKey,
@@ -76,8 +91,10 @@ export function sortItemsTableRows(
     if (key === "jan") {
       return compareNullableText(left.product.jan, right.product.jan, dir);
     }
-    const cmp = left.createdAt.localeCompare(right.createdAt);
-    return dir === "asc" ? cmp : -cmp;
+    if (key === "updatedAt") {
+      return compareIsoDate(left.updatedAt, right.updatedAt, dir);
+    }
+    return compareIsoDate(left.createdAt, right.createdAt, dir);
   });
   return copy;
 }

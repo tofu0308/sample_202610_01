@@ -2,6 +2,7 @@
 
 /**
  * 登録一覧の 1 行。選択チェック・閲覧／編集・単行操作を担う。
+ * 列順は「見たい情報」優先（商品名広め → 残量 → JAN / メモは後段）。
  */
 
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/items/item-action-styles";
 import { Status1Meter } from "@/components/items/status1-meter";
 import { STATUS1_OPTIONS } from "@/lib/items/constants";
+import { formatDateTimeJst } from "@/lib/items/format-datetime-jst";
 import type { ItemsTableRow } from "@/lib/items/items-table-sort";
 
 type ItemsTableRowViewProps = {
@@ -48,7 +50,8 @@ export function ItemsTableRowView({
   onSave,
   onDelete,
 }: ItemsTableRowViewProps) {
-  const registeredAt = new Date(item.createdAt).toLocaleDateString("ja-JP");
+  const registeredAt = formatDateTimeJst(item.createdAt);
+  const updatedAt = formatDateTimeJst(item.updatedAt);
   const rowBusy = pending || actionsDisabled;
 
   return (
@@ -86,10 +89,7 @@ export function ItemsTableRowView({
           </div>
         )}
       </td>
-      <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-zinc-600">
-        {item.product.jan}
-      </td>
-      <td className="max-w-[16rem] px-3 py-2 font-medium text-zinc-900">
+      <td className="min-w-[22rem] max-w-[28rem] px-3 py-2 font-medium text-zinc-900">
         <span className="line-clamp-2">{item.product.name}</span>
       </td>
       <td className="whitespace-nowrap px-3 py-2 text-zinc-600">
@@ -125,6 +125,9 @@ export function ItemsTableRowView({
           <Status1Meter value={item.status1} />
         )}
       </td>
+      <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-zinc-500">
+        {item.product.jan}
+      </td>
       <td className="max-w-[14rem] px-3 py-2 text-zinc-600">
         {editing ? (
           <textarea
@@ -133,8 +136,8 @@ export function ItemsTableRowView({
             maxLength={2000}
             rows={2}
             disabled={rowBusy}
-            placeholder="コメント（任意）"
-            aria-label={`${item.product.name} のコメント`}
+            placeholder="メモ（任意）"
+            aria-label={`${item.product.name} のメモ`}
             className="w-full min-w-[10rem] rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
           />
         ) : (
@@ -143,6 +146,9 @@ export function ItemsTableRowView({
       </td>
       <td className="whitespace-nowrap px-3 py-2 text-zinc-500">
         {registeredAt}
+      </td>
+      <td className="whitespace-nowrap px-3 py-2 text-zinc-500">
+        {updatedAt}
       </td>
       <td className="whitespace-nowrap px-3 py-2">
         <div className="flex flex-wrap gap-1">

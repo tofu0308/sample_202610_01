@@ -24,7 +24,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-zinc-500">
-        表は横にスクロールできます。列見出しで並べ替え（既定は残量）。行を選んで残量の一括変更・選択削除ができます。コメントは行の「編集」から。
+        表は横にスクロールできます。列見出しで並べ替え（既定は残量）。行を選ぶと上部に一括バーが出ます（残量の適用・選択解除・一覧から削除）。メモは行の「編集」から。
       </p>
       <ItemsTableBulkToolbar
         selectedCount={table.selectedCount}
@@ -36,7 +36,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
         onClearSelection={table.clearSelection}
       />
       <div className="-mx-1 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
-        <table className="min-w-[58rem] w-full border-collapse text-sm">
+        <table className="min-w-[64rem] w-full border-collapse text-sm">
           <thead className="border-b border-zinc-200 bg-zinc-50">
             <tr>
               <th scope="col" className={itemsTableThClassName}>
@@ -52,13 +52,6 @@ export function ItemsTable({ items }: ItemsTableProps) {
               <th scope="col" className={itemsTableThClassName}>
                 画像
               </th>
-              <ItemsTableSortHeader
-                label="JAN"
-                column="jan"
-                activeKey={table.sortKey}
-                activeDir={table.sortDir}
-                onSort={table.handleSort}
-              />
               <ItemsTableSortHeader
                 label="商品名"
                 column="name"
@@ -76,15 +69,29 @@ export function ItemsTable({ items }: ItemsTableProps) {
                 activeDir={table.sortDir}
                 onSort={table.handleSort}
               />
+              <ItemsTableSortHeader
+                label="JAN"
+                column="jan"
+                activeKey={table.sortKey}
+                activeDir={table.sortDir}
+                onSort={table.handleSort}
+              />
               <th
                 scope="col"
                 className="min-w-[10rem] px-3 py-2 text-left text-xs font-medium text-zinc-600"
               >
-                コメント
+                メモ
               </th>
               <ItemsTableSortHeader
                 label="登録日"
                 column="createdAt"
+                activeKey={table.sortKey}
+                activeDir={table.sortDir}
+                onSort={table.handleSort}
+              />
+              <ItemsTableSortHeader
+                label="更新日"
+                column="updatedAt"
                 activeKey={table.sortKey}
                 activeDir={table.sortDir}
                 onSort={table.handleSort}

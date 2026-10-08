@@ -16,6 +16,11 @@ export const itemSecondaryButtonClass = {
   sm: `${base} border border-zinc-300 px-2 py-1 text-xs`,
 } as const;
 
+/** 選択解除など、枠線だけだと埋もれる操作用 */
+export const itemNeutralButtonClass = {
+  sm: `${base} bg-zinc-600 px-2 py-1 text-xs text-white hover:bg-zinc-700`,
+} as const;
+
 /** 編集は操作の入口なので、枠線だけより塗りで目立たせる */
 export const itemEditButtonClass = {
   sm: `${base} bg-sky-600 px-2 py-1 text-xs text-white hover:bg-sky-700`,

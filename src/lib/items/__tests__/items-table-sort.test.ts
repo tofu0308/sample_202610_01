@@ -8,6 +8,7 @@ function row(
   partial: Pick<ItemsTableRow, "id" | "status1" | "createdAt"> & {
     name?: string;
     jan?: string;
+    updatedAt?: string;
   },
 ): ItemsTableRow {
   return {
@@ -15,6 +16,7 @@ function row(
     note: null,
     status1: partial.status1,
     createdAt: partial.createdAt,
+    updatedAt: partial.updatedAt ?? partial.createdAt,
     product: {
       jan: partial.jan ?? "000",
       name: partial.name ?? "商品",

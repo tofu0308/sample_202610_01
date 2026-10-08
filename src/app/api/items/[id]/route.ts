@@ -13,7 +13,7 @@ import { prisma } from "@/lib/prisma";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-/** コメント・ステータスなど、登録行の状態を更新する */
+/** メモ・残量など、登録行の状態を更新する */
 export async function PATCH(request: Request, context: RouteParams) {
   try {
     const { id } = await context.params;

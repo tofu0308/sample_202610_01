@@ -1,6 +1,6 @@
 /**
  * 登録一覧テーブルの state / 操作フロー。
- * 単行のインライン編集に加え、複数選択での残量一括・選択削除を扱う。
+ * 単行のインライン編集に加え、複数選択での残量一括・一覧からの削除を扱う。
  */
 
 import { useMemo, useState } from "react";
@@ -193,7 +193,7 @@ export function useItemsTable(items: ItemsTableRow[]) {
 
     if (
       !window.confirm(
-        `選択した ${selectedIdList.length} 件の登録を削除しますか？`,
+        `選択した ${selectedIdList.length} 件を一覧から削除しますか？`,
       )
     ) {
       return;
