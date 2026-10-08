@@ -5,6 +5,7 @@
  * TODO: 裏では単件 POST を順呼び。一括リクエスト API に切り替えたらここは維持して hook 側だけ差し替えでよい。
  */
 
+import { itemPrimaryButtonClass } from "@/components/items/item-action-styles";
 import { useRegisterItems } from "@/hooks/items/use-register-item";
 import type { FoundProduct } from "@/lib/items/register-item-request";
 
@@ -23,7 +24,7 @@ export function RegisterItemsButton({ products }: RegisterItemsButtonProps) {
         type="button"
         onClick={() => void registerMany(products)}
         disabled={disabled}
-        className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className={itemPrimaryButtonClass.md}
       >
         {pending
           ? "登録中…"

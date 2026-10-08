@@ -15,7 +15,7 @@
 リポ: C:\Users\isisa\worspace\sample_202610_01
 本番: https://sample-202610-01.vercel.app/
 設計: docs/DESIGN_BARCODE_SCAN.md
-学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261007.md
+学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261008.md
 
 完了: Phase1 カメラ読取 / Phase2 Yahoo JAN照会 / 連続スキャン / 浅いディレクトリ分割
 次: Phase 3a（Product + UserItem の migrate → スキャン／連続リストから登録・一覧・削除）
@@ -87,11 +87,13 @@ docs/HANDOFF_NEXT_SESSION.md  # 本ファイル
 
 ## 次にやること（優先）
 
-1. **Phase 3a（本命）** … 登録・一覧・削除（§11.9）
-2. **Phase 3b（必須・3a のあと）** … `note` / `status1` 編集（§11.10）。status2/3・remaining・検索は任意
+1. （任意）`remaining` / `status2`・`3` / 登録済み検索
+2. （任意）まとめて登録の一括 API（いまは単件 POST 順呼び）
 3. （任意）連続スキャンの実機再確認／Vercel の `YAHOO_APP_ID` 確認
-4. Phase 3 設計の未決: 塗料開始 `category_id`、`remaining` の型（3c 前）／プリセットは 3d
-5. Phase 4: 認証（**3b のあとでも可**。3a より先にはしない）
+4. カテゴリ探索登録（塗料開始 `category_id` 未決）／ステータスプリセット
+5. 認証（仮 `userId` を本番 uid に。編集・登録より先にはしない）
+
+完了済み: 登録・一覧・削除・表ソート・`note`/`status1` 編集
 
 ## 作業の進め方（エージェント向け）
 

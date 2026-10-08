@@ -28,3 +28,50 @@ export const createItemSchema = z.object({
   imageUrl: z.string().trim().url().max(2000).optional(),
   source: z.literal("yahoo_shopping"),
 });
+
+/**
+ * 任意テキスト。未送信は undefined、空文字 / null は DB 上 null（クリア）。
+ * プリセット候補は後続。いまは自由記述。
+ */
+const optionalClearableText = (max: number) =>
+  z
+    .union([z.string().trim().max(max), z.null()])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) {
+        return undefined;
+      }
+      if (value === null || value === "") {
+        return null;
+      }
+      return value;
+    });
+
+/**
+ * PATCH /api/items/[id] 用。
+ * note / status1 の少なくとも一方が必要。
+ */
+export const updateItemSchema = z
+  .object({
+    note: optionalClearableText(2000),
+    status1: optionalClearableText(100),
+  })
+  .refine(
+    (data) => data.note !== undefined || data.status1 !== undefined,
+    { message: "At least one of note or status1 is required" },
+  );
+
+/** Prisma update 用に、送られたフィールドだけ拾う */
+export function toUserItemUpdateData(data: z.infer<typeof updateItemSchema>): {
+  note?: string | null;
+  status1?: string | null;
+} {
+  const update: { note?: string | null; status1?: string | null } = {};
+  if (data.note !== undefined) {
+    update.note = data.note;
+  }
+  if (data.status1 !== undefined) {
+    update.status1 = data.status1;
+  }
+  return update;
+}

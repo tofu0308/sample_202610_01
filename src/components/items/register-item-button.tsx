@@ -5,6 +5,7 @@
  * 単体パネル・連続リストの両方から使う。
  */
 
+import { itemPrimaryButtonClass } from "@/components/items/item-action-styles";
 import { useRegisterItem } from "@/hooks/items/use-register-item";
 import type { FoundProduct } from "@/lib/items/register-item-request";
 
@@ -21,8 +22,8 @@ export function RegisterItemButton({
   const { register, pending, error, successMessage } = useRegisterItem();
   const wrapperClassName = compact ? "mt-2 space-y-1" : "space-y-1";
   const buttonClassName = compact
-    ? "rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-    : "rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50";
+    ? itemPrimaryButtonClass.compact
+    : itemPrimaryButtonClass.md;
 
   return (
     <div className={wrapperClassName}>

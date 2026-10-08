@@ -1,10 +1,14 @@
 /**
- * createItemSchema のユニットテスト。
- * 登録ボディの JAN 正規化・必須項目・source 制約を境界で確認する。
+ * item-schemas のユニットテスト。
+ * 登録・更新ボディの境界検証を確認する。
  */
 
 import { describe, expect, it } from "vitest";
-import { createItemSchema } from "@/lib/items/item-schemas";
+import {
+  createItemSchema,
+  toUserItemUpdateData,
+  updateItemSchema,
+} from "@/lib/items/item-schemas";
 
 const validBody = {
   code: "4905524535815",
@@ -77,5 +81,46 @@ describe("createItemSchema", () => {
       imageUrl: "not-a-url",
     });
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe("updateItemSchema", () => {
+  it("status1 だけでも成功する", () => {
+    const parsed = updateItemSchema.safeParse({ status1: "残少" });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.status1).toBe("残少");
+      expect(parsed.data.note).toBeUndefined();
+    }
+  });
+
+  it("空文字の note は null にする（クリア）", () => {
+    const parsed = updateItemSchema.safeParse({ note: "   " });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.note).toBeNull();
+    }
+  });
+
+  it("フィールドが無いと拒否する", () => {
+    const parsed = updateItemSchema.safeParse({});
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("toUserItemUpdateData", () => {
+  it("送られたフィールドだけ返す", () => {
+    const parsed = updateItemSchema.safeParse({
+      status1: "所持中",
+      note: "予備",
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) {
+      return;
+    }
+    expect(toUserItemUpdateData(parsed.data)).toEqual({
+      status1: "所持中",
+      note: "予備",
+    });
   });
 });
