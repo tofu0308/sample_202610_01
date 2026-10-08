@@ -116,7 +116,7 @@ export function ItemsTableRowView({
               onChange={(event) => onDraftStatus1Change(event.target.value)}
               disabled={rowBusy}
               aria-label={`${item.product.name} の残量`}
-              className="w-36 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm outline-none focus:border-zinc-500"
+              className="w-36 rounded-md border border-zinc-300 bg-white px-2 py-1 text-base outline-none focus:border-zinc-500 md:text-sm"
             >
               <option value="">未設定</option>
               {STATUS1_OPTIONS.map((option) => (
@@ -149,7 +149,7 @@ export function ItemsTableRowView({
             disabled={rowBusy}
             placeholder="メモ（任意）"
             aria-label={`${item.product.name} のメモ`}
-            className="w-full rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
+            className="w-full rounded-md border border-zinc-300 px-2 py-1 text-base outline-none focus:border-zinc-500 md:text-sm"
           />
         ) : (
           <MemoCell note={item.note} label={item.product.name} />

@@ -39,7 +39,7 @@ export function ItemsTableSearch({
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="キーワードを入力（商品名）"
-            className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-sm text-zinc-900 outline-none focus:border-zinc-500"
+            className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-base text-zinc-900 outline-none focus:border-zinc-500 md:text-sm"
           />
         </label>
         {filtering ? (

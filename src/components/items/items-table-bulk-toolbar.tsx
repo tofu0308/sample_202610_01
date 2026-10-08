@@ -49,7 +49,7 @@ export function ItemsTableBulkToolbar({
             value={bulkStatus1}
             onChange={(event) => onBulkStatus1Change(event.target.value)}
             disabled={pending}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm outline-none focus:border-zinc-500"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-base outline-none focus:border-zinc-500 md:text-sm"
           >
             <option value="">未設定</option>
             {STATUS1_OPTIONS.map((option) => (
