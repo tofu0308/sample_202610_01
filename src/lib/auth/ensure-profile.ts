@@ -8,7 +8,7 @@ import { usernameSchema } from "@/lib/auth/profile-schemas";
 import { prisma } from "@/lib/prisma";
 
 export type EnsureProfileResult =
-  | { ok: true; created: boolean }
+  | { ok: true; created: boolean; username: string }
   | { ok: false; reason: "missing_username" | "username_taken" | "unknown" };
 
 type AuthUserLike = {
@@ -23,7 +23,7 @@ export async function ensureProfileForAuthUser(
     where: { authUserId: user.id },
   });
   if (existing) {
-    return { ok: true, created: false };
+    return { ok: true, created: false, username: existing.username };
   }
 
   const parsed = usernameSchema.safeParse(user.user_metadata?.username);
@@ -38,7 +38,7 @@ export async function ensureProfileForAuthUser(
         username: parsed.data,
       },
     });
-    return { ok: true, created: true };
+    return { ok: true, created: true, username: parsed.data };
   } catch (error) {
     // P2002 は HTTP レスポンスではなく、Prisma が unique 違反時に投げる例外コード。
     // クライアント向けには reason: username_taken に言い換える。

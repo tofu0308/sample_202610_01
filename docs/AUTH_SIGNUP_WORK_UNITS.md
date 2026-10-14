@@ -23,7 +23,7 @@
 | **U5** | `/auth/callback` ＋ Proxy 公開パス | 確認リンクでセッションが立つ | code 交換・Redirect URL | **完了** |
 | **U6** | 確認後に `Profile` 作成（重複時はエラー） | `Profile` 行が uid＋username で残る | metadata → DB、一意衝突 | **完了** |
 | **U7** | `ADMIN_EMAIL` ゲート解除 | 一般ユーザーでも一覧／API が使える | ゲートと持ち主の違い | **完了** |
-| **U8** | ヘッダー「{username} さん」（登録リンクは login 側で先行対応済み） | 表示が揃う | Profile 取得、既存管理者の扱い | 未 |
+| **U8** | ヘッダー「{username} さん」（登録リンクは login 側で先行対応済み） | 表示が揃う | Profile 取得、既存管理者の扱い | **完了** |
 | **U9** | パスワードリセット（依頼画面） | リセットメールが飛ぶ | `resetPasswordForEmail` | 未 |
 | **U10** | 新パスワード設定画面＋ callback 連携 | 再ログインできる | recovery セッション | 未 |
 | **U11** | 通し確認（ローカル→必要なら本番）＋ Dashboard 設定メモ | 登録〜確認〜リセット〜一覧 | env / Redirect URLs | 未 |
@@ -37,7 +37,7 @@
 
 ## いまの次
 
-**U8**（ヘッダー「{username} さん」）
+**U9**（パスワードリセット依頼画面）
 
 ## 後で検討
 

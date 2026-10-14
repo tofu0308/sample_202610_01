@@ -32,11 +32,18 @@ export default async function Home() {
               /api/items
             </code>
           </p>
-          {user.email ? (
-            <p className="text-xs text-zinc-500">ログイン中: {user.email}</p>
-          ) : null}
         </div>
-        <LogoutButton />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Profile 必須が正。無い既存管理者はメールにフォールバック（設計書 §13.3） */}
+          <p className="text-sm text-zinc-600">
+            {user.username
+              ? `${user.username} さん`
+              : user.email
+                ? `ログイン中: ${user.email}`
+                : "ログイン中"}
+          </p>
+          <LogoutButton />
+        </div>
       </header>
 
       <section className="space-y-3" aria-labelledby="scan-heading">
