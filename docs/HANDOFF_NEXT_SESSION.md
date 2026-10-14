@@ -18,7 +18,8 @@
 GitHub: tofu0308/sample_202610_01（main）
 本番: https://sample-202610-01.vercel.app/
 設計: docs/DESIGN_BARCODE_SCAN.md
-学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md（§10〜§14）
+学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md（登録方針は §14）
+設計の登録・組織: docs/DESIGN_BARCODE_SCAN.md §13 / §14
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
 スタック: Next.js 16 App Router + Prisma 7 + Supabase(PostgreSQL) + zod + Vitest
@@ -29,13 +30,15 @@ GitHub: tofu0308/sample_202610_01（main）
 - Product / UserItem（Prisma migrate）。GET/POST/PATCH/DELETE /api/items
 - 一覧 UI: 残量プリセット＋バー、メモ（バルーン）、更新日 JST、検索、一括選択・適用・削除
 - スキャン UI: 読取リスト＋JAN コピー（商品情報パネルは廃止）
-- 管理者ログイン: Supabase Auth、/login、src/proxy.ts、ADMIN_EMAIL 制限、公開サインアップなし
-- ローカルで管理者ログイン成功済み。本番は未ログインだとログイン画面のみ（想定どおり）
+- 管理者ログイン: Supabase Auth、/login、src/proxy.ts、ADMIN_EMAIL ゲート（実装はまだ管理者のみ）
+- 一般登録フロー: **設計合意済み**（未実装）。方針は設計書 §13
 
 【次にやること（優先）】
-1. 一般ユーザー向け登録フロー（サインアップ UI・メール確認・ADMIN_EMAIL 制限の整理）
-2. （必要なら）既存 UserItem の userId 付け替え確認（local-dev-user → Auth uid）
-3. （任意）一括 API／ページネーション／status2・3／カテゴリ探索
+1. 一般登録の実装（/signup・確認メール・Profile(username必須)・ゲート解除・「○○さん」表示）
+2. パスワードリセット（ログイン周りに含める）
+3. 動作安定後に local-dev-user のコード・データ削除
+4. （任意）一括 API／ページネーション／status2・3／カテゴリ探索
+※ 組織単位は将来。設計書 §14（orgId 追加想定）。第1弾では触らない
 
 【エージェントへの注意】
 - commit / push は「commit して」「push して」など明示時だけ
@@ -93,7 +96,7 @@ npm run test
 | 一覧     | 残量（`status1`）プリセット／バー、メモ、検索、一括操作、PC は枠内スクロール＋見出し sticky |
 | 認証     | Supabase Auth。`/login`・ログアウト・`src/proxy.ts`・`ADMIN_EMAIL`。公開登録 UI **なし**    |
 
-学習メモ詳細: `課題対応_20261014.md` §10（migrate）§11（登録）§12（一覧強化）§13（管理者ログイン）§14（現状確認）
+学習メモ: `課題対応_20261014.md`（登録方針は §14）。設計の正本は `DESIGN_BARCODE_SCAN.md` §13/§14。
 
 ## 構成（触るとき）
 
@@ -120,25 +123,24 @@ src/app/api/items/
 
 ## 認証の現状（重要）
 
-- **公開サインアップなし**。ユーザーは Supabase Dashboard で作成（または今後アプリ登録を追加）
-- ログイン成功後、API／一覧は **Auth uid** で絞る
+- **いま**: 公開サインアップなし。`ADMIN_EMAIL` ゲートあり（管理者のみ）
+- **合意済み（未実装）**: 確認メール付きサインアップ。ゲート解除。username **必須**（表示＋DB照合用 Profile）
+- ログイン成功後、API／一覧は **Auth uid** で絞る（これは維持）
 - 本番未ログイン → ログイン画面のみ、は想定どおり
-- URL に `/rest/v1` を付けると Auth が壊れる（過去に踏み済み。`env.ts` でオリジンに正規化）
+- URL に `/rest/v1` を付けると Auth が壊れる（`env.ts` でオリジンに正規化）
 
-### 既存データの付け替え（まだなら）
+### 旧 `local-dev-user`
 
-```sql
-UPDATE "UserItem"
-SET "userId" = '<auth-uid>'
-WHERE "userId" = 'local-dev-user';
-```
+一般利用が安定したら **コード・データとも削除してよい**（付け替え運用は必須ではない）。残っていると管理者一覧に旧分が出ない原因になりうる。
 
 ## 次にやること
 
-1. **一般ユーザー向け登録フロー**（サインアップ UI、メール確認、`ADMIN_EMAIL` との役割分担）
-2. 既存 `userId` 付け替えの確認（空一覧ならこれが原因のことが多い）
-3. （任意）一括登録／一括 PATCH・DELETE API
-4. （任意）ページネーション、`status2`/`status3`、カテゴリ探索
+1. **一般登録の実装**（設計書 §13.5 の順）
+2. **パスワードリセット**（同 Phase）
+3. 学習メモに確認メール／リセットの仕組みを追記（実装時）
+4. 安定後に `local-dev-user` 削除
+5. （任意）一括 API／ページネーション／`status2`/`3`／カテゴリ探索
+6. （将来）組織単位 … 設計書 §14。第1弾では触らない
 
 ## 作業の進め方（エージェント向け）
 
