@@ -868,17 +868,19 @@ Proxy の公開パス: `/login` / `/signup` / リセット関連 / `/auth`
 
 ### 13.5 タスク順（実装）
 
-| # | 内容 | 状態 |
-|---|---|---|
-| 1 | `Profile` schema + migrate + generate（`username` 必須・一意） | 未 |
-| 2 | `/signup` UI + `signUp`（username 必須 → 確認後に Profile） | 未 |
-| 3 | `/auth/callback` + Dashboard（Confirm email / Redirect URLs） | 未 |
-| 4 | `ADMIN_EMAIL` ゲート解除（env とヘルパは残してよい） | 未 |
-| 5 | ログイン画面から登録リンク、表示「{username} さん」 | 未 |
-| 6 | **パスワードリセット**（依頼画面＋メールリンク／更新。Supabase `resetPasswordForEmail` 等） | 未 |
-| 7 | ローカル → 本番で登録〜確認〜リセット〜一覧を通す | 未 |
-| 8 | 学習メモに Auth（確認メール・パスワードリセット）の仕組みを追記 | 未 |
-| 9 | 一般利用が安定したら `local-dev-user` のコード・データを削除 | 未（依存: 7） |
+細分化した工程表・進捗: **`docs/AUTH_SIGNUP_WORK_UNITS.md`**（U1〜U13）。  
+学習メモへの追記は、学んだ内容を確認してから行う。
+
+粗い対応（詳細は工程表）:
+
+| # | 内容 |
+|---|---|
+| 1 | `Profile` schema + migrate + generate |
+| 2〜3 | `/signup` UI + `signUp` + callback |
+| 4〜5 | ゲート解除・表示名 |
+| 6 | パスワードリセット |
+| 7〜8 | 通し確認・学習メモ |
+| 9 | `local-dev-user` 削除（安定後） |
 
 任意（本 Phase の外）: 一括 API、ページネーション、`status2`/`3`、カテゴリ探索、OAuth
 

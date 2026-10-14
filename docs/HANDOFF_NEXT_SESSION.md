@@ -20,6 +20,7 @@ GitHub: tofu0308/sample_202610_01（main）
 設計: docs/DESIGN_BARCODE_SCAN.md
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md（登録方針は §14）
 設計の登録・組織: docs/DESIGN_BARCODE_SCAN.md §13 / §14
+作業単位: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
 スタック: Next.js 16 App Router + Prisma 7 + Supabase(PostgreSQL) + zod + Vitest
