@@ -927,3 +927,28 @@ UserItem
 ### 14.3 いま書いておく理由
 
 登録・Profile を個人前提で進めてよいことの根拠にする。組織が必要になったら §14.2 から設計を起こす。
+
+---
+
+## 15. エラー表示方針（2026-10-14）
+
+### 切り分け
+
+| 種類 | 出し方 | 例 |
+|---|---|---|
+| 想定内の操作失敗 | **インライン**（同じ画面） | ログイン失敗、API 4xx/5xx、登録済み JAN |
+| 未ログイン | **リダイレクト** `/login` | proxy / `requireUserForPage` |
+| 想定外の描画失敗 | **`src/app/error.tsx`** | トップの Prisma 取得が throw など |
+| 不正操作など続行不可 | **`throwAppError(...)` → `error.tsx`** | 今後の認可・不正リクエスト検知 |
+
+### 方針
+
+- catch できる失敗はインライン（または Result 型）。フルページにしない
+- catch しない／できないページ例外は Next の Error Boundary（`error.tsx`）へ流す
+- 続行させない操作は `throwAppError`（`src/lib/errors/app-error.ts`）で error 画面へ
+- 404 専用 UI・`global-error` は第1弾では必須にしない（気になったら追加）
+
+### 実装
+
+- `src/app/error.tsx` … 意図的／想定外で見出しを分ける。再試行は想定外のみ
+- `throwAppError("invalid_operation")` など（確認時はページに一時配置してよい）

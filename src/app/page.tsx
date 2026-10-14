@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const user = await requireUserForPage();
 
+  // DB 障害などは catch せず error.tsx へ（想定外のページ失敗）
   const items = await prisma.userItem.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },

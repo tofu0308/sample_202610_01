@@ -119,20 +119,24 @@ export function useItemsTable(items: ItemsTableRow[]) {
     setError(null);
     setPendingId(item.id);
 
-    const result = await patchItem(item.id, {
-      status1: draftStatus1,
-      note: draftNote,
-    });
+    try {
+      const result = await patchItem(item.id, {
+        status1: draftStatus1,
+        note: draftNote,
+      });
 
-    if (!result.ok) {
-      setError(result.message);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      setEditingId(null);
+      router.refresh();
+    } catch {
+      setError("更新処理でエラーが発生しました");
+    } finally {
       setPendingId(null);
-      return;
     }
-
-    setEditingId(null);
-    setPendingId(null);
-    router.refresh();
   }
 
   async function removeItem(item: ItemsTableRow) {
@@ -143,24 +147,28 @@ export function useItemsTable(items: ItemsTableRow[]) {
     setError(null);
     setPendingId(item.id);
 
-    const result = await deleteItem(item.id);
+    try {
+      const result = await deleteItem(item.id);
 
-    if (!result.ok) {
-      setError(result.message);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      if (editingId === item.id) {
+        cancelEdit();
+      }
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+      router.refresh();
+    } catch {
+      setError("削除処理でエラーが発生しました");
+    } finally {
       setPendingId(null);
-      return;
     }
-
-    if (editingId === item.id) {
-      cancelEdit();
-    }
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(item.id);
-      return next;
-    });
-    setPendingId(null);
-    router.refresh();
   }
 
   /** 選択行へ同じ残量を一括適用。TODO: 一括 PATCH API に差し替え */
@@ -173,30 +181,36 @@ export function useItemsTable(items: ItemsTableRow[]) {
     setBulkPending(true);
     cancelEdit();
 
-    let failed = 0;
-    let lastError: string | null = null;
+    try {
+      let failed = 0;
+      let lastError: string | null = null;
 
-    for (const id of selectedIdList) {
-      const result = await patchItem(id, { status1: bulkStatus1 });
-      if (!result.ok) {
-        failed += 1;
-        lastError = result.message;
+      for (const id of selectedIdList) {
+        const result = await patchItem(id, { status1: bulkStatus1 });
+        if (!result.ok) {
+          failed += 1;
+          lastError = result.message;
+        }
       }
-    }
 
-    setBulkPending(false);
-    // 適用後はパネルを閉じる（失敗があってもメッセージは残す）
-    clearSelection();
+      // 適用後はパネルを閉じる（失敗があってもメッセージは残す）
+      clearSelection();
 
-    if (failed > 0) {
-      setError(
-        lastError ??
-          `残量の一括更新に失敗した行があります（${failed} 件）`,
-      );
-    }
+      if (failed > 0) {
+        setError(
+          lastError ??
+            `残量の一括更新に失敗した行があります（${failed} 件）`,
+        );
+      }
 
-    if (failed < selectedIdList.length) {
-      router.refresh();
+      if (failed < selectedIdList.length) {
+        router.refresh();
+      }
+    } catch {
+      setError("一括更新でエラーが発生しました");
+      clearSelection();
+    } finally {
+      setBulkPending(false);
     }
   }
 
@@ -218,37 +232,42 @@ export function useItemsTable(items: ItemsTableRow[]) {
     setBulkPending(true);
     cancelEdit();
 
-    let failed = 0;
-    let lastError: string | null = null;
-    const deletedIds: string[] = [];
+    try {
+      let failed = 0;
+      let lastError: string | null = null;
+      const deletedIds: string[] = [];
 
-    for (const id of selectedIdList) {
-      const result = await deleteItem(id);
-      if (result.ok) {
-        deletedIds.push(id);
-      } else {
-        failed += 1;
-        lastError = result.message;
+      for (const id of selectedIdList) {
+        const result = await deleteItem(id);
+        if (result.ok) {
+          deletedIds.push(id);
+        } else {
+          failed += 1;
+          lastError = result.message;
+        }
       }
-    }
 
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      for (const id of deletedIds) {
-        next.delete(id);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of deletedIds) {
+          next.delete(id);
+        }
+        return next;
+      });
+
+      if (failed > 0) {
+        setError(
+          lastError ?? `削除に失敗した行があります（${failed} 件）`,
+        );
       }
-      return next;
-    });
-    setBulkPending(false);
 
-    if (failed > 0) {
-      setError(
-        lastError ?? `削除に失敗した行があります（${failed} 件）`,
-      );
-    }
-
-    if (deletedIds.length > 0) {
-      router.refresh();
+      if (deletedIds.length > 0) {
+        router.refresh();
+      }
+    } catch {
+      setError("一括削除でエラーが発生しました");
+    } finally {
+      setBulkPending(false);
     }
   }
 
