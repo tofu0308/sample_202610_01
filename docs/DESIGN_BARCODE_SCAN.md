@@ -6,7 +6,7 @@
 
 進捗は本ファイルのチェックリストと学習メモで管理する。  
 学習メモ: `C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md`  
-最終更新: 2026-10-14（登録フロー設計合意・組織拡張の方向性を §13/§14 に記載）
+最終更新: 2026-10-14（一般登録・リセット実装。通し・Dashboard は `AUTH_SETUP_CHECKLIST.md`）
 
 ---
 
@@ -14,14 +14,15 @@
 
 バーコードで商品を調べ、所持を DB に登録し、残量・メモを管理する学習用アプリ（当面は消耗品メイン）。
 
-到達済み: **スキャン → Yahoo 照会 → 登録 → 一覧編集 → 管理者ログイン**。  
-次: **一般ユーザー登録の実装**（方針は §13）。組織単位は将来（§14）。
+到達済み: **スキャン → Yahoo 照会 → 登録 → 一覧編集 → 一般登録／リセット**（§13）。  
+次: 学習メモ追記・`local-dev-user` 削除。組織単位は将来（§14）。  
+通し確認・Dashboard: **`docs/AUTH_SETUP_CHECKLIST.md`**。
 
 学習ポイント（累積）:
 
 - Client Component でのデバイス API（カメラ）利用
 - Route Handler + zod + Prisma（境界検証・所持 CRUD）
-- Supabase Auth（Proxy・`ADMIN_EMAIL`・uid でデータ分離）
+- Supabase Auth（Proxy・Profile・uid でデータ分離・確認／リセットメール）
 
 ---
 
@@ -891,7 +892,7 @@ Proxy の公開パス: `/login` / `/signup` / リセット関連 / `/auth`
 - [x] C: 既存ログイン＋最小登録
 - [x] username = **必須**・一意。表示＋DB 照合用（ログイン非使用）。null にしない
 - [x] `local-dev-user` は一般利用可能後に削除してよい
-- [ ] 実装チェック（§13.5）
+- [x] 実装チェック（§13.5／工程表 U1〜U11。通し手順は `AUTH_SETUP_CHECKLIST.md`）
 
 ---
 

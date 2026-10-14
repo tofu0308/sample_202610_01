@@ -20,7 +20,8 @@ GitHub: tofu0308/sample_202610_01（main）
 設計: docs/DESIGN_BARCODE_SCAN.md
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md（登録方針は §14）
 設計の登録・組織: docs/DESIGN_BARCODE_SCAN.md §13 / §14
-作業単位: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜）
+Auth 通し・Dashboard: docs/AUTH_SETUP_CHECKLIST.md
+作業単位: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U11 完了。次 U12）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
 スタック: Next.js 16 App Router + Prisma 7 + Supabase(PostgreSQL) + zod + Vitest
@@ -31,14 +32,13 @@ GitHub: tofu0308/sample_202610_01（main）
 - Product / UserItem（Prisma migrate）。GET/POST/PATCH/DELETE /api/items
 - 一覧 UI: 残量プリセット＋バー、メモ（バルーン）、更新日 JST、検索、一括選択・適用・削除
 - スキャン UI: 読取リスト＋JAN コピー（商品情報パネルは廃止）
-- 管理者ログイン: Supabase Auth、/login、src/proxy.ts、ADMIN_EMAIL ゲート（実装はまだ管理者のみ）
-- 一般登録フロー: **設計合意済み**（未実装）。方針は設計書 §13
+- Auth: /signup・確認メール・callback・Profile・ゲート解除・「○○さん」・forgot/update-password
+- Dashboard 設定メモ: AUTH_SETUP_CHECKLIST.md（メールは 1h 2 通制限あり）
 
 【次にやること（優先）】
-1. 一般登録の実装（/signup・確認メール・Profile(username必須)・ゲート解除・「○○さん」表示）
-2. パスワードリセット（ログイン周りに含める）
-3. 動作安定後に local-dev-user のコード・データ削除
-4. （任意）一括 API／ページネーション／status2・3／カテゴリ探索
+1. 学習メモに Auth の仕組みを短く追記（U12・確認のうえ）
+2. 安定後に local-dev-user のコード・データ削除（U13）
+3. （任意）一括 API／ページネーション／status2・3／カテゴリ探索
 ※ 組織単位は将来。設計書 §14（orgId 追加想定）。第1弾では触らない
 
 【エージェントへの注意】
@@ -95,17 +95,19 @@ npm run test
 | スキャン | 単体／連続、Yahoo 照会、読取リスト（JAN コピー＋登録）                                      |
 | DB / API | `Product` + `UserItem`。items CRUD + lookup（いずれもログイン必須）                         |
 | 一覧     | 残量（`status1`）プリセット／バー、メモ、検索、一括操作、PC は枠内スクロール＋見出し sticky |
-| 認証     | Supabase Auth。`/login`・ログアウト・`src/proxy.ts`・`ADMIN_EMAIL`。公開登録 UI **なし**    |
+| 認証     | Supabase Auth。`/signup`・`/login`・リセット・`Profile`・ログイン済みなら利用可 |
 
-学習メモ: `課題対応_20261014.md`（登録方針は §14）。設計の正本は `DESIGN_BARCODE_SCAN.md` §13/§14。
+学習メモ: `課題対応_20261014.md`（登録方針は §14）。設計の正本は `DESIGN_BARCODE_SCAN.md` §13/§14。  
+Auth 通し・Dashboard: `docs/AUTH_SETUP_CHECKLIST.md`。
 
 ## 構成（触るとき）
 
 ```
 src/proxy.ts                 # セッション更新＋未ログイン→/login
-src/app/login/               # 管理者ログイン
+src/app/login/ signup/ forgot-password/ update-password/
+src/app/auth/callback/       # code → セッション＋ Profile
 src/app/logout/              # POST でログアウト
-src/lib/auth/require-user.ts # ページ／API の認可
+src/lib/auth/                # require-user / ensure-profile / profile-schemas
 src/lib/supabase/            # browser / server / proxy / env
 src/components/auth/
 src/components/scan/         # barcode-scanner + 読取リスト
@@ -121,13 +123,15 @@ src/app/api/items/
 | 残量       | `status1`（`STATUS1_OPTIONS`）                       |
 | メモ       | `note`                                               |
 | ユーザー   | Auth uid → `UserItem.userId`（旧: `local-dev-user`） |
+| 表示名     | `Profile.username`（「○○さん」）                     |
 
 ## 認証の現状（重要）
 
-- **いま**: 公開サインアップなし。`ADMIN_EMAIL` ゲートあり（管理者のみ）
-- **合意済み（未実装）**: 確認メール付きサインアップ。ゲート解除。username **必須**（表示＋DB照合用 Profile）
+- **いま**: 公開 `/signup`（確認メール）。ゲートなし（ログイン済みなら可）。ヘッダーは username
+- パスワードリセット: `/forgot-password` → メール → `/auth/callback` → `/update-password`
 - ログイン成功後、API／一覧は **Auth uid** で絞る（これは維持）
-- 本番未ログイン → ログイン画面のみ、は想定どおり
+- Dashboard 設定・通し手順: `docs/AUTH_SETUP_CHECKLIST.md`
+- 組み込みメールはおおむね **1 時間 2 通**（Rate Limits）
 - URL に `/rest/v1` を付けると Auth が壊れる（`env.ts` でオリジンに正規化）
 
 ### 旧 `local-dev-user`
@@ -136,12 +140,10 @@ src/app/api/items/
 
 ## 次にやること
 
-1. **一般登録の実装**（設計書 §13.5 の順）
-2. **パスワードリセット**（同 Phase）
-3. 学習メモに確認メール／リセットの仕組みを追記（実装時）
-4. 安定後に `local-dev-user` 削除
-5. （任意）一括 API／ページネーション／`status2`/`3`／カテゴリ探索
-6. （将来）組織単位 … 設計書 §14。第1弾では触らない
+1. 学習メモに Auth の仕組みを短く追記（U12・確認のうえ）
+2. 安定後に `local-dev-user` 削除（U13）
+3. （任意）一括 API／ページネーション／`status2`/`3`／カテゴリ探索
+4. （将来）組織単位 … 設計書 §14。第1弾では触らない
 
 ## 作業の進め方（エージェント向け）
 
