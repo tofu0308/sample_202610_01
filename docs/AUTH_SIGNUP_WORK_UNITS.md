@@ -39,9 +39,6 @@
 
 **U12**（学習メモに Auth の仕組みを短く追記・確認のうえ）
 
-通し・Dashboard の正本: **`docs/AUTH_SETUP_CHECKLIST.md`**  
-（リセットのメール再試行は rate limit 待ち／Users 手動で可。必須ではない）
-
 ## 後で検討
 
 - フォーム検証: いまはブラウザ HTML 検証が先。`noValidate` ＋ zod に寄せるかは後で決める

@@ -20,7 +20,6 @@ GitHub: tofu0308/sample_202610_01（main）
 設計: docs/DESIGN_BARCODE_SCAN.md
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md（登録方針は §14）
 設計の登録・組織: docs/DESIGN_BARCODE_SCAN.md §13 / §14
-Auth 通し・Dashboard: docs/AUTH_SETUP_CHECKLIST.md
 作業単位: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U11 完了。次 U12）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
@@ -33,7 +32,6 @@ Auth 通し・Dashboard: docs/AUTH_SETUP_CHECKLIST.md
 - 一覧 UI: 残量プリセット＋バー、メモ（バルーン）、更新日 JST、検索、一括選択・適用・削除
 - スキャン UI: 読取リスト＋JAN コピー（商品情報パネルは廃止）
 - Auth: /signup・確認メール・callback・Profile・ゲート解除・「○○さん」・forgot/update-password
-- Dashboard 設定メモ: AUTH_SETUP_CHECKLIST.md（メールは 1h 2 通制限あり）
 
 【次にやること（優先）】
 1. 学習メモに Auth の仕組みを短く追記（U12・確認のうえ）
@@ -97,8 +95,7 @@ npm run test
 | 一覧     | 残量（`status1`）プリセット／バー、メモ、検索、一括操作、PC は枠内スクロール＋見出し sticky |
 | 認証     | Supabase Auth。`/signup`・`/login`・リセット・`Profile`・ログイン済みなら利用可 |
 
-学習メモ: `課題対応_20261014.md`（登録方針は §14）。設計の正本は `DESIGN_BARCODE_SCAN.md` §13/§14。  
-Auth 通し・Dashboard: `docs/AUTH_SETUP_CHECKLIST.md`。
+学習メモ: `課題対応_20261014.md`（登録方針は §14）。設計の正本は `DESIGN_BARCODE_SCAN.md` §13/§14。
 
 ## 構成（触るとき）
 
@@ -130,7 +127,6 @@ src/app/api/items/
 - **いま**: 公開 `/signup`（確認メール）。ゲートなし（ログイン済みなら可）。ヘッダーは username
 - パスワードリセット: `/forgot-password` → メール → `/auth/callback` → `/update-password`
 - ログイン成功後、API／一覧は **Auth uid** で絞る（これは維持）
-- Dashboard 設定・通し手順: `docs/AUTH_SETUP_CHECKLIST.md`
 - 組み込みメールはおおむね **1 時間 2 通**（Rate Limits）
 - URL に `/rest/v1` を付けると Auth が壊れる（`env.ts` でオリジンに正規化）
 
