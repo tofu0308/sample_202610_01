@@ -83,11 +83,11 @@ export function SignupForm() {
     return (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-zinc-200">
-          確認メールを送信しました。メール内のリンクから登録を完了してください（
-          {email.trim() || "ご登録の Email"}）。
+          手続きを受け付けました（{email.trim() || "ご入力の Email"}）。
+          はじめての登録であれば、確認用メールのリンクから完了できます。
         </p>
         <p className="text-sm leading-relaxed text-zinc-400">
-          届かない場合は迷惑メールフォルダも確認してください。メール内のリンクを開くと登録が完了します。
+          メールが来ない場合は迷惑メールフォルダも確認してください。すでに登録済みの場合は、こちらから再操作しても確認メールは再送されないことがあります。ログインをお試しください。
         </p>
         <p className={authFooterLinkClassName}>
           <Link

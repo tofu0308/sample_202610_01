@@ -14,7 +14,7 @@ export default function SignupPage() {
           新規登録
         </h1>
         <p className={authPageDescClassName}>
-          Email・パスワード・ユーザーIDを入力してください。登録後に確認メールが届きます。
+          Email・パスワード・ユーザーIDを入力してください。はじめての登録では確認用のメールが届きます。すでに登録済みの場合はログインへ進んでください。
         </p>
       </header>
       <SignupForm />
