@@ -19,8 +19,8 @@
 | **U1** | `Profile` モデル＋ migrate ＋ `generate` | Prisma／Studio でテーブルが見える | schema・一意制約・migrate | **完了** |
 | **U2** | username の zod（必須・形式） | ユニットテストが通る | 境界検証を先に切る | **完了** |
 | **U3** | `/signup` 画面（フォーム） | 3 項目のフォームが動く | Client フォーム、login との揃え | **完了** |
-| **U4** | `signUp` 結線（`user_metadata` に username）＋確認待ち文言 | メールが飛び、未確認の案内が出る | Supabase `signUp` | 未 |
-| **U5** | `/auth/callback` ＋ Proxy 公開パス | 確認リンクでセッションが立つ | code 交換・Redirect URL | 未 |
+| **U4** | `signUp` 結線（`user_metadata` に username）＋確認待ち文言 | メールが飛び、未確認の案内が出る | Supabase `signUp` | **完了** |
+| **U5** | `/auth/callback` ＋ Proxy 公開パス | 確認リンクでセッションが立つ | code 交換・Redirect URL | **完了** |
 | **U6** | 確認後に `Profile` 作成（重複時はエラー） | `Profile` 行が uid＋username で残る | metadata → DB、一意衝突 | 未 |
 | **U7** | `ADMIN_EMAIL` ゲート解除 | 一般ユーザーでも一覧／API が使える | ゲートと持ち主の違い | 未 |
 | **U8** | ヘッダー「{username} さん」（登録リンクは login 側で先行対応済み） | 表示が揃う | Profile 取得、既存管理者の扱い | 未 |
@@ -37,4 +37,4 @@
 
 ## いまの次
 
-**U4**（`signUp` 結線＋確認待ち文言）
+**U6**（確認後に Profile 作成）※ Auth 疎通確認・commit は U4+U5 で区切ってよい

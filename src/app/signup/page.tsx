@@ -1,6 +1,6 @@
 /**
  * 新規登録画面（公開）。
- * フォームの Auth 送信は後続工程。ここでは入力 UI と検証まで。
+ * signUp 後は確認メール待ち。Profile 作成は後続工程。
  */
 
 import { SignupForm } from "@/components/auth/signup-form";
@@ -14,7 +14,7 @@ export default function SignupPage() {
           新規登録
         </h1>
         <p className={authPageDescClassName}>
-          Email・パスワード・ユーザーIDを入力してください。確認メールの手順は登録送信の工程でつなぎます。
+          Email・パスワード・ユーザーIDを入力してください。登録後に確認メールが届きます。
         </p>
       </header>
       <SignupForm />

@@ -23,8 +23,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <p className={authPageDescClassName}>
           Emailとパスワードでログインしてください。
         </p>
+        {params.error === "auth_callback_failed" ? (
+          <p className="text-sm text-red-400">
+            メール確認リンクの処理に失敗しました。もう一度ログインするか、登録からやり直してください。
+          </p>
+        ) : null}
       </header>
-      <LoginForm nextPath={nextPath} initialError={params.error ?? null} />
+      <LoginForm
+          nextPath={nextPath}
+          initialError={
+            params.error && params.error !== "auth_callback_failed"
+              ? params.error
+              : null
+          }
+        />
     </main>
   );
 }
