@@ -20,7 +20,7 @@ GitHub: tofu0308/sample_202610_01（main）
 設計: docs/DESIGN_BARCODE_SCAN.md
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md（登録方針は §14）
 設計の登録・組織: docs/DESIGN_BARCODE_SCAN.md §13 / §14
-作業単位: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U11 完了。次 U12）
+作業単位: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U13 完了・削除可）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
 スタック: Next.js 16 App Router + Prisma 7 + Supabase(PostgreSQL) + zod + Vitest
@@ -31,12 +31,12 @@ GitHub: tofu0308/sample_202610_01（main）
 - Product / UserItem（Prisma migrate）。GET/POST/PATCH/DELETE /api/items
 - 一覧 UI: 残量プリセット＋バー、メモ（バルーン）、更新日 JST、検索、一括選択・適用・削除
 - スキャン UI: 読取リスト＋JAN コピー（商品情報パネルは廃止）
-- Auth: /signup・確認メール・callback・Profile・ゲート解除・「○○さん」・forgot/update-password
+- Auth: /signup・確認メール・callback・Profile・一般利用可・「○○さん」・forgot/update-password
+- 学習メモ §16〜§19（rate limit／認証と uid／username／リセット）
+- local-dev-user のコード・データ削除済み
 
 【次にやること（優先）】
-1. 学習メモに Auth の仕組みを短く追記（U12・確認のうえ）
-2. 安定後に local-dev-user のコード・データ削除（U13）
-3. （任意）一括 API／ページネーション／status2・3／カテゴリ探索
+1. （任意）一括 API／ページネーション／status2・3／カテゴリ探索
 ※ 組織単位は将来。設計書 §14（orgId 追加想定）。第1弾では触らない
 
 【エージェントへの注意】
@@ -119,27 +119,22 @@ src/app/api/items/
 | ---------- | ---------------------------------------------------- |
 | 残量       | `status1`（`STATUS1_OPTIONS`）                       |
 | メモ       | `note`                                               |
-| ユーザー   | Auth uid → `UserItem.userId`（旧: `local-dev-user`） |
+| ユーザー   | Auth uid → `UserItem.userId`                         |
 | 表示名     | `Profile.username`（「○○さん」）                     |
 
 ## 認証の現状（重要）
 
-- **いま**: 公開 `/signup`（確認メール）。ゲートなし（ログイン済みなら可）。ヘッダーは username
+- **いま**: 公開 `/signup`（確認メール）。ログイン済みなら利用可。ヘッダーは username
 - パスワードリセット: `/forgot-password` → メール → `/auth/callback` → `/update-password`
 - ログイン成功後、API／一覧は **Auth uid** で絞る（これは維持）
 - 組み込みメールはおおむね **1 時間 2 通**（Rate Limits）
 - URL に `/rest/v1` を付けると Auth が壊れる（`env.ts` でオリジンに正規化）
-
-### 旧 `local-dev-user`
-
-一般利用が安定したら **コード・データとも削除してよい**（付け替え運用は必須ではない）。残っていると管理者一覧に旧分が出ない原因になりうる。
+- 旧 `local-dev-user` は **削除済み**
 
 ## 次にやること
 
-1. 学習メモに Auth の仕組みを短く追記（U12・確認のうえ）
-2. 安定後に `local-dev-user` 削除（U13）
-3. （任意）一括 API／ページネーション／`status2`/`3`／カテゴリ探索
-4. （将来）組織単位 … 設計書 §14。第1弾では触らない
+1. （任意）一括 API／ページネーション／`status2`/`3`／カテゴリ探索
+2. （将来）組織単位 … 設計書 §14。第1弾では触らない
 
 ## 作業の進め方（エージェント向け）
 

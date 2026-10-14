@@ -59,9 +59,7 @@ export default async function Home() {
         </h2>
         {items.length === 0 ? (
           <p className="text-zinc-500">
-            商品を調べて登録すると一覧に表示されます。以前
-            local-dev-user で登録したデータがある場合は、Auth uid
-            へ付け替える必要があります（学習メモ参照）。
+            商品を調べて登録すると一覧に表示されます。
           </p>
         ) : (
           <ItemsTable

@@ -14,8 +14,8 @@
 
 バーコードで商品を調べ、所持を DB に登録し、残量・メモを管理する学習用アプリ（当面は消耗品メイン）。
 
-到達済み: **スキャン → Yahoo 照会 → 登録 → 一覧編集 → 一般登録／リセット**（§13）。  
-次: 学習メモ追記・`local-dev-user` 削除。組織単位は将来（§14）。
+到達済み: **スキャン → Yahoo 照会 → 登録 → 一覧編集 → 一般登録／リセット**（§13）。`local-dev-user` 削除済み。  
+次: （任意）強化・組織単位は将来（§14）。
 
 学習ポイント（累積）:
 
@@ -370,8 +370,8 @@ type ProductLookupResponse =
 - Note モデル / API / UI は削除済み。`UserItem.note` はメモ欄として残置
 - Yahoo 照会は Route Handler 経由（`YAHOO_APP_ID` はサーバのみ）。アフィリエイトなし
 - カテゴリは **塗料配下だけ**階層 API（未実装・任意）。全カテゴリの一括取得・DB 全件保存はしない
-- 認証は **管理者ログインまで完了**。一般登録は設計合意（§13）。組織は将来（§14）
-- `UserItem.userId` は Auth uid。旧 `local-dev-user` は一般利用安定後に削除予定
+- 認証は一般登録・リセットまで完了（§13）。組織は将来（§14）
+- `UserItem.userId` は Auth uid（旧 `local-dev-user` は削除済み）
 - 専用 `/scan` は作らない（この設計の範囲）
 - カメラはボタン操作後に起動する（マウント時の自動起動はしない）
 - Client 肥大化時は hooks / lib 分離。無関係なリファクタはしない
@@ -594,7 +594,6 @@ model UserItem {
 
 ```ts
 // src/lib/items/constants.ts（現行）
-export const LEGACY_DEV_USER_ID = "local-dev-user"; // 付け替え用。実行時書き込みには使わない
 export const DEFAULT_PRESET_KEY = "paint";
 export const STATUS1_OPTIONS = ["満タン", "余裕あり", "半分", "残少", "要補充"] as const;
 ```
@@ -804,7 +803,7 @@ src/components/auth/
 - [x] API / ページで `requireUser*`（uid で一覧・更新を絞る）
 - [x] `ADMIN_EMAIL` 制限（§13 でゲート廃止予定。管理者概念は残す）
 - [x] env 正規化（URL に `/rest/v1` を付けない）
-- [ ] 既存 `local-dev-user` … 一般利用可能後にコード・データ削除（§13.5）
+- [x] 既存 `local-dev-user` … コード・データ削除済み（§13.5）
 
 ---
 
@@ -880,7 +879,7 @@ Proxy の公開パス: `/login` / `/signup` / リセット関連 / `/auth`
 | 4〜5 | ゲート解除・表示名 |
 | 6 | パスワードリセット |
 | 7〜8 | 通し確認・学習メモ |
-| 9 | `local-dev-user` 削除（安定後） |
+| 9 | `local-dev-user` 削除（完了） |
 
 任意（本 Phase の外）: 一括 API、ページネーション、`status2`/`3`、カテゴリ探索、OAuth
 
@@ -891,7 +890,7 @@ Proxy の公開パス: `/login` / `/signup` / リセット関連 / `/auth`
 - [x] C: 既存ログイン＋最小登録
 - [x] username = **必須**・一意。表示＋DB 照合用（ログイン非使用）。null にしない
 - [x] `local-dev-user` は一般利用可能後に削除してよい
-- [x] 実装チェック（§13.5／工程表 U1〜U11）
+- [x] 実装チェック（§13.5／工程表 U1〜U13）
 
 ---
 
