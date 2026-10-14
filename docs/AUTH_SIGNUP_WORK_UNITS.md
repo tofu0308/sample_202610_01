@@ -16,8 +16,8 @@
 
 | 単位 | 内容 | 終わりの目安 | 学びどころ | 状態 |
 | --- | --- | --- | --- | --- |
-| **U1** | `Profile` モデル＋ migrate ＋ `generate` | Prisma／Studio でテーブルが見える | schema・一意制約・migrate | 未 |
-| **U2** | username の zod（必須・形式） | ユニットテストが通る | 境界検証を先に切る | 未 |
+| **U1** | `Profile` モデル＋ migrate ＋ `generate` | Prisma／Studio でテーブルが見える | schema・一意制約・migrate | **完了** |
+| **U2** | username の zod（必須・形式） | ユニットテストが通る | 境界検証を先に切る | **完了** |
 | **U3** | `/signup` 画面（フォーム） | 3 項目のフォームが動く | Client フォーム、login との揃え | 未 |
 | **U4** | `signUp` 結線（`user_metadata` に username）＋確認待ち文言 | メールが飛び、未確認の案内が出る | Supabase `signUp` | 未 |
 | **U5** | `/auth/callback` ＋ Proxy 公開パス | 確認リンクでセッションが立つ | code 交換・Redirect URL | 未 |
@@ -37,4 +37,4 @@
 
 ## いまの次
 
-**U1** から着手。
+**U3**（`/signup` 画面フォーム）

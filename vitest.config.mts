@@ -20,7 +20,10 @@ export default defineConfig({
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "./coverage",
       // 境界検証（zod）をカバレッジ対象にする。API Route 自体はここでは測らない
-      include: ["src/lib/items/item-schemas.ts"],
+      include: [
+        "src/lib/items/item-schemas.ts",
+        "src/lib/auth/profile-schemas.ts",
+      ],
       exclude: [
         "src/**/*.test.ts",
         "src/**/__tests__/**",

@@ -32,7 +32,7 @@ model Product {
 /// ユーザーが登録した 1 件。メモ・ステータス・残量など「状態」はこちら
 model UserItem {
   id        String  @id @default(cuid())
-  /// 誰の登録か。いまはサーバ定数。ログイン導入後は Auth のユーザー ID に差し替える
+  /// 誰の登録か。Supabase Auth の uid（人が選ぶ username ではない）
   userId    String
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -50,4 +50,15 @@ model UserItem {
   @@unique([userId, productId])
   @@index([userId])
   @@index([userId, presetKey])
+}
+
+/// Auth ユーザーの表示用プロフィール。所持（UserItem）とは分離する
+model Profile {
+  id         String   @id @default(cuid())
+  /// Supabase Auth の uid
+  authUserId String   @unique
+  /// 登録時必須の表示・照合用 ID（ログインには使わない）
+  username   String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
