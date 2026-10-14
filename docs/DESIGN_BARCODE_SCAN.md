@@ -1,24 +1,27 @@
-# 設計書（一時）: スマホ QR / バーコード読み取り → 画面表示
+# 設計書（一時）: バーコード起点の個人インベントリ（消耗品）
 
 > **一時メモ（削除前提）**  
 > 設計・進捗の作業用。方針が学習メモへ移ったあと、または機能が落ち着いたら **このファイルごと削除する**。  
 > 恒久ドキュメントではない。秘密情報（接続文字列・キーの値）は書かない。
 
-進捗は本ファイルのチェックリストとセッションの TODO で管理する。  
-最終更新: 2026-10-08（§11.10 編集を必須として追加。3a のあと）
+進捗は本ファイルのチェックリストと学習メモで管理する。  
+学習メモ: `C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md`  
+最終更新: 2026-10-14（Phase 3/4 完了反映・次は一般ユーザー登録）
 
 ---
 
 ## 1. 目的
 
-スマホのカメラで QR コード / バーコードを読み取り、その内容をアプリ上に表示する。  
-商品マスタ登録・認証・PC ハンディスキャナ本対応は **本フェーズの対象外**。
+バーコードで商品を調べ、所持を DB に登録し、残量・メモを管理する学習用アプリ（当面は消耗品メイン）。
 
-学習ポイント:
+到達済み: **スキャン → Yahoo 照会 → 登録 → 一覧編集 → 管理者ログイン**。  
+未着手の大きい塊: **一般ユーザー向け登録フロー**、旧 `local-dev-user` データの付け替え確認。
+
+学習ポイント（累積）:
 
 - Client Component でのデバイス API（カメラ）利用
-- 読取結果の型と画面反映
-- 実機（HTTPS）での権限・動作確認
+- Route Handler + zod + Prisma（境界検証・所持 CRUD）
+- Supabase Auth（Proxy・`ADMIN_EMAIL`・uid でデータ分離）
 
 ---
 
@@ -283,10 +286,11 @@ type ProductLookupResponse =
 | Phase | 内容 | 状態 |
 |---|---|---|
 | 1 | カメラ読取 → 画面表示 | **完了** |
-| 2 | Yahoo JAN 照会 → 商品名表示 | **実装済**（実機・env は運用側） |
-| 2.5 | 連続スキャン | **実装済**（下記 §9c） |
-| 3 | 所持の DB 管理・汎用モデル（下記 §11） | **設計中** |
-| 4 | 認証（ログイン・ユーザー別データ） | 未着手（Phase 3 のあと） |
+| 2 | Yahoo JAN 照会 → 商品名表示 | **完了** |
+| 2.5 | 連続スキャン | **完了** |
+| 3 | 所持の DB 管理・一覧編集（下記 §11） | **完了**（3c カテゴリ探索・status2/3 本利用は任意で未） |
+| 4 | 認証（管理者ログイン・uid 分離） | **完了**（公開サインアップは未。下記 §12） |
+| 4.5 | 一般ユーザー向け登録フロー | **次の主作業** |
 | 5 | PC ハンディスキャナ本対応 | 未着手 |
 | - | 未ヒット用の自前マスタ拡充 | 任意 |
 | - | アフィリエイト | **当面なし** |
@@ -363,20 +367,18 @@ type ProductLookupResponse =
 
 ## 10. エージェント向けメモ
 
-- Note モデル / API / UI は削除済み（2026-10-08）。`UserItem.note` は登録のコメント欄として残置
-- Phase 2 は Route Handler 経由で Yahoo API（`YAHOO_APP_ID` はサーバのみ）
-- アフィリエイト用パラメータは付けない
-- Open Food Facts / 楽天は使わない（方針変更済み）
-- カテゴリは **塗料配下だけ**階層 API。全カテゴリの一括取得・DB 全件保存はしない
-- 認証は Phase 3（DB・所持）のあと。スキーマは `userId` を見据える
+- Note モデル / API / UI は削除済み。`UserItem.note` はメモ欄として残置
+- Yahoo 照会は Route Handler 経由（`YAHOO_APP_ID` はサーバのみ）。アフィリエイトなし
+- カテゴリは **塗料配下だけ**階層 API（未実装・任意）。全カテゴリの一括取得・DB 全件保存はしない
+- 認証は **管理者ログインまで完了**。公開サインアップはこれから（§12 / §13）
+- `UserItem.userId` は Auth uid。旧 `local-dev-user` 行の付け替えが残っている場合あり
 - 専用 `/scan` は作らない（この設計の範囲）
 - カメラはボタン操作後に起動する（マウント時の自動起動はしない）
-- Client 肥大化時は hooks / lib 分離（`react-client-hooks.mdc`）
-- 連続リスト → Phase 3a の一括登録に繋げる想定
-- 秘密情報をチャットや commit に出さない
-- Next.js は通常と違う点あり → 必要なら `node_modules/next/dist/docs/` と `AGENTS.md` を確認
-- 破壊的操作は確認してから
-- 進捗を進めたら **本ファイルのチェックを更新**する
+- Client 肥大化時は hooks / lib 分離。無関係なリファクタはしない
+- MCP Supabase は read-only。DB 変更は Prisma migrate
+- 秘密情報をチャットや commit に出さない。commit / push は明示時のみ
+- Next.js 16 → `AGENTS.md` と `node_modules/next/dist/docs/`（Proxy は `src/proxy.ts`）
+- 進捗を進めたら **本ファイルのチェックと学習メモを更新**する
 
 ---
 
@@ -538,13 +540,13 @@ model UserItem {
 
 | Step | 内容 | 状態 |
 |---|---|---|
-| **3a** | `Product` + `UserItem` migrate。スキャン／照会成功 → 登録。一覧・削除。登録時は note/status は null | 未着手 |
-| **3b** | **編集（必須）**: `note` + `status1`（一覧から）。`status2`/`status3`・`remaining`・登録済み検索は同 Step で任意／後回し可 | 未着手 |
-| **3c** | カテゴリ階層ブラウズ＋複数選択一括登録（初期は塗料） | 未着手 |
-| **3d** | ステータスプリセット（候補・ラベル）。消耗/永続モード切替は任意 | 未着手 |
-| **4** | Supabase Auth 等。仮 `userId` を本番 uid に置換。認可 | 未着手 |
+| **3a** | `Product` + `UserItem` migrate。スキャン／照会成功 → 登録。一覧・削除 | **完了** |
+| **3b** | 編集: `note` + `status1`。検索・一括操作・残量プリセット／バーも実装済み | **完了**（`status2`/`3`・`remaining` 列の本利用は任意で未） |
+| **3c** | カテゴリ階層ブラウズ＋複数選択一括登録（初期は塗料） | 未着手（任意） |
+| **3d** | 用途別ステータスプリセット拡張。消耗/永続モード切替は任意 | 一部済み（残量プリセット）。用途切替は未 |
+| **4** | Supabase Auth。仮 `userId` を Auth uid に。認可 | **管理者ログインまで完了**（§12）。一般登録は §13 |
 
-優先: **3a（登録まで）→ 3b（編集）→ 認証（4）**。編集は登録が終わってからでよいが、コメント・ステータスがある以上 **3b は必須**。プリセット UI は 3d。
+優先（当初）: 3a → 3b → 4。**いまの次**: 一般ユーザー登録（§13）と旧データの付け替え確認。
 
 ### 11.8 進捗チェックリスト（Phase 3）
 
@@ -559,16 +561,18 @@ model UserItem {
 - [ ] `remaining` を自由記述か数値かを決定
 - [ ] 各 preset の status 候補値・ラベル（3d。例: book = 未読 / 読書中 / 読了）
 
-### 実装（3a 以降・未着手）
+### 実装（3a / 3b）
 
 - [x] Prisma migrate（`Product` / `UserItem`）→ `20261008025638_add_product_user_item`
 - [x] 登録・一覧・削除 API（`/api/items` GET/POST、`/api/items/[id]` DELETE）
-- [x] 登録一覧 UI（表示・削除。編集はあとで）
-- [x] スキャン成功 → 登録導線（単体・連続。PC は手動 JAN で確認可）
-- [x] （必須）`note` / `status1` 編集 API + UI（表のインライン編集）
-- [ ] （任意）`remaining`・`status2`/`3`・登録済み検索
+- [x] `PATCH /api/items/[id]`（`note` / `status1`）
+- [x] 登録一覧 UI（表・ソート・削除・インライン編集）
+- [x] スキャン成功 → 登録導線（単体・連続。まとめて登録は単件 POST 連打）
+- [x] 残量プリセット／バー、メモバルーン、更新日 JST、フリーワード検索、一括選択・適用・削除
+- [ ] （任意）一括 API（いまは 1 件ずつ PATCH/DELETE）
+- [ ] （任意）`remaining`・`status2`/`3` の本利用・ページネーション
 - [ ] （3c）カテゴリ階層＋複数選択登録
-- [ ] （3d）ステータスプリセット UI / 設定
+- [ ] （3d）用途別プリセット拡張
 
 ### 11.9 Phase 3a 実装設計（改修用）
 
@@ -583,18 +587,19 @@ model UserItem {
 | 照会成功 → 所持登録 | 連続リストからの一括登録（単件ボタンのみ） |
 | 所持一覧・削除 | 未ヒットの手動マスタ登録 |
 | 一覧で note/status は表示のみ可（多くは null） | プリセット切替・永続系モード（3d） |
-| 仮 `userId` 定数 | 認証（Phase 4） |
+| 仮 `userId` 定数（当時） | 認証（Phase 4・管理者まで完了） |
 | | Yahoo 再照会を登録時に必須にしない |
 
 #### 11.9.2 定数
 
 ```ts
-// src/lib/items/constants.ts（案）
-export const DEV_USER_ID = "local-dev-user"; // Phase 4 で Auth uid に置換
-export const DEFAULT_PRESET_KEY = "paint";   // 消耗品・初期ユースケース
+// src/lib/items/constants.ts（現行）
+export const LEGACY_DEV_USER_ID = "local-dev-user"; // 付け替え用。実行時書き込みには使わない
+export const DEFAULT_PRESET_KEY = "paint";
+export const STATUS1_OPTIONS = ["満タン", "余裕あり", "半分", "残少", "要補充"] as const;
 ```
 
-- クライアントに秘密は置かない。仮 userId はサーバ側で付与（ボディで受け取らない）
+- クライアントに秘密は置かない。`userId` はサーバが Auth uid を付与（ボディで受け取らない）
 
 #### 11.9.3 登録時のデータ流れ
 
@@ -603,7 +608,7 @@ export const DEFAULT_PRESET_KEY = "paint";   // 消耗品・初期ユースケ�
   → POST /api/items  { code, name, imageUrl?, brandName?, source }
   → [Server] zod 検証
   → Product upsert by jan（name 等は初回作成時に保存。既存行は jan 以外は当面更新しない）
-  → UserItem create（userId=DEV_USER_ID, presetKey=DEFAULT, status/note/remaining=null）
+  → UserItem create（userId=Auth uid, presetKey=DEFAULT, status/note/remaining=null）
   → 201 { item: UserItem & { product } }
   → 同一 user で同じ JAN が既登録なら 409 { error: "Duplicate JAN for this user", item? }
 ```
@@ -620,7 +625,7 @@ Notes と同様: Route Handler + zod 境界 + `@/lib/prisma`。パスは所持�
 
 | Method | Path | 役割 | 成功 |
 |---|---|---|---|
-| `GET` | `/api/items` | 仮 userId の所持一覧（新しい順、`product` include） | 200 `{ items }` |
+| `GET` | `/api/items` | ログイン中 uid の所持一覧（新しい順、`product` include） | 200 `{ items }` |
 | `POST` | `/api/items` | Product upsert + UserItem 作成 | 201 `{ item }` / 409 登録済み JAN 重複 |
 | `DELETE` | `/api/items/[id]` | UserItem 削除（Product は残す） | 200 `{ ok: true }` / 404 |
 
@@ -661,7 +666,7 @@ Notes と同様: Route Handler + zod 境界 + `@/lib/prisma`。パスは所持�
 }
 ```
 
-- DELETE は `UserItem.id`。他ユーザー分は Phase 4 まで厳密認可しないが、削除前に `userId === DEV_USER_ID` を見て 404 に寄せる（学習用の最小ガード）
+- DELETE / PATCH は `UserItem.id` + ログイン中 uid 一致（なければ 404）
 - Product を消さない理由: 再登録時にマスタを再利用できる
 
 #### 11.9.5 UI
@@ -720,7 +725,7 @@ src/app/page.tsx                  # 所持一覧のサーバ取得
 
 - [x] API パス・メソッド・ステータス（201 / 409 / 404）
 - [x] POST はクライアント照会スナップショット。Product 既存時は name 非上書き
-- [x] 仮 userId はサーバ定数。連続は単件登録のみ
+- [x] userId はサーバが Auth uid を付与。連続は単件登録のみ（当時は仮定数）
 - [x] UI: 登録ボタン + 一覧・削除。編集は 3b（必須）
 - [x] 本節承認。小項目ずつ実装（まず schema）
 
@@ -748,9 +753,9 @@ src/app/page.tsx                  # 所持一覧のサーバ取得
 }
 ```
 
-- 存在確認 + `userId === DEV_USER_ID`（なければ 404）
+- 存在確認 + `userId ===` ログイン中 uid（なければ 404）
 - 成功 200 `{ item }`（product include）
-- 3a の `[id]/route.ts` に PATCH を足す（Notes の `[id]` と同じ型）
+- `[id]/route.ts` に PATCH あり
 
 #### UI（案）
 
@@ -763,3 +768,55 @@ src/app/page.tsx                  # 所持一覧のサーバ取得
 - [x] 編集は 3a の後・必須（note + status1）
 - [x] PATCH を `[id]` に追加。status2/3・remaining・検索は任意
 - [x] `PATCH /api/items/[id]` + 一覧表の編集 UI を実装
+- [x] 一覧強化（残量バー・検索・一括操作・スキャン UI 簡略化）まで完了（詳細は学習メモ §12）
+
+---
+
+## 12. Phase 4 — 管理者ログイン（完了）
+
+公開サインアップはまだ。**管理者だけログインできる**状態まで実装済み（2026-10-08）。
+
+### 方針（実装済み）
+
+| 項目 | 内容 |
+|---|---|
+| Auth | Supabase Auth（メール／パスワード） |
+| 登録 UI | **なし**（Dashboard でユーザー作成） |
+| 制限 | `ADMIN_EMAIL` と一致するメールだけ利用可（未設定ならログイン済みなら誰でも可） |
+| データ | `UserItem.userId` = Auth **uid** |
+| 入口 | `/login`。未ログインは `src/proxy.ts` で誘導。ログアウトあり |
+
+### 主なコード
+
+```text
+src/proxy.ts
+src/lib/supabase/          # browser / server / proxy / env
+src/lib/auth/require-user.ts
+src/app/login/
+src/app/logout/
+src/components/auth/
+```
+
+### チェック
+
+- [x] セッション更新 Proxy + 未ログイン → `/login`
+- [x] ログイン／ログアウト UI
+- [x] API / ページで `requireUser*`（uid で一覧・更新を絞る）
+- [x] `ADMIN_EMAIL` 制限
+- [x] env 正規化（URL に `/rest/v1` を付けない）
+- [ ] 既存 `local-dev-user` 行の付け替え確認（残件。学習メモ §4）
+
+---
+
+## 13. 次にやること（2026-10-14）
+
+| 優先 | 内容 | 備考 |
+|---|---|---|
+| 1 | 一般ユーザー向け登録フロー | サインアップ UI・メール確認・`ADMIN_EMAIL` との役割分担 |
+| 2 | `local-dev-user` → Auth uid 付け替え | 空一覧の典型原因。MCP は read-only のため SQL は手元／Dashboard |
+| 3 | （任意）一括 API | いまはクライアントから単件連打 |
+| 4 | （任意）ページネーション、`status2`/`3`、カテゴリ探索（3c） | |
+
+大規模リファクタは不要。登録フロー追加時に認可の役割分担を整理すればよい。
+
+詳細・環境・MCP 状況は学習メモ `課題対応_20261014.md` を正とする。

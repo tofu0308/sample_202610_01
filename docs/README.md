@@ -5,7 +5,9 @@
 
 | ファイル | 用途 |
 |---|---|
-| `DESIGN_BARCODE_SCAN.md` | スキャン〜塗料所持の設計・チェックリスト |
+| `DESIGN_BARCODE_SCAN.md` | スキャン〜所持・認証の設計・チェックリスト（2026-10-14 更新） |
 | `HANDOFF_NEXT_SESSION.md` | 次セッション向け引き継ぎ |
+
+学習メモ（リポ外）: `C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md`
 
 秘密情報（接続文字列・API キーの値など）は書かない。`.env` のみに置く。
