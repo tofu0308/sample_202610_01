@@ -34,7 +34,7 @@ export async function GET() {
 
 /**
  * 商品照会の結果を受け取り、商品マスタを用意したうえで登録行を作る。
- * すでに同じ JAN のマスタがある場合、名前などは上書きしない。
+ * 同じ JAN のマスタがあれば表示用フィールドを更新する（§16・lookup と同方針）。
  * 同じユーザーで同じ JAN が登録済みなら 409。
  */
 export async function POST(request: Request) {
@@ -56,16 +56,20 @@ export async function POST(request: Request) {
 
     const { code, name, brandName, imageUrl, source } = parsed.data;
 
+    // lookup 経路の toProductUpsertArgs と同じ更新方針
+    const productFields = {
+      name,
+      brandName: brandName ?? null,
+      imageUrl: imageUrl ?? null,
+      source,
+    };
     const product = await prisma.product.upsert({
       where: { jan: code },
       create: {
         jan: code,
-        name,
-        brandName: brandName ?? null,
-        imageUrl: imageUrl ?? null,
-        source,
+        ...productFields,
       },
-      update: {},
+      update: productFields,
     });
 
     const existing = await prisma.userItem.findUnique({

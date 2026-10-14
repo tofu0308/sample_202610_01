@@ -1,11 +1,14 @@
 /**
  * JAN / バーコードから商品情報を照会する API（Route Handler）。
  * 入力は zod、外部呼び出しは Yahoo!ショッピング（サーバ側のみ）。アフィは使わない。
+ * ヒット時は既存 Product マスタの表示用フィールドも更新する（設計書 §16）。
  */
 
 import { NextResponse } from "next/server";
 import { requireUserForApi } from "@/lib/auth/require-user";
+import { prisma } from "@/lib/prisma";
 import { productLookupSchema } from "@/lib/products/product-lookup-schemas";
+import { syncProductFromLookupResult } from "@/lib/products/sync-product-from-lookup";
 import {
   lookupProductByJan,
   YahooShoppingConfigError,
@@ -31,6 +34,16 @@ export async function POST(request: Request) {
     }
 
     const result = await lookupProductByJan(parsed.data.code);
+
+    // マスタ同期失敗でも照会結果は返す（画面の確認を優先）
+    try {
+      await syncProductFromLookupResult(result, (args) =>
+        prisma.product.upsert(args),
+      );
+    } catch (syncError) {
+      console.error("POST /api/products/lookup product sync", syncError);
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof YahooShoppingConfigError) {
