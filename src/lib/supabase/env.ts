@@ -27,7 +27,10 @@ export function getSupabaseEnv(): { url: string; anonKey: string } {
   return { url, anonKey };
 }
 
-/** 管理者として許可するメール（未設定ならログイン済みなら誰でも可・学習用） */
+/**
+ * 管理者メール（将来の管理操作向け）。
+ * アプリ利用のゲートには使わない（ログイン済みなら誰でも可）。
+ */
 export function getAdminEmail(): string | null {
   const value = process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? "";
   return value === "" ? null : value;

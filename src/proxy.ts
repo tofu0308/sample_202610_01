@@ -1,10 +1,10 @@
 /**
  * Next.js 16 Proxy（旧 middleware）。
- * セッション更新と、未ログイン時の /login 誘導（管理者向け最小ガード）。
+ * セッション更新と、未ログイン時の /login 誘導。
+ * アプリ利用は「ログイン済み」なら可（ADMIN_EMAIL ゲートは使わない）。
  */
 
 import { NextResponse, type NextRequest } from "next/server";
-import { getAdminEmail } from "@/lib/supabase/env";
 import { updateSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
@@ -19,19 +19,18 @@ export async function proxy(request: NextRequest) {
   try {
     const { supabaseResponse, user } = await updateSession(request);
 
-    const adminEmail = getAdminEmail();
-    const emailOk =
-      adminEmail == null ||
-      (user?.email ?? "").toLowerCase() === adminEmail;
-
-    if ((!user || !emailOk) && !isPublic) {
+    if (!user && !isPublic) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }
 
-    if (user && emailOk && pathname.startsWith("/login")) {
+    // ログイン済みなら login / signup には留めない
+    if (
+      user &&
+      (pathname.startsWith("/login") || pathname.startsWith("/signup"))
+    ) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       url.search = "";

@@ -1,25 +1,19 @@
 /**
- * ログイン中ユーザーの取得と管理者メールの制限。
- * UserItem.userId には Auth の uid を使う（仮定数 DEV_USER_ID の置き換え）。
+ * ログイン中ユーザーの取得（アプリ利用はログイン済みなら可）。
+ * UserItem.userId には Auth の uid を使う。
+ * Profile が無ければ metadata の username から補完作成を試みる。
+ * ADMIN_EMAIL はゲートに使わない（将来の管理用途向けに env 側へ残置）。
  */
 
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
-import { getAdminEmail } from "@/lib/supabase/env";
+import { ensureProfileForAuthUser } from "@/lib/auth/ensure-profile";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthUser = {
   id: string;
   email: string | null;
 };
-
-function isAllowedAdmin(email: string | null): boolean {
-  const adminEmail = getAdminEmail();
-  if (adminEmail == null) {
-    return true;
-  }
-  return (email ?? "").toLowerCase() === adminEmail;
-}
 
 export async function getAuthUser(): Promise<AuthUser | null> {
   const supabase = await createClient();
@@ -30,9 +24,9 @@ export async function getAuthUser(): Promise<AuthUser | null> {
   if (!user) {
     return null;
   }
-  if (!isAllowedAdmin(user.email ?? null)) {
-    return null;
-  }
+
+  // ページ／API 到達時にも補完（確認リンクを既に踏んだユーザー向け）。失敗しても認可は続行
+  await ensureProfileForAuthUser(user);
 
   return { id: user.id, email: user.email ?? null };
 }
