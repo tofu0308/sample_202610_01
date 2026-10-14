@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import {
   signupFormSchema,
+  updatePasswordFormSchema,
   usernameSchema,
 } from "@/lib/auth/profile-schemas";
 
@@ -69,3 +70,23 @@ describe("signupFormSchema", () => {
     ).toBe(false);
   });
 });
+
+describe("updatePasswordFormSchema", () => {
+  it("一致する6文字以上なら成功する", () => {
+    const parsed = updatePasswordFormSchema.safeParse({
+      password: "secret1",
+      confirmPassword: "secret1",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("不一致は拒否する", () => {
+    expect(
+      updatePasswordFormSchema.safeParse({
+        password: "secret1",
+        confirmPassword: "secret2",
+      }).success,
+    ).toBe(false);
+  });
+});
+

@@ -8,6 +8,14 @@ import { z } from "zod";
 /** 画面の maxLength やエラー文言と揃えるための定数 */
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 20;
+export const PASSWORD_MIN_LENGTH = 6;
+
+const PASSWORD_MIN_MESSAGE = `パスワードは${PASSWORD_MIN_LENGTH}文字以上です`;
+
+/** 登録・再設定で共通のパスワード欄（長さルールを一箇所に） */
+const passwordSchema = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH, { message: PASSWORD_MIN_MESSAGE });
 
 /**
  * 登録時必須のユーザーID。
@@ -39,10 +47,24 @@ export const signupFormSchema = z.object({
     .trim()
     .min(1, { message: "Emailは必須です" })
     .email({ message: "Emailの形式が正しくありません" }),
-  password: z
-    .string()
-    .min(6, { message: "パスワードは6文字以上です" }),
+  password: passwordSchema,
   username: usernameSchema,
 });
 
 export type SignupFormValues = z.infer<typeof signupFormSchema>;
+
+/** 新パスワード設定（リセット後／任意の変更）。確認入力と一致させる */
+export const updatePasswordFormSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z
+      .string()
+      .min(1, { message: "確認用パスワードを入力してください" }),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "パスワードが一致しません",
+    path: ["confirmPassword"],
+  });
+
+export type UpdatePasswordFormValues = z.infer<typeof updatePasswordFormSchema>;
+

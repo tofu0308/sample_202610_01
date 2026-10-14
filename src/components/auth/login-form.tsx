@@ -85,6 +85,14 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
           className={authInputClassName}
         />
       </label>
+      <p className="text-right text-sm">
+        <Link
+          href="/forgot-password"
+          className="font-medium text-zinc-300 underline underline-offset-2 hover:text-zinc-100"
+        >
+          パスワードを忘れた場合
+        </Link>
+      </p>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       <button
         type="submit"

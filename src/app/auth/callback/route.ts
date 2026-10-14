@@ -1,7 +1,8 @@
 /**
  * Auth コールバック（公開）。
- * 確認メール／将来のリセットリンクの code をセッション Cookie に交換し、
+ * 確認メール／パスワードリセットの code をセッション Cookie に交換し、
  * 続けて Profile（username）を用意する。
+ * リセット時は next=/update-password で新パスワード画面へ。
  */
 
 import { NextResponse } from "next/server";

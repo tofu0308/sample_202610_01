@@ -10,10 +10,11 @@ import { updateSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 静的資産などは matcher で除外。ログイン・登録・auth コールバックは公開
+  // 静的資産などは matcher で除外。ログイン・登録・リセット依頼・auth コールバックは公開
   const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/auth");
 
   try {
@@ -26,10 +27,12 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // ログイン済みなら login / signup には留めない
+    // ログイン済みなら login / signup / リセット依頼には留めない
     if (
       user &&
-      (pathname.startsWith("/login") || pathname.startsWith("/signup"))
+      (pathname.startsWith("/login") ||
+        pathname.startsWith("/signup") ||
+        pathname.startsWith("/forgot-password"))
     ) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
