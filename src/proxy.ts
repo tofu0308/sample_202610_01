@@ -10,9 +10,11 @@ import { updateSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 静的資産などは matcher で除外。auth コールバックは将来用に通す
+  // 静的資産などは matcher で除外。ログイン・登録・auth コールバックは公開
   const isPublic =
-    pathname.startsWith("/login") || pathname.startsWith("/auth");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/auth");
 
   try {
     const { supabaseResponse, user } = await updateSession(request);

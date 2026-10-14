@@ -1,11 +1,21 @@
 "use client";
 
 /**
- * メール／パスワードでログイン。成功後は nextPath へ。
+ * Email／パスワードでログイン。成功後は nextPath へ。
  */
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import {
+  AUTH_LABEL_EMAIL,
+  AUTH_LABEL_PASSWORD,
+  authFieldClassName,
+  authFooterLinkClassName,
+  authFormClassName,
+  authInputClassName,
+  authLabelClassName,
+} from "@/components/auth/form-styles";
 import { createClient } from "@/lib/supabase/client";
 
 type LoginFormProps = {
@@ -47,9 +57,12 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
-      <label className="block space-y-1 text-sm">
-        <span className="font-medium text-zinc-800">メール</span>
+    <form
+      onSubmit={(event) => void handleSubmit(event)}
+      className={authFormClassName}
+    >
+      <label className={authFieldClassName}>
+        <span className={authLabelClassName}>{AUTH_LABEL_EMAIL}</span>
         <input
           type="email"
           name="email"
@@ -57,11 +70,11 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base outline-none focus:border-zinc-500 md:text-sm"
+          className={authInputClassName}
         />
       </label>
-      <label className="block space-y-1 text-sm">
-        <span className="font-medium text-zinc-800">パスワード</span>
+      <label className={authFieldClassName}>
+        <span className={authLabelClassName}>{AUTH_LABEL_PASSWORD}</span>
         <input
           type="password"
           name="password"
@@ -69,17 +82,26 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base outline-none focus:border-zinc-500 md:text-sm"
+          className={authInputClassName}
         />
       </label>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="text-sm text-red-400">{error}</p> : null}
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="w-full rounded-md bg-zinc-100 px-3 py-2.5 text-sm font-medium text-zinc-900 disabled:opacity-50"
       >
         {pending ? "ログイン中…" : "ログイン"}
       </button>
+      <p className={authFooterLinkClassName}>
+        アカウントがない場合は{" "}
+        <Link
+          href="/signup"
+          className="font-medium text-zinc-100 underline underline-offset-2"
+        >
+          新規登録
+        </Link>
+      </p>
     </form>
   );
 }

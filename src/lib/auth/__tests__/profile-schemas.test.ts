@@ -4,7 +4,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { usernameSchema } from "@/lib/auth/profile-schemas";
+import {
+  signupFormSchema,
+  usernameSchema,
+} from "@/lib/auth/profile-schemas";
 
 describe("usernameSchema", () => {
   it("英数字とアンダースコアなら成功し、小文字に揃える", () => {
@@ -36,5 +39,33 @@ describe("usernameSchema", () => {
   it("記号や日本語は拒否する", () => {
     expect(usernameSchema.safeParse("user-name").success).toBe(false);
     expect(usernameSchema.safeParse("ユーザー").success).toBe(false);
+  });
+});
+
+describe("signupFormSchema", () => {
+  const valid = {
+    email: "user@example.com",
+    password: "secret1",
+    username: "demo_user",
+  };
+
+  it("必須3項目が揃えば成功する", () => {
+    const parsed = signupFormSchema.safeParse(valid);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.username).toBe("demo_user");
+    }
+  });
+
+  it("不正な Email は拒否する", () => {
+    expect(
+      signupFormSchema.safeParse({ ...valid, email: "not-an-email" }).success,
+    ).toBe(false);
+  });
+
+  it("短いパスワードは拒否する", () => {
+    expect(
+      signupFormSchema.safeParse({ ...valid, password: "12345" }).success,
+    ).toBe(false);
   });
 });

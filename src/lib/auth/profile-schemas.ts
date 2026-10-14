@@ -31,3 +31,18 @@ export const usernameSchema = z
   });
 
 export type Username = z.infer<typeof usernameSchema>;
+
+/** 登録フォーム（Email・パスワード・ユーザーID）。Auth 送信前のクライアント検証にも使う */
+export const signupFormSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, { message: "Emailは必須です" })
+    .email({ message: "Emailの形式が正しくありません" }),
+  password: z
+    .string()
+    .min(6, { message: "パスワードは6文字以上です" }),
+  username: usernameSchema,
+});
+
+export type SignupFormValues = z.infer<typeof signupFormSchema>;
