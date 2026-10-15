@@ -1,7 +1,11 @@
 /**
- * 全画面スキャナ（portal 先の中身）。連続時は件数＋直近のみでカメラ領域を確保する。
+ * 全画面スキャナ（portal 先のシェル）。
+ * ヘッダ／単体フッタ／連続フッタに分け、ここは組み立てと離脱アクションの振り分けだけ担う。
  */
 
+import { ScanOverlayContinuousFooter } from "@/components/scan/scan-overlay-continuous-footer";
+import { ScanOverlayHeader } from "@/components/scan/scan-overlay-header";
+import { ScanOverlaySingleFooter } from "@/components/scan/scan-overlay-single-footer";
 import type { ContinuousScanEntry, ProductLookupResult, ScanResult } from "@/lib/scan/types";
 
 type ScanOverlayProps = {
@@ -53,9 +57,6 @@ export function ScanOverlay({
       ? onDismissToResults
       : onCancel;
 
-  const singleLookupDone =
-    singleHasResult && !lookupPending && (product !== null || lookupError !== null);
-
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col bg-black text-white"
@@ -63,126 +64,50 @@ export function ScanOverlay({
       aria-modal="true"
       aria-label={isContinuous ? "連続バーコードスキャン" : "バーコードスキャン"}
     >
-      <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
-        <p className="text-sm font-medium">
-          {starting
-            ? "カメラ起動中…"
-            : isContinuous
-              ? `連続読取（${continuousEntries.length} 件）`
-              : result
-                ? lookupPending
-                  ? "商品を照会しています…"
-                  : "読取完了"
-                : "コードを枠に合わせてください"}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            void onHeaderAction();
-          }}
-          className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
-        >
-          {headerActionLabel}
-        </button>
-      </header>
+      <ScanOverlayHeader
+        isContinuous={isContinuous}
+        starting={starting}
+        continuousCount={continuousEntries.length}
+        hasSingleResult={singleHasResult}
+        lookupPending={lookupPending}
+        actionLabel={headerActionLabel}
+        onAction={() => {
+          void onHeaderAction();
+        }}
+      />
 
       <div
         id={regionId}
         className="min-h-0 flex-1 basis-0 overflow-hidden [&_img]:mx-auto [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
       />
 
-      <footer className="shrink-0 space-y-2 bg-black/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {cameraError ? (
-          <p className="text-sm text-red-300">{cameraError}</p>
-        ) : null}
-
-        {isContinuous ? (
-          <div className="space-y-2 text-sm">
-            {duplicateNotice ? (
-              <p
-                className="rounded bg-amber-500/20 px-2 py-1.5 text-amber-100"
-                role="status"
-              >
-                {duplicateNotice}
-              </p>
-            ) : (
-              <p className="text-zinc-400">
-                {starting
-                  ? "しばらくお待ちください"
-                  : scanning
-                    ? "読取待機中…重複したJANコードは登録しません"
-                    : null}
-              </p>
-            )}
-            {latestContinuousEntry ? (
-              <p className="truncate rounded bg-white/10 px-2 py-1.5 font-mono text-xs text-white">
-                直近: {latestContinuousEntry.code}
-                {latestContinuousEntry.product?.found === true
-                  ? ` — ${latestContinuousEntry.product.name}`
-                  : latestContinuousEntry.lookupStatus === "loading" ||
-                      latestContinuousEntry.lookupStatus === "pending"
-                    ? " …"
-                    : latestContinuousEntry.product?.found === false
-                      ? " — 商品なし"
-                      : latestContinuousEntry.lookupError
-                        ? " — エラー"
-                        : ""}
-                {continuousLookupActive ? "（照会中）" : ""}
-              </p>
-            ) : null}
-            {/* 主操作はフッタのみ。ヘッダは「閉じる」表記 */}
-            <button
-              type="button"
-              onClick={() => {
-                void onFinishContinuous();
-              }}
-              className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
-            >
-              読取を終了（{continuousEntries.length} 件）
-            </button>
-          </div>
-        ) : result ? (
-          <div className="space-y-2 text-sm">
-            <p className="font-medium text-emerald-300">読み取りました</p>
-            <p className="break-all font-mono text-white">{result.rawValue}</p>
-            <p className="text-zinc-400">
-              {result.format ?? "不明"} /{" "}
-              {new Date(result.scannedAt).toLocaleString("ja-JP")}
-            </p>
-            {lookupPending ? (
-              <p className="text-zinc-400">照会中…</p>
-            ) : null}
-            {product?.found === true ? (
-              <p className="text-white">{product.name}</p>
-            ) : null}
-            {product?.found === false ? (
-              <p className="text-zinc-400">商品情報なし</p>
-            ) : null}
-            {lookupError ? (
-              <p className="text-red-300">{lookupError}</p>
-            ) : null}
-            {singleLookupDone ? (
-              <button
-                type="button"
-                onClick={() => {
-                  void onDismissToResults();
-                }}
-                className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
-              >
-                結果を見る
-              </button>
-            ) : null}
-          </div>
-        ) : (
-          <p className="text-sm text-zinc-400">
-            {scanning
-              ? "読取待機中…"
-              : starting
-                ? "しばらくお待ちください"
-                : null}
-          </p>
-        )}
-      </footer>
+      {isContinuous ? (
+        <ScanOverlayContinuousFooter
+          starting={starting}
+          scanning={scanning}
+          cameraError={cameraError}
+          duplicateNotice={duplicateNotice}
+          latestEntry={latestContinuousEntry}
+          continuousLookupActive={continuousLookupActive}
+          entryCount={continuousEntries.length}
+          onFinish={() => {
+            void onFinishContinuous();
+          }}
+        />
+      ) : (
+        <ScanOverlaySingleFooter
+          starting={starting}
+          scanning={scanning}
+          cameraError={cameraError}
+          result={result}
+          product={product}
+          lookupPending={lookupPending}
+          lookupError={lookupError}
+          onDismissToResults={() => {
+            void onDismissToResults();
+          }}
+        />
+      )}
     </div>
   );
 }
