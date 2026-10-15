@@ -58,7 +58,7 @@ describe("signupFormSchema", () => {
     }
   });
 
-  it("不正な Email は拒否する", () => {
+  it("不正なメールは拒否する", () => {
     expect(
       signupFormSchema.safeParse({ ...valid, email: "not-an-email" }).success,
     ).toBe(false);

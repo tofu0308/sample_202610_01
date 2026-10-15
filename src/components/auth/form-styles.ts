@@ -3,8 +3,8 @@
  * アプリのダーク寄りのトーンに合わせつつ、ラベルと入力のコントラストを確保する。
  */
 
-/** アドレス欄の表示名（UI は Email に統一） */
-export const AUTH_LABEL_EMAIL = "Email";
+/** アドレス欄の表示名（UI は「メール」に統一） */
+export const AUTH_LABEL_EMAIL = "メール";
 export const AUTH_LABEL_PASSWORD = "パスワード";
 export const AUTH_LABEL_USERNAME = "ユーザーID";
 

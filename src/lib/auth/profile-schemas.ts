@@ -40,13 +40,13 @@ export const usernameSchema = z
 
 export type Username = z.infer<typeof usernameSchema>;
 
-/** 登録フォーム（Email・パスワード・ユーザーID）。Auth 送信前のクライアント検証にも使う */
+/** 登録フォーム（メール・パスワード・ユーザーID）。Auth 送信前のクライアント検証にも使う */
 export const signupFormSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, { message: "Emailは必須です" })
-    .email({ message: "Emailの形式が正しくありません" }),
+    .min(1, { message: "メールは必須です" })
+    .email({ message: "メールの形式が正しくありません" }),
   password: passwordSchema,
   username: usernameSchema,
 });

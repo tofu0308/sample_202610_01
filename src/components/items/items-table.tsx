@@ -24,9 +24,8 @@ export function ItemsTable({ items }: ItemsTableProps) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-zinc-500">
-        表は横スクロールできます（PC
-        では枠内で縦横スクロール・見出し固定）。列見出しで並べ替え（既定は残量）。行を選ぶと上部に一括バーが出ます。メモは行の「編集」から。
+      <p className="text-xs text-zinc-400">
+        列見出しで並べ替え。行を選ぶと一括バーが出ます。メモは「編集」から。
       </p>
       <ItemsTableSearch
         query={table.searchQuery}
@@ -92,7 +91,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
                 メモ
               </th>
               <ItemsTableSortHeader
-                label="JAN"
+                label="JANコード"
                 column="jan"
                 activeKey={table.sortKey}
                 activeDir={table.sortDir}
@@ -157,7 +156,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
         </table>
       </div>
       {table.error ? (
-        <p className="text-sm text-red-600">{table.error}</p>
+        <p className="text-sm text-red-400">{table.error}</p>
       ) : null}
     </div>
   );

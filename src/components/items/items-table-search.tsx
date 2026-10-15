@@ -70,7 +70,7 @@ export function ItemsTableSearch({
               onChange={(event) => onIncludeJanChange(event.target.checked)}
               className="h-3.5 w-3.5 rounded border-zinc-300"
             />
-            JAN
+            JANコード
           </label>
         </div>
       </fieldset>

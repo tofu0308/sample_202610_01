@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Email／パスワードでログイン。成功後は nextPath へ。
+ * メール／パスワードでログイン。成功後は nextPath へ。
  */
 
 import Link from "next/link";

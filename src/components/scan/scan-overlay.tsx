@@ -54,10 +54,10 @@ export function ScanOverlay({
             ? "カメラ起動中…"
             : isContinuous
               ? `連続読取（${continuousEntries.length} 件）`
-              : result
+                  : result
                 ? lookupPending
-                  ? "商品を調べています…"
-                  : "読み取り完了"
+                  ? "商品を照会しています…"
+                  : "読取完了"
                 : "コードを枠に合わせてください"}
         </p>
         <button
@@ -99,7 +99,7 @@ export function ScanOverlay({
                 {starting
                   ? "しばらくお待ちください"
                   : scanning
-                    ? "読み取り待機中…同じ JAN は追加しません"
+                    ? "読取待機中…重複したJANコードは登録しません"
                     : null}
               </p>
             )}
@@ -136,7 +136,7 @@ export function ScanOverlay({
               {new Date(result.scannedAt).toLocaleString("ja-JP")}
             </p>
             {lookupPending ? (
-              <p className="text-zinc-400">商品検索中…</p>
+              <p className="text-zinc-400">照会中…</p>
             ) : null}
             {product?.found === true ? (
               <p className="text-white">{product.name}</p>
@@ -166,7 +166,7 @@ export function ScanOverlay({
         ) : (
           <p className="text-sm text-zinc-400">
             {scanning
-              ? "読み取り待機中…"
+              ? "読取待機中…"
               : starting
                 ? "しばらくお待ちください"
                 : null}

@@ -4,7 +4,7 @@
  * パスワードリセット依頼（公開）。
  * resetPasswordForEmail でメールを送る。
  * リンクは /auth/callback?next=/update-password → 新パスワード画面。
- * 登録の有無は画面に出さない（Email 列挙を避ける）。
+ * 登録の有無は画面に出さない（メール列挙を避ける）。
  */
 
 import Link from "next/link";
@@ -32,7 +32,7 @@ export function ForgotPasswordForm() {
 
     const trimmed = email.trim();
     if (!trimmed) {
-      setError("Emailを入力してください");
+      setError("メールを入力してください");
       setPending(false);
       return;
     }
@@ -65,7 +65,7 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-zinc-200">
-          手続きを受け付けました（{email.trim() || "ご入力の Email"}）。
+          手続きを受け付けました（{email.trim() || "ご入力のメール"}）。
           登録済みの場合は、パスワード再設定用のメールが届きます。
         </p>
         <p className="text-sm leading-relaxed text-zinc-400">

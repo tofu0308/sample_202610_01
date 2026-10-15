@@ -26,41 +26,47 @@ export default async function Home() {
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-6 py-16">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">登録一覧</h1>
-          <p className="text-zinc-600">
-            バーコードで調べた商品を DB に登録する学習用アプリ。API は{" "}
-            <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm">
-              /api/items
-            </code>
+          <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
+            消耗品インベントリ
+          </h1>
+          <p className="text-zinc-400">
+            バーコードで商品をスキャンし、所持状況・残量を管理できます。また、メモを残すことができます。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {/* Profile 必須が正。無い既存管理者はメールにフォールバック（設計書 §13.3） */}
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-zinc-400">
             {user.username
               ? `${user.username} さん`
               : user.email
-                ? `ログイン中: ${user.email}`
-                : "ログイン中"}
+                ? user.email
+                : null}
           </p>
           <LogoutButton />
         </div>
       </header>
 
       <section className="space-y-3" aria-labelledby="scan-heading">
-        <h2 id="scan-heading" className="text-lg font-medium">
+        <h2 id="scan-heading" className="text-lg font-medium text-zinc-100">
           スキャン / 登録
         </h2>
         <BarcodeScanner />
       </section>
 
-      <section className="space-y-3" aria-labelledby="item-list-heading">
-        <h2 id="item-list-heading" className="text-lg font-medium">
-          登録（{items.length} 件）
+      <section
+        id="items"
+        className="space-y-3"
+        aria-labelledby="item-list-heading"
+      >
+        <h2
+          id="item-list-heading"
+          className="text-lg font-medium text-zinc-100"
+        >
+          登録一覧（{items.length} 件）
         </h2>
         {items.length === 0 ? (
-          <p className="text-zinc-500">
-            商品を調べて登録すると一覧に表示されます。
+          <p className="text-zinc-400">
+            スキャンまたは手動入力で照会し、登録するとここに表示されます。
           </p>
         ) : (
           <ItemsTable

@@ -49,7 +49,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           ログイン
         </h1>
         <p className={authPageDescClassName}>
-          Emailとパスワードでログインしてください。
+          メールとパスワードでログインしてください。
         </p>
         {bannerError ? (
           <p className="text-sm text-red-400">{bannerError}</p>

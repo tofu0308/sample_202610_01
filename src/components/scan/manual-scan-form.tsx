@@ -17,8 +17,11 @@ export function ManualScanForm({
 }: ManualScanFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <label htmlFor="manual-scan-value" className="block text-sm font-medium">
-        手動入力（カメラが使えないときの確認用）
+      <label
+        htmlFor="manual-scan-value"
+        className="block text-sm font-medium text-zinc-200"
+      >
+        JANコード手動入力
       </label>
       <div className="flex flex-col gap-2">
         <input
@@ -26,14 +29,14 @@ export function ManualScanForm({
           type="text"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="JAN / QR の文字列"
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
+          placeholder="JANコード / QR の文字列"
+          className="w-full rounded-md border border-zinc-600 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-zinc-400"
         />
         <button
           type="submit"
-          className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900"
+          className="rounded-md border border-zinc-600 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-700"
         >
-          表示
+          照会
         </button>
       </div>
     </form>

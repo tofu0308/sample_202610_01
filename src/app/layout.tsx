@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "消耗品インベントリ",
   description:
-    "バーコードで商品を調べ、所持・残量・メモを管理する学習用アプリ",
+    "バーコードでスキャンし、所持・残量・メモを管理する学習用アプリ",
 };
 
 // LayoutProps は next typegen 生成型。CI では未生成のため ReactNode で受ける
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lang="ja"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );
 }

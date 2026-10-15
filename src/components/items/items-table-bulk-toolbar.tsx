@@ -88,7 +88,7 @@ export function ItemsTableBulkToolbar({
             disabled={pending}
             className={`${itemDangerButtonClass.sm} ml-auto`}
           >
-            一覧から削除
+            削除
           </button>
         </div>
       </div>

@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
           パスワード再設定
         </h1>
         <p className={authPageDescClassName}>
-          登録した Email を入力してください。再設定用のリンクを送ります。
+          登録したメールを入力してください。再設定用のリンクを送ります。
         </p>
       </header>
       <ForgotPasswordForm />

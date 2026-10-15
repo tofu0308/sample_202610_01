@@ -51,7 +51,7 @@ export async function postRegisterItem(
       return {
         ok: false,
         kind: "duplicate",
-        message: "すでに登録済みの JAN です",
+        message: "すでに登録済みのJANコードです",
       };
     }
 

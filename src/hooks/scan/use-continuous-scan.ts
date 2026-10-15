@@ -49,7 +49,7 @@ export function useContinuousScan({
     if (duplicateNoticeTimerRef.current) {
       clearTimeout(duplicateNoticeTimerRef.current);
     }
-    setDuplicateNotice(`JAN ${code} は既にリストにあります`);
+    setDuplicateNotice(`重複したJANコードです（${code}）`);
     duplicateNoticeTimerRef.current = setTimeout(() => {
       setDuplicateNotice(null);
       duplicateNoticeTimerRef.current = null;
@@ -154,7 +154,7 @@ export function useContinuousScan({
       const code = normalizeBarcodeDigits(trimmed);
       if (!code) {
         setCameraError(
-          "8〜14 桁の JAN / バーコードとして認識できませんでした。",
+          "8〜14 桁の JANコード / バーコードとして認識できませんでした。",
         );
         return;
       }

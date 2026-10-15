@@ -222,7 +222,7 @@ export function useItemsTable(items: ItemsTableRow[]) {
 
     if (
       !window.confirm(
-        `選択した ${selectedIdList.length} 件を一覧から削除しますか？`,
+        `選択した ${selectedIdList.length} 件を削除しますか？`,
       )
     ) {
       return;

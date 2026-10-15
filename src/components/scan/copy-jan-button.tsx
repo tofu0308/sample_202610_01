@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * JAN をクリップボードへコピーする小さなボタン。
+ * JANコードをクリップボードへコピーする小さなボタン。
  * 単体・連続リストで同じ操作感に揃える。
  */
 
@@ -31,7 +31,7 @@ export function CopyJanButton({ jan }: CopyJanButtonProps) {
       onClick={() => void handleCopy()}
       className={itemSecondaryButtonClass.sm}
     >
-      {copied ? "コピー済み" : "JANをコピー"}
+      {copied ? "コピー済み" : "JANコードをコピー"}
     </button>
   );
 }

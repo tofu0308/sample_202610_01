@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 新規登録フォーム（Email・パスワード・ユーザーID）。
+ * 新規登録フォーム（メール・パスワード・ユーザーID）。
  * Supabase signUp で確認メールを送り、username は user_metadata に載せる。
  * Profile 行の作成は後続工程。
  */
@@ -83,7 +83,7 @@ export function SignupForm() {
     return (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-zinc-200">
-          手続きを受け付けました（{email.trim() || "ご入力の Email"}）。
+          手続きを受け付けました（{email.trim() || "ご入力のメール"}）。
           はじめての登録であれば、確認用メールのリンクから完了できます。
         </p>
         <p className="text-sm leading-relaxed text-zinc-400">
@@ -144,7 +144,7 @@ export function SignupForm() {
           className={authInputClassName}
         />
         <span className={authHintClassName}>
-          3〜20文字。英数字とアンダースコア。表示名と照合用（ログインには使いません）
+          3〜20文字。英数字とアンダースコア。画面表示と照合用（ログインには使いません）
         </span>
       </label>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}

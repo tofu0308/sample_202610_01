@@ -13,7 +13,8 @@ export const itemPrimaryButtonClass = {
 } as const;
 
 export const itemSecondaryButtonClass = {
-  sm: `${base} border border-zinc-300 px-2 py-1 text-xs`,
+  // 枠線ボタン。ダーク page の color 継承で文字が消えないよう色を明示する
+  sm: `${base} border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-800 hover:bg-zinc-50`,
 } as const;
 
 /** 選択解除など、枠線だけだと埋もれる操作用 */

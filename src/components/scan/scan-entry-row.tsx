@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 読取 1 件分の行。JAN とコピー・登録を主にし、商品カードは出さない。
+ * 読取 1 件分の行。照会結果（サムネ・商品名）と JANコードコピー・登録を出す。
  * 単体／連続で同じ見た目にして操作の齟齬を減らす。
  */
 
@@ -27,7 +27,39 @@ export function ScanEntryRow({
     product?.found === true ? product : null;
 
   return (
-    <li className="rounded border border-zinc-200 bg-white px-3 py-2">
+    <li className="rounded border border-zinc-200 bg-white px-3 py-2 text-zinc-900">
+      {foundProduct ? (
+        <div className="mb-2 flex gap-3">
+          {foundProduct.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
+            <img
+              src={foundProduct.imageUrl}
+              alt=""
+              width={48}
+              height={48}
+              className="h-12 w-12 shrink-0 rounded border border-zinc-200 object-cover"
+            />
+          ) : (
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-dashed border-zinc-200 bg-zinc-50 text-[9px] text-zinc-400"
+              aria-hidden
+            >
+              —
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-sm font-medium text-zinc-900">
+              {foundProduct.name}
+            </p>
+            {foundProduct.brandName ? (
+              <p className="mt-0.5 text-xs text-zinc-500">
+                {foundProduct.brandName}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-2">
         <p className="font-mono text-sm text-zinc-800">{code}</p>
         <CopyJanButton jan={code} />

@@ -2,7 +2,7 @@
 
 /**
  * QR / バーコード読み取り UI（Client Component）。
- * 読取結果・商品情報の別パネルは出さず、リスト行（JAN コピー＋登録）に統一する。
+ * 読取結果はリスト行に統一（サムネ・商品名・JANコードコピー・登録）。
  */
 
 import { createPortal } from "react-dom";
@@ -21,22 +21,26 @@ export function BarcodeScanner() {
 
   return (
     <div id="scan" className="space-y-4">
-      <p className="text-sm text-zinc-600">
-        「単体 / 連続」で読取モードを切り替えられます。カメラはスマホ向けです。PC
-        では下の手動入力で JAN を入れて登録できます（HTTPS
-        推奨・カメラ許可が必要）。各行の「JANをコピー」でコードを取れます。
+      {/* カメラはスマホ向け。PC（md+）は手動入力のみ（設計書 §5） */}
+      <p className="text-sm text-zinc-400 md:hidden">
+        単体／連続でスキャンできます。
+      </p>
+      <p className="hidden text-sm text-zinc-400 md:block">
+        JANコードを入力して照会してください。
       </p>
 
-      <ScanModeControls
-        isContinuous={isContinuous}
-        starting={flow.starting}
-        overlayOpen={flow.overlayOpen}
-        onToggleMode={flow.toggleScanMode}
-        onStart={() => void flow.startScan()}
-      />
+      <div className="md:hidden">
+        <ScanModeControls
+          isContinuous={isContinuous}
+          starting={flow.starting}
+          overlayOpen={flow.overlayOpen}
+          onToggleMode={flow.toggleScanMode}
+          onStart={() => void flow.startScan()}
+        />
+      </div>
 
       {flow.cameraError && !flow.overlayOpen ? (
-        <p className="text-sm text-red-600">{flow.cameraError}</p>
+        <p className="text-sm text-red-400 md:hidden">{flow.cameraError}</p>
       ) : null}
 
       {isContinuous ? (

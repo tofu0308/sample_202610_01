@@ -180,7 +180,7 @@ export function useBarcodeScanFlow() {
       setCameraError(null);
       const value = manualValue.trim();
       if (value === "") {
-        setCameraError("表示する値を入力してください。");
+        setCameraError("照会する値を入力してください。");
         return;
       }
       void applyResult(value, "MANUAL", false);

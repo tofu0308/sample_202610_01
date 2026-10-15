@@ -2,7 +2,7 @@
 
 /**
  * 連続読取の待ちリスト（スクロール可）。
- * 各行は JAN コピー＋登録。商品情報カードは出さない。
+ * 各行はサムネ・商品名・JANコードコピー・登録。
  */
 
 import { RegisterItemsButton } from "@/components/items/register-items-button";
@@ -47,7 +47,7 @@ export function ContinuousScanList({
           id="continuous-list-heading"
           className="text-sm font-medium text-zinc-800"
         >
-          読取リスト（{entries.length} 件・JAN 重複なし）
+          読取リスト（{entries.length} 件・重複なし）
         </h3>
         <RegisterItemsButton products={foundProducts} />
       </div>
