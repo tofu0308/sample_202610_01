@@ -172,7 +172,7 @@ export function ItemsTableRowView({
                 type="button"
                 onClick={onSave}
                 disabled={rowBusy}
-                className={itemPrimaryButtonClass.sm}
+                className={itemPrimaryButtonClass.row}
               >
                 {pending ? "保存中…" : "保存"}
               </button>
@@ -180,7 +180,7 @@ export function ItemsTableRowView({
                 type="button"
                 onClick={onCancelEdit}
                 disabled={rowBusy}
-                className={itemSecondaryButtonClass.sm}
+                className={itemSecondaryButtonClass.row}
               >
                 キャンセル
               </button>
@@ -190,7 +190,7 @@ export function ItemsTableRowView({
               type="button"
               onClick={onStartEdit}
               disabled={rowBusy}
-              className={itemEditButtonClass.sm}
+              className={itemEditButtonClass.row}
             >
               編集
             </button>
@@ -199,7 +199,7 @@ export function ItemsTableRowView({
             type="button"
             onClick={onDelete}
             disabled={rowBusy}
-            className={itemDangerButtonClass.sm}
+            className={itemDangerButtonClass.row}
           >
             {pending && !editing ? "削除中…" : "削除"}
           </button>

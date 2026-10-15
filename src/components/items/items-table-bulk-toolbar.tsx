@@ -3,6 +3,7 @@
 /**
  * 複数選択時の一括操作バー。
  * 表の段落ちを避けるためサイト上部に fixed 表示する。
+ * スキャン overlay（z-50）より下にし、ノッチ分は上余白で避ける。
  */
 
 import {
@@ -37,7 +38,7 @@ export function ItemsTableBulkToolbar({
   }
 
   return (
-    <div className="fixed inset-x-0 top-0 z-50 border-b border-sky-200 bg-sky-50/95 shadow-sm backdrop-blur-sm">
+    <div className="fixed inset-x-0 top-0 z-40 border-b border-sky-200 bg-sky-50/95 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 py-2.5 sm:flex-row sm:items-center sm:gap-3">
         <p className="shrink-0 text-sm font-medium text-sky-950">
           {selectedCount} 件選択中

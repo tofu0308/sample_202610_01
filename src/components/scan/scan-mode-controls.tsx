@@ -1,7 +1,9 @@
 /**
  * 単体 / 連続のセグメント切替とスキャン開始ボタン。
+ * 開始はライト面向け主ボタン（表・カードと同じ暗い塗り）。
  */
 
+import { primaryOnLightButtonClass } from "@/components/ui/button-styles";
 import type { ScanMode } from "@/lib/scan/types";
 
 type ScanModeControlsProps = {
@@ -52,7 +54,7 @@ export function ScanModeControls({
         type="button"
         onClick={onStart}
         disabled={disabled}
-        className="flex-1 bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className={`flex-1 ${primaryOnLightButtonClass.stretch}`}
       >
         {starting
           ? "起動中…"

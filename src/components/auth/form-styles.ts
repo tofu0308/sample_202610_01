@@ -1,7 +1,12 @@
 /**
  * ログイン／登録フォーム共通の文言と見た目。
  * アプリのダーク寄りのトーンに合わせつつ、ラベルと入力のコントラストを確保する。
+ * 主ボタンは `ui/button-styles`（ダーク面向けの明るい塗り）。
  */
+
+export {
+  authPrimarySubmitClassName,
+} from "@/components/ui/button-styles";
 
 /** アドレス欄の表示名（UI は「メール」に統一） */
 export const AUTH_LABEL_EMAIL = "メール";
