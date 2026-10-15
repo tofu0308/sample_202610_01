@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import {
   postRegisterItem,
+  postRegisterItemsBulk,
   type FoundProduct,
 } from "@/lib/items/register-item-request";
 
@@ -65,10 +66,7 @@ export function useRegisterItem(options: UseRegisterItemOptions = {}) {
   };
 }
 
-/**
- * 照会成功した複数件を登録する（連続リストのまとめて登録用）。
- * TODO: いまは POST /api/items を 1 件ずつ順呼び。次の工程で一括 API に差し替える。
- */
+/** 照会成功した複数件を 1 リクエストで登録する（連続リストのまとめて登録用） */
 export function useRegisterItems(options: UseRegisterItemOptions = {}) {
   const { onRegistered } = options;
   const router = useRouter();
@@ -88,25 +86,14 @@ export function useRegisterItems(options: UseRegisterItemOptions = {}) {
       setSuccessMessage(null);
 
       try {
-        let created = 0;
-        let duplicates = 0;
-        let failed = 0;
-        let lastError: string | null = null;
+        const result = await postRegisterItemsBulk(products);
 
-        for (const product of products) {
-          const result = await postRegisterItem(product);
-          if (result.ok) {
-            created += 1;
-            continue;
-          }
-          if (result.kind === "duplicate") {
-            duplicates += 1;
-            continue;
-          }
-          failed += 1;
-          lastError = result.message;
+        if (!result.ok) {
+          setError(result.message);
+          return;
         }
 
+        const { created, duplicates, failed } = result;
         const parts: string[] = [];
         if (created > 0) {
           parts.push(`${created} 件登録`);
@@ -137,7 +124,7 @@ export function useRegisterItems(options: UseRegisterItemOptions = {}) {
         }
 
         if (failed > 0) {
-          setError(lastError ?? "一部の登録に失敗しました");
+          setError("一部の登録に失敗しました");
         } else if (created === 0 && duplicates === 0) {
           setError("登録できる商品がありませんでした");
         }

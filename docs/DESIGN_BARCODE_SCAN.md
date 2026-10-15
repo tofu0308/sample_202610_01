@@ -571,7 +571,7 @@ model UserItem {
 - [x] 登録一覧 UI（表・ソート・削除・インライン編集）
 - [x] スキャン成功 → 登録導線（単体・連続。まとめて登録は単件 POST 連打）
 - [x] 残量プリセット／バー、メモバルーン、更新日 JST、フリーワード検索、一括選択・適用・削除
-- [ ] （任意）一括 API（いまは 1 件ずつ PATCH/DELETE）
+- [x] 一括 API（`/api/items/bulk` … PATCH 残量／DELETE／POST まとめて登録）
 - [ ] （任意）`remaining`・`status2`/`3` の本利用・ページネーション
 - [ ] （3c）カテゴリ階層＋複数選択登録
 - [ ] （3d）用途別プリセット拡張
@@ -1118,7 +1118,7 @@ UserItem
 | E5 | 削除確認を `window.confirm` から軽い UI に | `use-items-table` | M | P2 |
 | E6 | モバイル向けカード行 or 列優先表示 | items 全体 | L | 保留 |
 | E7 | ページネーション UI | items + API | L | 保留（機能追加枠） |
-| E8 | 一括 API（待ち時間改善） | API + hooks | L | 保留（機能追加枠） |
+| E8 | 一括 API（待ち時間改善） | API + hooks | L | 完了（`/api/items/bulk`） |
 
 チェック:
 

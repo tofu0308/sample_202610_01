@@ -1,10 +1,15 @@
 /**
  * 登録 API（/api/items）の入力スキーマ（zod）。
  * Route Handler とユニットテストの両方から使い、境界検証のルールを一箇所に置く。
+ * 一括系もここに置き、件数上限でボディ肥大を抑える。
  */
 
 import { z } from "zod";
 import { STATUS1_OPTIONS } from "@/lib/items/constants";
+
+/** 一括で一度に扱う ID／件数の上限（学習用の安全弁） */
+export const BULK_ITEM_IDS_MAX = 100;
+export const BULK_CREATE_ITEMS_MAX = 50;
 
 /** lookup と同じ JAN 正規化（数字のみ・8〜14 桁） */
 const janCodeSchema = z
@@ -92,3 +97,35 @@ export function toUserItemUpdateData(data: z.infer<typeof updateItemSchema>): {
   }
   return update;
 }
+
+/** 重複を除いた ID 配列（空・上限超えは reject） */
+const bulkItemIdsSchema = z
+  .array(z.string().trim().min(1).max(64))
+  .min(1)
+  .max(BULK_ITEM_IDS_MAX)
+  .transform((ids) => [...new Set(ids)])
+  .refine((ids) => ids.length >= 1, { message: "At least one id is required" });
+
+/**
+ * PATCH /api/items/bulk 用。
+ * 選択行へ同じ残量を載せる（空はクリア）。
+ */
+export const bulkUpdateItemsSchema = z.object({
+  ids: bulkItemIdsSchema,
+  status1: optionalClearableStatus1,
+}).refine((data) => data.status1 !== undefined, {
+  message: "status1 is required",
+});
+
+/** DELETE /api/items/bulk 用 */
+export const bulkDeleteItemsSchema = z.object({
+  ids: bulkItemIdsSchema,
+});
+
+/**
+ * POST /api/items/bulk 用。
+ * 連続スキャンのまとめて登録。各要素は単件 create と同じ形。
+ */
+export const bulkCreateItemsSchema = z.object({
+  items: z.array(createItemSchema).min(1).max(BULK_CREATE_ITEMS_MAX),
+});

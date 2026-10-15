@@ -6,6 +6,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  deleteItemsBulk,
+  patchItemsBulk,
+} from "@/lib/items/item-bulk-request";
+import {
   deleteItem,
   patchItem,
 } from "@/lib/items/item-mutation-request";
@@ -171,7 +175,7 @@ export function useItemsTable(items: ItemsTableRow[]) {
     }
   }
 
-  /** 選択行へ同じ残量を一括適用。TODO: 一括 PATCH API に差し替え */
+  /** 選択行へ同じ残量を一括適用（1 リクエスト） */
   async function applyBulkStatus1() {
     if (selectedIdList.length === 0) {
       return;
@@ -182,28 +186,23 @@ export function useItemsTable(items: ItemsTableRow[]) {
     cancelEdit();
 
     try {
-      let failed = 0;
-      let lastError: string | null = null;
-
-      for (const id of selectedIdList) {
-        const result = await patchItem(id, { status1: bulkStatus1 });
-        if (!result.ok) {
-          failed += 1;
-          lastError = result.message;
-        }
-      }
+      const result = await patchItemsBulk(selectedIdList, bulkStatus1);
 
       // 適用後はパネルを閉じる（失敗があってもメッセージは残す）
       clearSelection();
 
-      if (failed > 0) {
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      if (result.skipped > 0) {
         setError(
-          lastError ??
-            `残量の一括更新に失敗した行があります（${failed} 件）`,
+          `残量の一括更新で対象外の行がありました（${result.skipped} 件）`,
         );
       }
 
-      if (failed < selectedIdList.length) {
+      if (result.affected > 0) {
         router.refresh();
       }
     } catch {
@@ -214,7 +213,7 @@ export function useItemsTable(items: ItemsTableRow[]) {
     }
   }
 
-  /** 選択行を順に削除。TODO: 一括 DELETE API に差し替え */
+  /** 選択行を一括削除（1 リクエスト） */
   async function removeSelected() {
     if (selectedIdList.length === 0) {
       return;
@@ -233,36 +232,22 @@ export function useItemsTable(items: ItemsTableRow[]) {
     cancelEdit();
 
     try {
-      let failed = 0;
-      let lastError: string | null = null;
-      const deletedIds: string[] = [];
+      const result = await deleteItemsBulk(selectedIdList);
 
-      for (const id of selectedIdList) {
-        const result = await deleteItem(id);
-        if (result.ok) {
-          deletedIds.push(id);
-        } else {
-          failed += 1;
-          lastError = result.message;
-        }
+      if (!result.ok) {
+        setError(result.message);
+        return;
       }
 
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        for (const id of deletedIds) {
-          next.delete(id);
-        }
-        return next;
-      });
-
-      if (failed > 0) {
-        setError(
-          lastError ?? `削除に失敗した行があります（${failed} 件）`,
-        );
-      }
-
-      if (deletedIds.length > 0) {
+      if (result.affected > 0) {
+        clearSelection();
         router.refresh();
+      }
+
+      if (result.skipped > 0) {
+        setError(
+          `削除できなかった行があります（${result.skipped} 件）`,
+        );
       }
     } catch {
       setError("一括削除でエラーが発生しました");

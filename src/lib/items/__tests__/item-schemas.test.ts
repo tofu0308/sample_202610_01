@@ -5,6 +5,9 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  bulkCreateItemsSchema,
+  bulkDeleteItemsSchema,
+  bulkUpdateItemsSchema,
   createItemSchema,
   toUserItemUpdateData,
   updateItemSchema,
@@ -135,5 +138,45 @@ describe("toUserItemUpdateData", () => {
       status1: "要補充",
       note: "予備",
     });
+  });
+});
+
+describe("bulkUpdateItemsSchema", () => {
+  it("ids と status1 があれば成功し、重複 id を除く", () => {
+    const parsed = bulkUpdateItemsSchema.safeParse({
+      ids: ["a", "a", "b"],
+      status1: "残少",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.ids).toEqual(["a", "b"]);
+      expect(parsed.data.status1).toBe("残少");
+    }
+  });
+
+  it("status1 なしは拒否する", () => {
+    const parsed = bulkUpdateItemsSchema.safeParse({ ids: ["a"] });
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("bulkDeleteItemsSchema", () => {
+  it("ids があれば成功する", () => {
+    const parsed = bulkDeleteItemsSchema.safeParse({ ids: ["x"] });
+    expect(parsed.success).toBe(true);
+  });
+});
+
+describe("bulkCreateItemsSchema", () => {
+  it("items 配列を受け取る", () => {
+    const parsed = bulkCreateItemsSchema.safeParse({
+      items: [validBody],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("空配列は拒否する", () => {
+    const parsed = bulkCreateItemsSchema.safeParse({ items: [] });
+    expect(parsed.success).toBe(false);
   });
 });

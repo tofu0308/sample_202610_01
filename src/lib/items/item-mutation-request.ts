@@ -1,7 +1,6 @@
 /**
  * 登録 1 件の更新・削除リクエスト。
- * 表の編集／削除と将来の別 UI から同じ形で呼べるように、fetch を一箇所に置く。
- * TODO: 一括 PATCH / DELETE API ができたら、ここを束ねる呼び出しに差し替える。
+ * 一括は item-bulk-request（/api/items/bulk）を使う。
  */
 
 export type ItemMutationResult =
