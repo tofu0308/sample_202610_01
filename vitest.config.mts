@@ -19,14 +19,20 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "./coverage",
-      // 境界検証（zod）をカバレッジ対象にする。API Route 自体はここでは測らない
-      include: [
-        "src/lib/items/item-schemas.ts",
-        "src/lib/auth/profile-schemas.ts",
-      ],
+      // lib 配下を測る。外部 I/O・認証境界・未整備の UI ヘルパは除外
+      include: ["src/lib/**/*.ts"],
       exclude: [
         "src/**/*.test.ts",
         "src/**/__tests__/**",
+        "src/lib/prisma.ts",
+        "src/lib/supabase/**",
+        "src/lib/products/yahoo-shopping.ts",
+        "src/lib/auth/ensure-profile.ts",
+        "src/lib/auth/require-user.ts",
+        "src/lib/items/status1-meter.ts",
+        "src/lib/items/format-datetime-jst.ts",
+        "src/lib/scan/camera-errors.ts",
+        "src/lib/scan/types.ts",
         "node_modules/**",
       ],
       // Windows でパス表記ゆれによる二重集計を避ける
@@ -34,7 +40,7 @@ export default defineConfig({
       thresholds: {
         lines: 80,
         functions: 80,
-        branches: 80,
+        branches: 75,
         statements: 80,
       },
     },

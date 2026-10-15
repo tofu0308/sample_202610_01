@@ -1,30 +1,28 @@
 /**
  * バーコード読取〜商品照会〜オーバーレイ閉鎖までの一連フロー。
- * 連続モードの排他・キューは useContinuousScan に委譲する。
+ * 連続モードの排他・キューは useContinuousScan、一覧 refresh UX は useListRefreshAfterRegister に委譲する。
  */
 
-import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
   useRef,
   useState,
-  useTransition,
   type FormEvent,
 } from "react";
 import { useBarcodeCamera } from "@/hooks/scan/use-barcode-camera";
 import { useBodyScrollLock } from "@/hooks/scan/use-body-scroll-lock";
 import { useContinuousScan } from "@/hooks/scan/use-continuous-scan";
+import { useListRefreshAfterRegister } from "@/hooks/scan/use-list-refresh-after-register";
 import { useProductLookup } from "@/hooks/scan/use-product-lookup";
 import { SAME_VALUE_COOLDOWN_MS } from "@/lib/scan/constants";
+import { scrollToElementId } from "@/lib/scan/scroll-to-element-id";
 import type { ScanMode, ScanResult } from "@/lib/scan/types";
 
 const PRODUCT_LOOKUP_SECTION_ID = "product-lookup";
 const CONTINUOUS_LIST_SECTION_ID = "continuous-scan-list";
 
 export function useBarcodeScanFlow() {
-  const router = useRouter();
-  const [isListRefreshing, startListTransition] = useTransition();
   const lastRawRef = useRef<string | null>(null);
   const lastAtRef = useRef(0);
 
@@ -33,8 +31,8 @@ export function useBarcodeScanFlow() {
   const [manualValue, setManualValue] = useState("");
   /** 登録後クリアなどでリスト枠だけ残す（初回表示では出さない） */
   const [showEmptyList, setShowEmptyList] = useState(false);
-  /** 読取クリア後〜一覧 RSC 反映まで（ボタン unmount 後もバナーを出す） */
-  const [listUpdating, setListUpdating] = useState(false);
+
+  const { listUpdating, refreshListAndScroll } = useListRefreshAfterRegister();
 
   const {
     product,
@@ -83,26 +81,10 @@ export function useBarcodeScanFlow() {
     },
   });
 
-  const scrollToProductSection = useCallback(() => {
-    requestAnimationFrame(() => {
-      document
-        .getElementById(PRODUCT_LOOKUP_SECTION_ID)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }, []);
-
-  const scrollToContinuousList = useCallback(() => {
-    requestAnimationFrame(() => {
-      document
-        .getElementById(CONTINUOUS_LIST_SECTION_ID)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }, []);
-
   const dismissOverlayToResults = useCallback(async () => {
     await closeOverlay();
-    scrollToProductSection();
-  }, [closeOverlay, scrollToProductSection]);
+    scrollToElementId(PRODUCT_LOOKUP_SECTION_ID);
+  }, [closeOverlay]);
 
   const finishContinuousScan = useCallback(async () => {
     const hadNone = continuousEntries.length === 0;
@@ -110,8 +92,8 @@ export function useBarcodeScanFlow() {
     if (hadNone) {
       setShowEmptyList(true);
     }
-    scrollToContinuousList();
-  }, [closeOverlay, continuousEntries.length, scrollToContinuousList]);
+    scrollToElementId(CONTINUOUS_LIST_SECTION_ID);
+  }, [closeOverlay, continuousEntries.length]);
 
   const applySingleResult = useCallback(
     async (rawValue: string, format: string | undefined, fromCamera: boolean) => {
@@ -198,24 +180,9 @@ export function useBarcodeScanFlow() {
   }, [resetContinuousBatch, resetProductLookup, setCameraError]);
 
   const afterRegistered = useCallback(() => {
-    // ボタンが消えても分かるよう、refresh 完了までバナーを出す
-    setListUpdating(true);
     clearScanResults();
-    startListTransition(() => {
-      router.refresh();
-    });
-    requestAnimationFrame(() => {
-      document
-        .getElementById("items")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }, [clearScanResults, router]);
-
-  useEffect(() => {
-    if (listUpdating && !isListRefreshing) {
-      setListUpdating(false);
-    }
-  }, [isListRefreshing, listUpdating]);
+    refreshListAndScroll({ scrollToId: "items" });
+  }, [clearScanResults, refreshListAndScroll]);
 
   const startScan = useCallback(async () => {
     if (scanMode === "continuous") {
@@ -248,7 +215,7 @@ export function useBarcodeScanFlow() {
     afterRegistered,
     showEmptyList,
     /** 一覧 refresh 中（画面下部バナー用） */
-    listUpdating: listUpdating || isListRefreshing,
+    listUpdating,
     continuousEntries,
     latestContinuousEntry,
     duplicateNotice,

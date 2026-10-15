@@ -5,6 +5,8 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  BULK_CREATE_ITEMS_MAX,
+  BULK_ITEM_IDS_MAX,
   bulkCreateItemsSchema,
   bulkDeleteItemsSchema,
   bulkUpdateItemsSchema,
@@ -158,6 +160,28 @@ describe("bulkUpdateItemsSchema", () => {
     const parsed = bulkUpdateItemsSchema.safeParse({ ids: ["a"] });
     expect(parsed.success).toBe(false);
   });
+
+  it("空文字の status1 は null（クリア）にする", () => {
+    const parsed = bulkUpdateItemsSchema.safeParse({
+      ids: ["a"],
+      status1: "",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.status1).toBeNull();
+    }
+  });
+
+  it(`ids が ${BULK_ITEM_IDS_MAX} 件超は拒否する`, () => {
+    const ids = Array.from({ length: BULK_ITEM_IDS_MAX + 1 }, (_, i) =>
+      String(i),
+    );
+    const parsed = bulkUpdateItemsSchema.safeParse({
+      ids,
+      status1: "残少",
+    });
+    expect(parsed.success).toBe(false);
+  });
 });
 
 describe("bulkDeleteItemsSchema", () => {
@@ -177,6 +201,15 @@ describe("bulkCreateItemsSchema", () => {
 
   it("空配列は拒否する", () => {
     const parsed = bulkCreateItemsSchema.safeParse({ items: [] });
+    expect(parsed.success).toBe(false);
+  });
+
+  it(`items が ${BULK_CREATE_ITEMS_MAX} 件超は拒否する`, () => {
+    const items = Array.from(
+      { length: BULK_CREATE_ITEMS_MAX + 1 },
+      () => validBody,
+    );
+    const parsed = bulkCreateItemsSchema.safeParse({ items });
     expect(parsed.success).toBe(false);
   });
 });
