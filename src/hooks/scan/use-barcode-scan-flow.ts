@@ -3,7 +3,15 @@
  * 連続モードの排他・キューは useContinuousScan に委譲する。
  */
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import { useBarcodeCamera } from "@/hooks/scan/use-barcode-camera";
 import { useBodyScrollLock } from "@/hooks/scan/use-body-scroll-lock";
 import { useContinuousScan } from "@/hooks/scan/use-continuous-scan";
@@ -17,6 +25,8 @@ const PRODUCT_LOOKUP_SECTION_ID = "product-lookup";
 const CONTINUOUS_LIST_SECTION_ID = "continuous-scan-list";
 
 export function useBarcodeScanFlow() {
+  const router = useRouter();
+  const [isListRefreshing, startListTransition] = useTransition();
   const lastRawRef = useRef<string | null>(null);
   const lastAtRef = useRef(0);
 
@@ -25,6 +35,8 @@ export function useBarcodeScanFlow() {
   const [manualValue, setManualValue] = useState("");
   /** 登録後クリアなどでリスト枠だけ残す（初回表示では出さない） */
   const [showEmptyList, setShowEmptyList] = useState(false);
+  /** 読取クリア後〜一覧 RSC 反映まで（ボタン unmount 後もバナーを出す） */
+  const [listUpdating, setListUpdating] = useState(false);
 
   const {
     product,
@@ -188,13 +200,24 @@ export function useBarcodeScanFlow() {
   }, [resetContinuousBatch, resetProductLookup, setCameraError]);
 
   const afterRegistered = useCallback(() => {
+    // ボタンが消えても分かるよう、refresh 完了までバナーを出す
+    setListUpdating(true);
     clearScanResults();
+    startListTransition(() => {
+      router.refresh();
+    });
     requestAnimationFrame(() => {
       document
         .getElementById("items")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }, [clearScanResults]);
+  }, [clearScanResults, router]);
+
+  useEffect(() => {
+    if (listUpdating && !isListRefreshing) {
+      setListUpdating(false);
+    }
+  }, [isListRefreshing, listUpdating]);
 
   const startScan = useCallback(async () => {
     if (scanMode === "continuous") {
@@ -226,6 +249,8 @@ export function useBarcodeScanFlow() {
     selectScanMode,
     afterRegistered,
     showEmptyList,
+    /** 一覧 refresh 中（画面下部バナー用） */
+    listUpdating: listUpdating || isListRefreshing,
     continuousEntries,
     latestContinuousEntry,
     duplicateNotice,

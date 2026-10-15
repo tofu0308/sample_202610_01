@@ -1,29 +1,34 @@
 /**
  * 商品照会結果を POST /api/items で登録する Client hook。
- * 成功後は router.refresh() でサーバの登録一覧を更新する。
+ * 一覧の再取得（router.refresh）は onRegistered 側に任せるか、未指定時のみここで行う。
  */
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useTransition } from "react";
 import {
   postRegisterItem,
   type FoundProduct,
 } from "@/lib/items/register-item-request";
 
 type UseRegisterItemOptions = {
+  /**
+   * POST 成功後。一覧 refresh・読取クリアなどは呼び出し側。
+   * 渡したときは hook 内で refresh しない（二重取得を避ける）。
+   */
   onRegistered?: () => void;
 };
 
 export function useRegisterItem(options: UseRegisterItemOptions = {}) {
   const { onRegistered } = options;
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [isRefreshing, startTransition] = useTransition();
+  const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const register = useCallback(
     async (product: FoundProduct) => {
-      setPending(true);
+      setPosting(true);
       setError(null);
       setSuccessMessage(null);
 
@@ -36,29 +41,39 @@ export function useRegisterItem(options: UseRegisterItemOptions = {}) {
         }
 
         setSuccessMessage("登録しました");
-        router.refresh();
-        onRegistered?.();
+        if (onRegistered) {
+          onRegistered();
+        } else {
+          startTransition(() => {
+            router.refresh();
+          });
+        }
       } catch {
         setError("登録処理でエラーが発生しました");
       } finally {
-        setPending(false);
+        setPosting(false);
       }
     },
     [onRegistered, router],
   );
 
-  return { register, pending, error, successMessage };
+  return {
+    register,
+    pending: posting || isRefreshing,
+    error,
+    successMessage,
+  };
 }
 
 /**
  * 照会成功した複数件を登録する（連続リストのまとめて登録用）。
- * TODO: いまは POST /api/items を 1 件ずつ順呼び。次の工程で一括 API
- * （例: 複数件をまとめたボディ／カンマ区切りなど）に差し替える。
+ * TODO: いまは POST /api/items を 1 件ずつ順呼び。次の工程で一括 API に差し替える。
  */
 export function useRegisterItems(options: UseRegisterItemOptions = {}) {
   const { onRegistered } = options;
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [isRefreshing, startTransition] = useTransition();
+  const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -68,7 +83,7 @@ export function useRegisterItems(options: UseRegisterItemOptions = {}) {
         return;
       }
 
-      setPending(true);
+      setPosting(true);
       setError(null);
       setSuccessMessage(null);
 
@@ -78,7 +93,6 @@ export function useRegisterItems(options: UseRegisterItemOptions = {}) {
         let failed = 0;
         let lastError: string | null = null;
 
-        // TODO: 一括 API ができたらこのループをやめる
         for (const product of products) {
           const result = await postRegisterItem(product);
           if (result.ok) {
@@ -106,12 +120,20 @@ export function useRegisterItems(options: UseRegisterItemOptions = {}) {
 
         if (created > 0 || duplicates > 0) {
           setSuccessMessage(parts.join(" / ") || "完了");
-          router.refresh();
         }
 
-        // 新規登録できたときだけ一覧へ誘導・読取クリア（重複のみは残す）
         if (created > 0) {
-          onRegistered?.();
+          if (onRegistered) {
+            onRegistered();
+          } else {
+            startTransition(() => {
+              router.refresh();
+            });
+          }
+        } else if (duplicates > 0) {
+          startTransition(() => {
+            router.refresh();
+          });
         }
 
         if (failed > 0) {
@@ -122,11 +144,16 @@ export function useRegisterItems(options: UseRegisterItemOptions = {}) {
       } catch {
         setError("登録処理でエラーが発生しました");
       } finally {
-        setPending(false);
+        setPosting(false);
       }
     },
     [onRegistered, router],
   );
 
-  return { registerMany, pending, error, successMessage };
+  return {
+    registerMany,
+    pending: posting || isRefreshing,
+    error,
+    successMessage,
+  };
 }

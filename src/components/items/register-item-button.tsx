@@ -39,7 +39,7 @@ export function RegisterItemButton({
         disabled={pending}
         className={buttonClassName}
       >
-        {pending ? "登録中…" : "登録"}
+        {pending ? "処理中…" : "登録"}
       </button>
       {successMessage ? (
         <p className="text-xs text-emerald-700">{successMessage}</p>

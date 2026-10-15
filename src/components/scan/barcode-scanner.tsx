@@ -6,6 +6,7 @@
  */
 
 import { createPortal } from "react-dom";
+import { ListUpdatingBanner } from "@/components/items/list-updating-banner";
 import { ContinuousScanList } from "@/components/scan/continuous-scan-list";
 import { ManualScanForm } from "@/components/scan/manual-scan-form";
 import { ScanModeControls } from "@/components/scan/scan-mode-controls";
@@ -21,7 +22,8 @@ export function BarcodeScanner() {
 
   return (
     <div id="scan" className="space-y-4">
-      {/* カメラはスマホ向け。PC（md+）は手動入力のみ（設計書 §5） */}
+      <ListUpdatingBanner active={flow.listUpdating} />
+      {/* カメラはスマホ向け。PC（md+）は手動入力のみ */}
       <p className="text-sm text-zinc-400 md:hidden">
         単体／連続でスキャンできます。
       </p>

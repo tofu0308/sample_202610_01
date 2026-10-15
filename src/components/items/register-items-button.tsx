@@ -34,7 +34,7 @@ export function RegisterItemsButton({
         className={itemPrimaryButtonClass.md}
       >
         {pending
-          ? "登録中…"
+          ? "処理中…"
           : count === 0
             ? "まとめて登録"
             : `まとめて登録（${count} 件）`}
