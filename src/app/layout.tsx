@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// タブ表示。画面上のブランド（A5）と同じ定数を使う
+// タブ表示。画面上のブランドと同じ定数を使う
 export const metadata: Metadata = {
   title: APP_NAME,
   description: APP_DESCRIPTION,

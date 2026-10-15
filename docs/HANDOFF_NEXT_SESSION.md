@@ -19,7 +19,7 @@ GitHub: tofu0308/sample_202610_01（main）
 本番: https://sample-202610-01.vercel.app/
 設計: docs/DESIGN_BARCODE_SCAN.md
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261015.md
-  （Auth §14〜§19、エラー §20、Product 鮮度 §21、UI §22。設計の組織は §14）
+  （Auth・エラー・Product・UI。作業内容は節タイトルで追える）
 作業単位 Auth: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U13 完了・削除可）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
@@ -32,12 +32,14 @@ GitHub: tofu0308/sample_202610_01（main）
   /forgot-password → /update-password、local-dev-user 削除済み
 - エラー: error.tsx + throwAppError（想定内はインライン）
 - Product: 照会成功時にマスタ表示用を更新（見つからなくても所持は消さない）
-- 学習メモ追記済み（§14〜§21）
+- UI 改修: 体裁・文言、スキャン／登録の振る舞い、登録後の待ち表示（学習メモ §22〜§24）
 
 【次にやること（優先は任意）】
-1. 機能追加の検討（一括 API／ページネーション／status2・3／カテゴリ探索 など）
-2. UI 改善
-3. （将来）組織単位 … 設計書 §14。第1弾では触らない
+1. UI 改修の続き（体裁・操作・待ちの見せ方を含む）
+   - 一括バーの重なり／safe-area、プライマリボタン統一
+   - （余裕）auth 導線・alert、overlay Escape／余白、未ヒット案内、タッチ領域、削除確認など
+2. （任意）待ち短縮・一括 API・ページネーションなど
+3. （将来）組織単位。第1弾では触らない
 ※ 確認メール再送 UI、フォームを noValidate+zod に寄せるかは後で検討
 
 【エージェントへの注意】
@@ -138,8 +140,11 @@ src/app/api/items/
 
 ## 次にやること
 
-1. （任意）機能追加・UI 改善（一括 API、ページネーション、`status2`/`3`、カテゴリ探索、確認メール再送 など）
-2. （将来）組織単位 … 設計書 §14
+1. **UI 改修の続き**（見た目・スキャン／登録の振る舞い・待ち表示を同じ枠で扱う）
+   - 一括バーの重なり／safe-area、プライマリボタン統一
+   - （余裕）auth 導線・alert、overlay Escape／余白、未ヒット案内、タッチ領域、削除確認、Logout／入力スタイル寄せなど
+2. （任意）待ち短縮（楽観的更新など）、一括 API、ページネーション、`status2`/`3`
+3. （将来）組織単位。第1弾では触らない
 
 ## 作業の進め方（エージェント向け）
 

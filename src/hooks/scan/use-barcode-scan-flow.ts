@@ -138,7 +138,7 @@ export function useBarcodeScanFlow() {
         scannedAt: new Date().toISOString(),
       });
 
-      // ヒット時も自動クローズしない（D6）。結果を見てから「結果を見る」で閉じる
+      // ヒット時も自動クローズしない。結果を見てから「結果を見る」で閉じる
       if (fromCamera) {
         await stop();
       }

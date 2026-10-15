@@ -130,7 +130,7 @@ export function ScanOverlay({
                 {continuousLookupActive ? "（照会中）" : ""}
               </p>
             ) : null}
-            {/* 主操作はフッタのみ（D5）。ヘッダは「閉じる」表記 */}
+            {/* 主操作はフッタのみ。ヘッダは「閉じる」表記 */}
             <button
               type="button"
               onClick={() => {
