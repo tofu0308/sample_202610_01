@@ -9,7 +9,7 @@ import { ItemsTableBulkToolbar } from "@/components/items/items-table-bulk-toolb
 import { ItemsTableRowView } from "@/components/items/items-table-row";
 import { ItemsTableSearch } from "@/components/items/items-table-search";
 import { ItemsTableSortHeader } from "@/components/items/items-table-sort-header";
-import { itemsTableThClassName } from "@/components/items/item-action-styles";
+import { itemsTableThClassName } from "@/components/items/items-table-styles";
 import { useItemsTable } from "@/hooks/items/use-items-table";
 import type { ItemsTableRow } from "@/lib/items/items-table-sort";
 

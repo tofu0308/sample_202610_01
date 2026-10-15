@@ -8,6 +8,7 @@
 import { RegisterItemsButton } from "@/components/items/register-items-button";
 import { ScanEntryRow } from "@/components/scan/scan-entry-row";
 import { ScanListEmpty } from "@/components/scan/scan-list-empty";
+import { ScanResultsSection } from "@/components/scan/scan-results-section";
 import type { FoundProduct } from "@/lib/items/register-item-request";
 import type { ContinuousScanEntry } from "@/lib/scan/types";
 
@@ -50,11 +51,9 @@ export function ContinuousScanList({
   const foundProducts = collectFoundProducts(entries);
 
   return (
-    <section
-      id={sectionId}
-      className="space-y-2 rounded-md border border-emerald-200 bg-emerald-50/50 px-4 py-3"
-      aria-live="polite"
-      aria-labelledby="continuous-list-heading"
+    <ScanResultsSection
+      sectionId={sectionId}
+      labelledBy="continuous-list-heading"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3
@@ -80,6 +79,6 @@ export function ContinuousScanList({
           />
         ))}
       </ul>
-    </section>
+    </ScanResultsSection>
   );
 }

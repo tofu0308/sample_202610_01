@@ -2,9 +2,7 @@
  * ソート可能な表ヘッダ。aria-sort は th に置き、ボタンは見た目のクリック領域。
  */
 
-import {
-  itemsTableThClassName,
-} from "@/components/items/item-action-styles";
+import { itemsTableThClassName } from "@/components/items/items-table-styles";
 import type {
   ItemsTableSortDir,
   ItemsTableSortKey,

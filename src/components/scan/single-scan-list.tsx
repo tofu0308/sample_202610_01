@@ -6,6 +6,7 @@
 
 import { ScanEntryRow } from "@/components/scan/scan-entry-row";
 import { ScanListEmpty } from "@/components/scan/scan-list-empty";
+import { ScanResultsSection } from "@/components/scan/scan-results-section";
 import type { ProductLookupResult, ScanResult } from "@/lib/scan/types";
 
 type SingleScanListProps = {
@@ -50,11 +51,9 @@ export function SingleScanList({
         : undefined;
 
   return (
-    <section
-      id={sectionId}
-      className="space-y-2 rounded-md border border-emerald-200 bg-emerald-50/50 px-4 py-3"
-      aria-live="polite"
-      aria-labelledby="single-scan-list-heading"
+    <ScanResultsSection
+      sectionId={sectionId}
+      labelledBy="single-scan-list-heading"
     >
       <h3
         id="single-scan-list-heading"
@@ -71,6 +70,6 @@ export function SingleScanList({
           onRegistered={onRegistered}
         />
       </ul>
-    </section>
+    </ScanResultsSection>
   );
 }

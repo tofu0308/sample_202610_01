@@ -11,6 +11,7 @@ import {
   itemNeutralButtonClass,
   itemPrimaryButtonClass,
 } from "@/components/items/item-action-styles";
+import { itemsTableInputClassName } from "@/components/items/items-table-styles";
 import { Status1Meter } from "@/components/items/status1-meter";
 import { STATUS1_OPTIONS } from "@/lib/items/constants";
 
@@ -50,7 +51,7 @@ export function ItemsTableBulkToolbar({
             value={bulkStatus1}
             onChange={(event) => onBulkStatus1Change(event.target.value)}
             disabled={pending}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-base outline-none focus:border-zinc-500 md:text-sm"
+            className={itemsTableInputClassName}
           >
             <option value="">未設定</option>
             {STATUS1_OPTIONS.map((option) => (

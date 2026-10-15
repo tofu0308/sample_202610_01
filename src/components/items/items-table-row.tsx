@@ -3,16 +3,17 @@
 /**
  * 登録一覧の 1 行。選択チェック・閲覧／編集・単行操作を担う。
  * 列順は「見たい情報」優先（商品名広め → 残量 → メモ → JAN）。
+ * 操作ボタンは ItemsTableRowActions、サムネは ProductThumbnail。
  */
 
+import { ItemsTableRowActions } from "@/components/items/items-table-row-actions";
 import {
-  itemDangerButtonClass,
-  itemEditButtonClass,
-  itemPrimaryButtonClass,
-  itemSecondaryButtonClass,
-} from "@/components/items/item-action-styles";
+  itemsTableInputClassName,
+  itemsTableTextareaClassName,
+} from "@/components/items/items-table-styles";
 import { MemoCell } from "@/components/items/memo-cell";
 import { Status1Meter } from "@/components/items/status1-meter";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { STATUS1_OPTIONS } from "@/lib/items/constants";
 import {
   formatDateTimeJstParts,
@@ -84,23 +85,7 @@ export function ItemsTableRowView({
         />
       </td>
       <td className="px-3 py-2">
-        {item.product.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
-          <img
-            src={item.product.imageUrl}
-            alt=""
-            width={40}
-            height={40}
-            className="h-10 w-10 rounded border border-zinc-200 object-cover"
-          />
-        ) : (
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded border border-dashed border-zinc-200 bg-zinc-50 text-[9px] text-zinc-400"
-            aria-hidden
-          >
-            —
-          </div>
-        )}
+        <ProductThumbnail imageUrl={item.product.imageUrl} size={40} />
       </td>
       <td className="min-w-[22rem] max-w-[28rem] px-3 py-2 font-medium text-zinc-900">
         <span className="line-clamp-2">{item.product.name}</span>
@@ -116,7 +101,7 @@ export function ItemsTableRowView({
               onChange={(event) => onDraftStatus1Change(event.target.value)}
               disabled={rowBusy}
               aria-label={`${item.product.name} の残量`}
-              className="w-36 rounded-md border border-zinc-300 bg-white px-2 py-1 text-base outline-none focus:border-zinc-500 md:text-sm"
+              className={`w-36 ${itemsTableInputClassName}`}
             >
               <option value="">未設定</option>
               {STATUS1_OPTIONS.map((option) => (
@@ -149,7 +134,7 @@ export function ItemsTableRowView({
             disabled={rowBusy}
             placeholder="メモ（任意）"
             aria-label={`${item.product.name} のメモ`}
-            className="w-full rounded-md border border-zinc-300 px-2 py-1 text-base outline-none focus:border-zinc-500 md:text-sm"
+            className={itemsTableTextareaClassName}
           />
         ) : (
           <MemoCell note={item.note} label={item.product.name} />
@@ -165,57 +150,15 @@ export function ItemsTableRowView({
         <DateTimeTwoLine parts={updatedAt} />
       </td>
       <td className="whitespace-nowrap px-3 py-2">
-        {/* キャンセル分の幅を常に確保し、編集開始で表幅が伸びないようにする */}
-        <div className="flex flex-nowrap items-center gap-1">
-          {editing ? (
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={rowBusy}
-              className={itemPrimaryButtonClass.row}
-            >
-              {pending ? "保存中…" : "保存"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onStartEdit}
-              disabled={rowBusy}
-              className={itemEditButtonClass.row}
-            >
-              編集
-            </button>
-          )}
-          {editing ? (
-            <button
-              type="button"
-              onClick={onCancelEdit}
-              disabled={rowBusy}
-              className={itemSecondaryButtonClass.row}
-            >
-              キャンセル
-            </button>
-          ) : (
-            <span className="invisible" aria-hidden="true">
-              <button
-                type="button"
-                tabIndex={-1}
-                disabled
-                className={itemSecondaryButtonClass.row}
-              >
-                キャンセル
-              </button>
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={rowBusy}
-            className={itemDangerButtonClass.row}
-          >
-            {pending && !editing ? "削除中…" : "削除"}
-          </button>
-        </div>
+        <ItemsTableRowActions
+          editing={editing}
+          pending={pending}
+          disabled={rowBusy}
+          onStartEdit={onStartEdit}
+          onCancelEdit={onCancelEdit}
+          onSave={onSave}
+          onDelete={onDelete}
+        />
       </td>
     </tr>
   );

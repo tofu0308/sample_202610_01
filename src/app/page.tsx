@@ -8,6 +8,7 @@ import { ItemsTable } from "@/components/items/items-table";
 import { BarcodeScanner } from "@/components/scan/barcode-scanner";
 import { APP_NAME } from "@/lib/app-name";
 import { requireUserForPage } from "@/lib/auth/require-user";
+import { toItemsTableRow } from "@/lib/items/to-items-table-row";
 import { prisma } from "@/lib/prisma";
 
 // 一覧を毎回 DB から取り直す（キャッシュで古くならないようにする）
@@ -70,21 +71,7 @@ export default async function Home() {
             スキャンまたは手動入力で照会し、登録するとここに表示されます。
           </p>
         ) : (
-          <ItemsTable
-            items={items.map((item) => ({
-              id: item.id,
-              note: item.note,
-              status1: item.status1,
-              createdAt: item.createdAt.toISOString(),
-              updatedAt: item.updatedAt.toISOString(),
-              product: {
-                jan: item.product.jan,
-                name: item.product.name,
-                brandName: item.product.brandName,
-                imageUrl: item.product.imageUrl,
-              },
-            }))}
-          />
+          <ItemsTable items={items.map(toItemsTableRow)} />
         )}
       </section>
     </main>

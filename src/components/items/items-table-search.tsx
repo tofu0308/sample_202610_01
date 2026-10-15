@@ -5,6 +5,8 @@
  * 商品名は常に対象。メモ・JAN はチェックで追加する。
  */
 
+import { itemsTableSearchInputClassName } from "@/components/items/items-table-styles";
+
 type ItemsTableSearchProps = {
   query: string;
   includeNote: boolean;
@@ -39,7 +41,7 @@ export function ItemsTableSearch({
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="キーワードを入力（商品名）"
-            className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-base text-zinc-900 outline-none focus:border-zinc-500 md:text-sm"
+            className={itemsTableSearchInputClassName}
           />
         </label>
         {filtering ? (

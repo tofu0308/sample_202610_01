@@ -14,6 +14,9 @@ type ScanModeControlsProps = {
   onStart: () => void;
 };
 
+const modeSegmentButtonClassName =
+  "px-3 py-2 text-sm font-medium bg-zinc-100 text-zinc-800 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-emerald-100 aria-pressed:text-emerald-900 aria-pressed:hover:bg-emerald-100";
+
 export function ScanModeControls({
   scanMode,
   starting,
@@ -36,7 +39,7 @@ export function ScanModeControls({
           onClick={() => onSelectMode("single")}
           disabled={disabled}
           aria-pressed={!isContinuous}
-          className="px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-emerald-100 aria-pressed:text-emerald-900 aria-pressed:hover:bg-emerald-100 bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+          className={modeSegmentButtonClassName}
         >
           単体
         </button>
@@ -45,7 +48,7 @@ export function ScanModeControls({
           onClick={() => onSelectMode("continuous")}
           disabled={disabled}
           aria-pressed={isContinuous}
-          className="border-l border-zinc-300 px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-emerald-100 aria-pressed:text-emerald-900 aria-pressed:hover:bg-emerald-100 bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+          className={`border-l border-zinc-300 ${modeSegmentButtonClassName}`}
         >
           連続
         </button>

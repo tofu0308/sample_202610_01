@@ -7,6 +7,7 @@
 
 import { RegisterItemButton } from "@/components/items/register-item-button";
 import { CopyJanButton } from "@/components/scan/copy-jan-button";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import type { FoundProduct } from "@/lib/items/register-item-request";
 import type { ProductLookupResult } from "@/lib/scan/types";
 
@@ -32,23 +33,7 @@ export function ScanEntryRow({
     <li className="rounded border border-zinc-200 bg-white px-3 py-2 text-zinc-900">
       {foundProduct ? (
         <div className="mb-2 flex gap-3">
-          {foundProduct.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- 外部ホストが可変のため
-            <img
-              src={foundProduct.imageUrl}
-              alt=""
-              width={48}
-              height={48}
-              className="h-12 w-12 shrink-0 rounded border border-zinc-200 object-cover"
-            />
-          ) : (
-            <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-dashed border-zinc-200 bg-zinc-50 text-[9px] text-zinc-400"
-              aria-hidden
-            >
-              —
-            </div>
-          )}
+          <ProductThumbnail imageUrl={foundProduct.imageUrl} size={48} />
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-sm font-medium text-zinc-900">
               {foundProduct.name}

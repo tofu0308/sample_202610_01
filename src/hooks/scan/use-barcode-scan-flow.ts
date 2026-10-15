@@ -16,10 +16,8 @@ import { useBarcodeCamera } from "@/hooks/scan/use-barcode-camera";
 import { useBodyScrollLock } from "@/hooks/scan/use-body-scroll-lock";
 import { useContinuousScan } from "@/hooks/scan/use-continuous-scan";
 import { useProductLookup } from "@/hooks/scan/use-product-lookup";
+import { SAME_VALUE_COOLDOWN_MS } from "@/lib/scan/constants";
 import type { ScanMode, ScanResult } from "@/lib/scan/types";
-
-/** 単体モードで同一値の連続コールバックを間引く間隔 */
-const SAME_VALUE_COOLDOWN_MS = 2000;
 
 const PRODUCT_LOOKUP_SECTION_ID = "product-lookup";
 const CONTINUOUS_LIST_SECTION_ID = "continuous-scan-list";
