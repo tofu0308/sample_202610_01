@@ -16,6 +16,7 @@ import {
   authInputClassName,
   authLabelClassName,
 } from "@/components/auth/form-styles";
+import { toLoginErrorMessage } from "@/lib/auth/login-error-message";
 import { createClient } from "@/lib/supabase/client";
 
 type LoginFormProps = {
@@ -43,7 +44,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
       });
 
       if (signInError) {
-        setError(signInError.message || "ログインに失敗しました");
+        setError(toLoginErrorMessage(signInError));
         setPending(false);
         return;
       }

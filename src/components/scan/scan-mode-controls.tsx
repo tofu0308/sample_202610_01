@@ -1,42 +1,57 @@
 /**
- * 単体 / 連続トグルとスキャン開始ボタン。
+ * 単体 / 連続のセグメント切替とスキャン開始ボタン。
  */
 
+import type { ScanMode } from "@/lib/scan/types";
+
 type ScanModeControlsProps = {
-  isContinuous: boolean;
+  scanMode: ScanMode;
   starting: boolean;
   overlayOpen: boolean;
-  onToggleMode: () => void;
+  onSelectMode: (mode: ScanMode) => void;
   onStart: () => void;
 };
 
 export function ScanModeControls({
-  isContinuous,
+  scanMode,
   starting,
   overlayOpen,
-  onToggleMode,
+  onSelectMode,
   onStart,
 }: ScanModeControlsProps) {
+  const disabled = overlayOpen || starting;
+  const isContinuous = scanMode === "continuous";
+
   return (
     <div className="flex overflow-hidden rounded-md border border-zinc-300 shadow-sm">
-      <button
-        type="button"
-        onClick={onToggleMode}
-        disabled={overlayOpen || starting}
-        aria-pressed={isContinuous}
-        aria-label={
-          isContinuous
-            ? "連続読取モード。タップで単体に切り替え"
-            : "単体読取モード。タップで連続に切り替え"
-        }
-        className="shrink-0 border-r border-zinc-300 bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-emerald-100 aria-pressed:text-emerald-900"
+      <div
+        className="flex shrink-0 border-r border-zinc-300"
+        role="group"
+        aria-label="読取モード"
       >
-        {isContinuous ? "連続" : "単体"}
-      </button>
+        <button
+          type="button"
+          onClick={() => onSelectMode("single")}
+          disabled={disabled}
+          aria-pressed={!isContinuous}
+          className="px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-emerald-100 aria-pressed:text-emerald-900 aria-pressed:hover:bg-emerald-100 bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+        >
+          単体
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelectMode("continuous")}
+          disabled={disabled}
+          aria-pressed={isContinuous}
+          className="border-l border-zinc-300 px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-emerald-100 aria-pressed:text-emerald-900 aria-pressed:hover:bg-emerald-100 bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+        >
+          連続
+        </button>
+      </div>
       <button
         type="button"
         onClick={onStart}
-        disabled={overlayOpen || starting}
+        disabled={disabled}
         className="flex-1 bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {starting

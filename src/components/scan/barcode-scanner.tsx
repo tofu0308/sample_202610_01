@@ -31,10 +31,10 @@ export function BarcodeScanner() {
 
       <div className="md:hidden">
         <ScanModeControls
-          isContinuous={isContinuous}
+          scanMode={flow.scanMode}
           starting={flow.starting}
           overlayOpen={flow.overlayOpen}
-          onToggleMode={flow.toggleScanMode}
+          onSelectMode={flow.selectScanMode}
           onStart={() => void flow.startScan()}
         />
       </div>
@@ -47,6 +47,7 @@ export function BarcodeScanner() {
         <ContinuousScanList
           sectionId={flow.continuousListSectionId}
           entries={flow.continuousEntries}
+          onRegistered={flow.afterRegistered}
         />
       ) : (
         <SingleScanList
@@ -55,6 +56,7 @@ export function BarcodeScanner() {
           product={flow.product}
           lookupPending={flow.lookupPending}
           lookupError={flow.lookupError}
+          onRegistered={flow.afterRegistered}
         />
       )}
 

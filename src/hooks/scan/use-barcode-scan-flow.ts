@@ -30,6 +30,7 @@ export function useBarcodeScanFlow() {
     error: lookupError,
     lookup,
     lookupOnce,
+    reset: resetProductLookup,
   } = useProductLookup();
 
   const handleDecodeRef = useRef<(rawValue: string, format?: string) => void>(
@@ -158,12 +159,34 @@ export function useBarcodeScanFlow() {
     return () => media.removeEventListener("change", onChange);
   }, [cancelOverlay]);
 
-  const toggleScanMode = useCallback(() => {
-    if (overlayOpen || starting) {
-      return;
-    }
-    setScanMode((prev) => (prev === "single" ? "continuous" : "single"));
-  }, [overlayOpen, starting]);
+  const selectScanMode = useCallback(
+    (mode: ScanMode) => {
+      if (overlayOpen || starting) {
+        return;
+      }
+      setScanMode(mode);
+    },
+    [overlayOpen, starting],
+  );
+
+  const clearScanResults = useCallback(() => {
+    setResult(null);
+    setManualValue("");
+    resetProductLookup();
+    resetContinuousBatch();
+    lastRawRef.current = null;
+    lastAtRef.current = 0;
+    setCameraError(null);
+  }, [resetContinuousBatch, resetProductLookup, setCameraError]);
+
+  const afterRegistered = useCallback(() => {
+    clearScanResults();
+    requestAnimationFrame(() => {
+      document
+        .getElementById("items")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [clearScanResults]);
 
   const startScan = useCallback(async () => {
     if (scanMode === "continuous") {
@@ -192,7 +215,8 @@ export function useBarcodeScanFlow() {
     productLookupSectionId: PRODUCT_LOOKUP_SECTION_ID,
     continuousListSectionId: CONTINUOUS_LIST_SECTION_ID,
     scanMode,
-    toggleScanMode,
+    selectScanMode,
+    afterRegistered,
     continuousEntries,
     latestContinuousEntry,
     duplicateNotice,

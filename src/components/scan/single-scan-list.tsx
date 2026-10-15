@@ -13,6 +13,7 @@ type SingleScanListProps = {
   product: ProductLookupResult | null;
   lookupPending: boolean;
   lookupError: string | null;
+  onRegistered?: () => void;
 };
 
 export function SingleScanList({
@@ -21,6 +22,7 @@ export function SingleScanList({
   product,
   lookupPending,
   lookupError,
+  onRegistered,
 }: SingleScanListProps) {
   if (!result && !lookupPending) {
     return null;
@@ -54,6 +56,7 @@ export function SingleScanList({
           lookupStatus={lookupStatus}
           lookupError={lookupError}
           product={product}
+          onRegistered={onRegistered}
         />
       </ul>
     </section>

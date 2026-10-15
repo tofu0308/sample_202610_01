@@ -15,6 +15,7 @@ type ScanEntryRowProps = {
   lookupStatus?: "pending" | "loading" | "done" | "error";
   lookupError?: string | null;
   product?: ProductLookupResult | null;
+  onRegistered?: () => void;
 };
 
 export function ScanEntryRow({
@@ -22,6 +23,7 @@ export function ScanEntryRow({
   lookupStatus,
   lookupError = null,
   product = null,
+  onRegistered,
 }: ScanEntryRowProps) {
   const foundProduct: FoundProduct | null =
     product?.found === true ? product : null;
@@ -65,7 +67,11 @@ export function ScanEntryRow({
         <CopyJanButton jan={code} />
         {foundProduct ? (
           <div className="ml-auto">
-            <RegisterItemButton product={foundProduct} compact />
+            <RegisterItemButton
+              product={foundProduct}
+              compact
+              onRegistered={onRegistered}
+            />
           </div>
         ) : null}
       </div>

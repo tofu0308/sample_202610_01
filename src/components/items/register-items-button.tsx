@@ -11,10 +11,17 @@ import type { FoundProduct } from "@/lib/items/register-item-request";
 
 type RegisterItemsButtonProps = {
   products: FoundProduct[];
+  /** 1件以上登録できたあと（一覧スクロール・読取クリアなど） */
+  onRegistered?: () => void;
 };
 
-export function RegisterItemsButton({ products }: RegisterItemsButtonProps) {
-  const { registerMany, pending, error, successMessage } = useRegisterItems();
+export function RegisterItemsButton({
+  products,
+  onRegistered,
+}: RegisterItemsButtonProps) {
+  const { registerMany, pending, error, successMessage } = useRegisterItems({
+    onRegistered,
+  });
   const count = products.length;
   const disabled = pending || count === 0;
 

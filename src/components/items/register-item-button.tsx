@@ -13,13 +13,18 @@ type RegisterItemButtonProps = {
   product: FoundProduct;
   /** 連続リストなど、横並び用に小さくするとき */
   compact?: boolean;
+  /** 登録成功後（一覧スクロール・読取クリアなど） */
+  onRegistered?: () => void;
 };
 
 export function RegisterItemButton({
   product,
   compact = false,
+  onRegistered,
 }: RegisterItemButtonProps) {
-  const { register, pending, error, successMessage } = useRegisterItem();
+  const { register, pending, error, successMessage } = useRegisterItem({
+    onRegistered,
+  });
   // compact はリスト行内向け（上マージンは付けない）
   const wrapperClassName = "space-y-1";
   const buttonClassName = compact

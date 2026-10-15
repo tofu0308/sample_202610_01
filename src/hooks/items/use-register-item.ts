@@ -10,7 +10,12 @@ import {
   type FoundProduct,
 } from "@/lib/items/register-item-request";
 
-export function useRegisterItem() {
+type UseRegisterItemOptions = {
+  onRegistered?: () => void;
+};
+
+export function useRegisterItem(options: UseRegisterItemOptions = {}) {
+  const { onRegistered } = options;
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,13 +37,14 @@ export function useRegisterItem() {
 
         setSuccessMessage("登録しました");
         router.refresh();
+        onRegistered?.();
       } catch {
         setError("登録処理でエラーが発生しました");
       } finally {
         setPending(false);
       }
     },
-    [router],
+    [onRegistered, router],
   );
 
   return { register, pending, error, successMessage };
@@ -49,7 +55,8 @@ export function useRegisterItem() {
  * TODO: いまは POST /api/items を 1 件ずつ順呼び。次の工程で一括 API
  * （例: 複数件をまとめたボディ／カンマ区切りなど）に差し替える。
  */
-export function useRegisterItems() {
+export function useRegisterItems(options: UseRegisterItemOptions = {}) {
+  const { onRegistered } = options;
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +109,11 @@ export function useRegisterItems() {
           router.refresh();
         }
 
+        // 新規登録できたときだけ一覧へ誘導・読取クリア（重複のみは残す）
+        if (created > 0) {
+          onRegistered?.();
+        }
+
         if (failed > 0) {
           setError(lastError ?? "一部の登録に失敗しました");
         } else if (created === 0 && duplicates === 0) {
@@ -113,7 +125,7 @@ export function useRegisterItems() {
         setPending(false);
       }
     },
-    [router],
+    [onRegistered, router],
   );
 
   return { registerMany, pending, error, successMessage };

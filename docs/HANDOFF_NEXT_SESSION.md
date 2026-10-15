@@ -18,8 +18,8 @@
 GitHub: tofu0308/sample_202610_01（main）
 本番: https://sample-202610-01.vercel.app/
 設計: docs/DESIGN_BARCODE_SCAN.md
-学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md
-  （Auth §14〜§19、エラー §20、Product 鮮度 §21。設計の組織は §14）
+学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261015.md
+  （Auth §14〜§19、エラー §20、Product 鮮度 §21、UI §22。設計の組織は §14）
 作業単位 Auth: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U13 完了・削除可）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
@@ -97,7 +97,7 @@ npm run test
 | 一覧       | 残量（`status1`）・メモ・検索・一括・PC は枠内スクロール＋ sticky |
 | 認証       | `/signup`・確認メール・一般利用可・リセット・Profile・「○○さん」 |
 | エラー     | `error.tsx` / `throwAppError`。想定内失敗はインライン |
-| 学習メモ   | `課題対応_20261014.md` §14〜§21 |
+| 学習メモ   | `課題対応_20261015.md` §14〜§22 |
 
 設計の正本: `DESIGN_BARCODE_SCAN.md`（登録 §13、組織 §14、エラー §15、Product 鮮度 §16）。
 

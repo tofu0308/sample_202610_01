@@ -11,7 +11,6 @@ import {
   AUTH_LABEL_PASSWORD,
   authFieldClassName,
   authFormClassName,
-  authHintClassName,
   authInputClassName,
   authLabelClassName,
 } from "@/components/auth/form-styles";
@@ -79,7 +78,6 @@ export function UpdatePasswordForm() {
           onChange={(event) => setPassword(event.target.value)}
           className={authInputClassName}
         />
-        <span className={authHintClassName}>6文字以上</span>
       </label>
       <label className={authFieldClassName}>
         <span className={authLabelClassName}>パスワード（確認）</span>

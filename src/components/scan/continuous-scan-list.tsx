@@ -13,6 +13,7 @@ import type { ContinuousScanEntry } from "@/lib/scan/types";
 type ContinuousScanListProps = {
   sectionId: string;
   entries: ContinuousScanEntry[];
+  onRegistered?: () => void;
 };
 
 function collectFoundProducts(entries: ContinuousScanEntry[]): FoundProduct[] {
@@ -28,6 +29,7 @@ function collectFoundProducts(entries: ContinuousScanEntry[]): FoundProduct[] {
 export function ContinuousScanList({
   sectionId,
   entries,
+  onRegistered,
 }: ContinuousScanListProps) {
   if (entries.length === 0) {
     return null;
@@ -49,7 +51,10 @@ export function ContinuousScanList({
         >
           読取リスト（{entries.length} 件・重複なし）
         </h3>
-        <RegisterItemsButton products={foundProducts} />
+        <RegisterItemsButton
+          products={foundProducts}
+          onRegistered={onRegistered}
+        />
       </div>
       <ul className="max-h-80 space-y-2 overflow-y-auto text-sm">
         {entries.map((entry) => (
@@ -59,6 +64,7 @@ export function ContinuousScanList({
             lookupStatus={entry.lookupStatus}
             lookupError={entry.lookupError}
             product={entry.product}
+            onRegistered={onRegistered}
           />
         ))}
       </ul>
