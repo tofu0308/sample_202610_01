@@ -5,7 +5,7 @@
 > 秘密情報（接続文字列・キーの値・パスワード）は書かない／チャットにも出さない。  
 > 不要になったらこのファイルごと削除してよい。
 
-最終更新: 2026-10-14
+最終更新: 2026-10-15
 
 ---
 
@@ -18,31 +18,33 @@
 GitHub: tofu0308/sample_202610_01（main）
 本番: https://sample-202610-01.vercel.app/
 設計: docs/DESIGN_BARCODE_SCAN.md
-学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md（登録方針は §14）
-設計の登録・組織: docs/DESIGN_BARCODE_SCAN.md §13 / §14
-作業単位: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U13 完了・削除可）
+学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md
+  （Auth §14〜§19、エラー §20、Product 鮮度 §21。設計の組織は §14）
+作業単位 Auth: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U13 完了・削除可）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
 スタック: Next.js 16 App Router + Prisma 7 + Supabase(PostgreSQL) + zod + Vitest
 目的: バーコード → Yahoo 照会 → DB 登録 → 一覧で残量・メモ管理（消耗品メイン）
 
-【完了済み】
-- スキャン（単体／連続）+ Yahoo 商品照会（POST /api/products/lookup）
-- Product / UserItem（Prisma migrate）。GET/POST/PATCH/DELETE /api/items
-- 一覧 UI: 残量プリセット＋バー、メモ（バルーン）、更新日 JST、検索、一括選択・適用・削除
-- スキャン UI: 読取リスト＋JAN コピー（商品情報パネルは廃止）
-- Auth: /signup・確認メール・callback・Profile・一般利用可・「○○さん」・forgot/update-password
-- 学習メモ §16〜§19（rate limit／認証と uid／username／リセット）
-- local-dev-user のコード・データ削除済み
+【到達済み（体裁は一通り）】
+- スキャン（単体／連続）+ Yahoo 照会 + 登録一覧（残量・メモ・検索・一括）
+- Auth: /signup・確認メール・callback・Profile・一般利用可・「○○さん」
+  /forgot-password → /update-password、local-dev-user 削除済み
+- エラー: error.tsx + throwAppError（想定内はインライン）
+- Product: 照会成功時にマスタ表示用を更新（見つからなくても所持は消さない）
+- 学習メモ追記済み（§14〜§21）
 
-【次にやること（優先）】
-1. （任意）一括 API／ページネーション／status2・3／カテゴリ探索
-※ 組織単位は将来。設計書 §14（orgId 追加想定）。第1弾では触らない
+【次にやること（優先は任意）】
+1. 機能追加の検討（一括 API／ページネーション／status2・3／カテゴリ探索 など）
+2. UI 改善
+3. （将来）組織単位 … 設計書 §14。第1弾では触らない
+※ 確認メール再送 UI、フォームを noValidate+zod に寄せるかは後で検討
 
 【エージェントへの注意】
 - commit / push は「commit して」「push して」など明示時だけ
 - 秘密は .env のみ。MCP Supabase は read-only のまま
 - 変更は依頼範囲に限定。Next は AGENTS.md と node_modules/next/dist/docs/ を優先
+- 学習メモへの長文追記は、内容確認してから（勝手に長く書かない）
 - 返答は日本語・簡潔。学習モードなので選定理由を短く
 ```
 
@@ -52,7 +54,7 @@ GitHub: tofu0308/sample_202610_01（main）
 
 Next.js（App Router）+ Prisma 7 + Supabase でフルスタックを学習する。  
 バーコード起点の個人インベントリ（当面は消耗品）。  
-**スキャン → 照会 → 登録 → 一覧編集 → 管理者ログイン** まで到達済み。
+**スキャン → 照会 → 登録 → 一覧 → 一般登録／リセット** まで到達。体裁は一通り整った。
 
 ## リポジトリ / 環境
 
@@ -70,7 +72,7 @@ Next.js（App Router）+ Prisma 7 + Supabase でフルスタックを学習す�
 - Yahoo: `YAHOO_APP_ID`
 - Auth: `NEXT_PUBLIC_SUPABASE_URL`（`https://xxx.supabase.co` まで。`/rest/v1` は付けない）
 - Auth: `NEXT_PUBLIC_SUPABASE_ANON_KEY`（Publishable / anon）
-- Auth: `ADMIN_EMAIL`（管理者メール。未設定ならログイン済みなら誰でも可）
+- Auth: `ADMIN_EMAIL`（将来の管理用。**アプリ利用ゲートには使わない**）
 
 ## 起動・チェック
 
@@ -87,15 +89,17 @@ npm run test
 
 ## 完了済み（現状）
 
-| 領域     | 内容                                                                                        |
-| -------- | ------------------------------------------------------------------------------------------- |
-| 基盤     | Next.js 16 + Prisma 7 + Vercel + GitHub Actions CI                                          |
-| スキャン | 単体／連続、Yahoo 照会、読取リスト（JAN コピー＋登録）                                      |
-| DB / API | `Product` + `UserItem`。items CRUD + lookup（いずれもログイン必須）                         |
-| 一覧     | 残量（`status1`）プリセット／バー、メモ、検索、一括操作、PC は枠内スクロール＋見出し sticky |
-| 認証     | Supabase Auth。`/signup`・`/login`・リセット・`Profile`・ログイン済みなら利用可 |
+| 領域       | 内容 |
+| ---------- | ---- |
+| 基盤       | Next.js 16 + Prisma 7 + Vercel + GitHub Actions CI |
+| スキャン   | 単体／連続、Yahoo 照会、読取リスト（JAN コピー＋登録） |
+| DB / API   | `Product` + `UserItem`。items CRUD + lookup。照会成功時に Product 更新 |
+| 一覧       | 残量（`status1`）・メモ・検索・一括・PC は枠内スクロール＋ sticky |
+| 認証       | `/signup`・確認メール・一般利用可・リセット・Profile・「○○さん」 |
+| エラー     | `error.tsx` / `throwAppError`。想定内失敗はインライン |
+| 学習メモ   | `課題対応_20261014.md` §14〜§21 |
 
-学習メモ: `課題対応_20261014.md`（登録方針は §14）。設計の正本は `DESIGN_BARCODE_SCAN.md` §13/§14。
+設計の正本: `DESIGN_BARCODE_SCAN.md`（登録 §13、組織 §14、エラー §15、Product 鮮度 §16）。
 
 ## 構成（触るとき）
 
@@ -103,48 +107,50 @@ npm run test
 src/proxy.ts                 # セッション更新＋未ログイン→/login
 src/app/login/ signup/ forgot-password/ update-password/
 src/app/auth/callback/       # code → セッション＋ Profile
-src/app/logout/              # POST でログアウト
+src/app/error.tsx            # 想定外／throwAppError
+src/app/logout/
 src/lib/auth/                # require-user / ensure-profile / profile-schemas
-src/lib/supabase/            # browser / server / proxy / env
-src/components/auth/
-src/components/scan/         # barcode-scanner + 読取リスト
-src/components/items/        # 表・検索・一括バー・メモ・残量メーター
+src/lib/errors/app-error.ts  # throwAppError
+src/lib/products/            # yahoo-shopping / sync-product-from-lookup
+src/lib/supabase/
+src/components/auth|scan|items/
 src/hooks/scan|items/
-src/lib/scan|items|products/
 src/app/api/products/lookup/
 src/app/api/items/
 ```
 
-| 画面ラベル | DB / コード                                          |
-| ---------- | ---------------------------------------------------- |
-| 残量       | `status1`（`STATUS1_OPTIONS`）                       |
-| メモ       | `note`                                               |
-| ユーザー   | Auth uid → `UserItem.userId`                         |
-| 表示名     | `Profile.username`（「○○さん」）                     |
+| 画面ラベル | DB / コード |
+| ---------- | ----------- |
+| 残量       | `status1`（`STATUS1_OPTIONS`） |
+| メモ       | `note` |
+| ユーザー   | Auth uid → `UserItem.userId` |
+| 表示名     | `Profile.username`（「○○さん」） |
+| 商品マスタ | `Product`（Table Editor で確認。Auth ではない） |
 
-## 認証の現状（重要）
+## 認証・データ方針（重要）
 
-- **いま**: 公開 `/signup`（確認メール）。ログイン済みなら利用可。ヘッダーは username
-- パスワードリセット: `/forgot-password` → メール → `/auth/callback` → `/update-password`
-- ログイン成功後、API／一覧は **Auth uid** で絞る（これは維持）
-- 組み込みメールはおおむね **1 時間 2 通**（Rate Limits）
-- URL に `/rest/v1` を付けると Auth が壊れる（`env.ts` でオリジンに正規化）
-- 旧 `local-dev-user` は **削除済み**
+- 認証: 確認済みログインなら利用可（`ADMIN_EMAIL` はゲートに使わない）
+- データの問い合わせ: **Auth uid** で自分の行だけ
+- パスワードリセット: `/forgot-password` → callback → `/update-password`
+- 組み込みメールはおおむね **1 時間 2 通**（Rate Limits）。学習メモ §16
+- Product: 照会成功時に表示用更新。外部で JAN が取れなくても所持は消さない（§16／学習メモ §21）
+- URL に `/rest/v1` を付けない（`env.ts` で正規化）
 
 ## 次にやること
 
-1. （任意）一括 API／ページネーション／`status2`/`3`／カテゴリ探索
-2. （将来）組織単位 … 設計書 §14。第1弾では触らない
+1. （任意）機能追加・UI 改善（一括 API、ページネーション、`status2`/`3`、カテゴリ探索、確認メール再送 など）
+2. （将来）組織単位 … 設計書 §14
 
 ## 作業の進め方（エージェント向け）
 
-- **commit / push は「commit して」「push して」など明示時だけ**（「修正して」はコードのみ）
+- **commit / push は「commit して」「push して」など明示時だけ**
 - 秘密情報をチャット・commit に出さない。MCP Supabase は read-only
-- 変更は依頼範囲に限定。無関係なリファクタしない
-- Next.js 16 は通常と違う → `AGENTS.md` と `node_modules/next/dist/docs/`（Proxy は `src/proxy.ts`）
-- 返答は日本語・簡潔。学習モードなので選定理由を短く（1〜3 点）
+- 変更は依頼範囲に限定
+- Next.js 16 → `AGENTS.md` と `node_modules/next/dist/docs/`（Proxy は `src/proxy.ts`）
+- 学習メモ追記は確認のうえ。返答は日本語・簡潔。選定理由は短く
 
 ## 注意
 
-- 旧 Note CRUD は削除済み（`UserItem.note` はメモ欄で別物）
+- 旧 Note CRUD・`local-dev-user` は削除済み
 - 生成クライアント `src/generated/prisma` は gitignore（`prisma generate`）
+- `AUTH_SIGNUP_WORK_UNITS.md` は完了済みの一時工程表（削除してよい）
