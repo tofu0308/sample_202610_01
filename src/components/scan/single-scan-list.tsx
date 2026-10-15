@@ -2,11 +2,14 @@
 
 /**
  * 単体読取の結果行。連続リストと同じ ScanEntryRow で見た目を揃える。
+ * 登録ボタンは親から registerAction を渡す。
  */
 
+import type { ReactNode } from "react";
 import { ScanEntryRow } from "@/components/scan/scan-entry-row";
 import { ScanListEmpty } from "@/components/scan/scan-list-empty";
 import { ScanResultsSection } from "@/components/scan/scan-results-section";
+import type { FoundProduct } from "@/lib/items/register-item-request";
 import type { ProductLookupResult, ScanResult } from "@/lib/scan/types";
 
 type SingleScanListProps = {
@@ -16,7 +19,7 @@ type SingleScanListProps = {
   lookupPending: boolean;
   lookupError: string | null;
   showEmptyList?: boolean;
-  onRegistered?: () => void;
+  renderRegisterAction?: (product: FoundProduct) => ReactNode;
 };
 
 export function SingleScanList({
@@ -26,7 +29,7 @@ export function SingleScanList({
   lookupPending,
   lookupError,
   showEmptyList = false,
-  onRegistered,
+  renderRegisterAction,
 }: SingleScanListProps) {
   if (!result && !lookupPending) {
     if (showEmptyList) {
@@ -49,6 +52,7 @@ export function SingleScanList({
       : product
         ? "done"
         : undefined;
+  const foundProduct = product?.found === true ? product : null;
 
   return (
     <ScanResultsSection
@@ -67,7 +71,11 @@ export function SingleScanList({
           lookupStatus={lookupStatus}
           lookupError={lookupError}
           product={product}
-          onRegistered={onRegistered}
+          registerAction={
+            foundProduct && renderRegisterAction
+              ? renderRegisterAction(foundProduct)
+              : undefined
+          }
         />
       </ul>
     </ScanResultsSection>

@@ -2,7 +2,7 @@
 
 /**
  * 照会成功した複数商品をまとめて登録するボタン（連続リスト用）。
- * TODO: 裏では単件 POST を順呼び。一括リクエスト API に切り替えたらここは維持して hook 側だけ差し替えでよい。
+ * 裏は POST /api/items/bulk（useRegisterItems）。
  */
 
 import { itemPrimaryButtonClass } from "@/components/items/item-action-styles";

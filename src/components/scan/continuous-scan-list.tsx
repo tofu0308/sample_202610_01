@@ -2,10 +2,10 @@
 
 /**
  * 連続読取の待ちリスト（スクロール可）。
- * 各行はサムネ・商品名・JANコードコピー・登録。
+ * 登録 UI は items に寄せ、ここでは render props で差し込むだけにする。
  */
 
-import { RegisterItemsButton } from "@/components/items/register-items-button";
+import type { ReactNode } from "react";
 import { ScanEntryRow } from "@/components/scan/scan-entry-row";
 import { ScanListEmpty } from "@/components/scan/scan-list-empty";
 import { ScanResultsSection } from "@/components/scan/scan-results-section";
@@ -16,7 +16,10 @@ type ContinuousScanListProps = {
   sectionId: string;
   entries: ContinuousScanEntry[];
   showEmptyList?: boolean;
-  onRegistered?: () => void;
+  /** まとめて登録（例: RegisterItemsButton） */
+  renderBulkRegister?: (products: FoundProduct[]) => ReactNode;
+  /** 各行の登録（例: RegisterItemButton） */
+  renderRegisterAction?: (product: FoundProduct) => ReactNode;
 };
 
 function collectFoundProducts(entries: ContinuousScanEntry[]): FoundProduct[] {
@@ -33,7 +36,8 @@ export function ContinuousScanList({
   sectionId,
   entries,
   showEmptyList = false,
-  onRegistered,
+  renderBulkRegister,
+  renderRegisterAction,
 }: ContinuousScanListProps) {
   if (entries.length === 0) {
     if (showEmptyList) {
@@ -62,22 +66,27 @@ export function ContinuousScanList({
         >
           読取リスト（{entries.length} 件・重複なし）
         </h3>
-        <RegisterItemsButton
-          products={foundProducts}
-          onRegistered={onRegistered}
-        />
+        {renderBulkRegister?.(foundProducts)}
       </div>
       <ul className="max-h-80 space-y-2 overflow-y-auto text-sm">
-        {entries.map((entry) => (
-          <ScanEntryRow
-            key={entry.id}
-            code={entry.code}
-            lookupStatus={entry.lookupStatus}
-            lookupError={entry.lookupError}
-            product={entry.product}
-            onRegistered={onRegistered}
-          />
-        ))}
+        {entries.map((entry) => {
+          const found =
+            entry.product?.found === true ? entry.product : null;
+          return (
+            <ScanEntryRow
+              key={entry.id}
+              code={entry.code}
+              lookupStatus={entry.lookupStatus}
+              lookupError={entry.lookupError}
+              product={entry.product}
+              registerAction={
+                found && renderRegisterAction
+                  ? renderRegisterAction(found)
+                  : undefined
+              }
+            />
+          );
+        })}
       </ul>
     </ScanResultsSection>
   );

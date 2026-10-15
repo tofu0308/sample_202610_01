@@ -1,17 +1,19 @@
 "use client";
 
 /**
- * QR / バーコード読み取り UI（Client Component）。
- * 読取結果はリスト行に統一（サムネ・商品名・JANコードコピー・登録）。
+ * QR / バーコード読み取り UI の組み立て（Client Component）。
+ * スキャン表示は scan/*、登録ボタンは items/* をここでつなぐ（scan 葉コンポーネントは items を import しない）。
  */
 
 import { createPortal } from "react-dom";
-import { ListUpdatingBanner } from "@/components/items/list-updating-banner";
+import { RegisterItemButton } from "@/components/items/register-item-button";
+import { RegisterItemsButton } from "@/components/items/register-items-button";
 import { ContinuousScanList } from "@/components/scan/continuous-scan-list";
 import { ManualScanForm } from "@/components/scan/manual-scan-form";
 import { ScanModeControls } from "@/components/scan/scan-mode-controls";
 import { ScanOverlay } from "@/components/scan/scan-overlay";
 import { SingleScanList } from "@/components/scan/single-scan-list";
+import { ListUpdatingBanner } from "@/components/ui/list-updating-banner";
 import { useBarcodeScanFlow } from "@/hooks/scan/use-barcode-scan-flow";
 
 export type { ScanResult } from "@/lib/scan/types";
@@ -19,6 +21,7 @@ export type { ScanResult } from "@/lib/scan/types";
 export function BarcodeScanner() {
   const flow = useBarcodeScanFlow();
   const isContinuous = flow.scanMode === "continuous";
+  const onRegistered = flow.afterRegistered;
 
   return (
     <div id="scan" className="space-y-4">
@@ -50,7 +53,19 @@ export function BarcodeScanner() {
           sectionId={flow.continuousListSectionId}
           entries={flow.continuousEntries}
           showEmptyList={flow.showEmptyList}
-          onRegistered={flow.afterRegistered}
+          renderBulkRegister={(products) => (
+            <RegisterItemsButton
+              products={products}
+              onRegistered={onRegistered}
+            />
+          )}
+          renderRegisterAction={(product) => (
+            <RegisterItemButton
+              product={product}
+              compact
+              onRegistered={onRegistered}
+            />
+          )}
         />
       ) : (
         <SingleScanList
@@ -60,7 +75,13 @@ export function BarcodeScanner() {
           lookupPending={flow.lookupPending}
           lookupError={flow.lookupError}
           showEmptyList={flow.showEmptyList}
-          onRegistered={flow.afterRegistered}
+          renderRegisterAction={(product) => (
+            <RegisterItemButton
+              product={product}
+              compact
+              onRegistered={onRegistered}
+            />
+          )}
         />
       )}
 

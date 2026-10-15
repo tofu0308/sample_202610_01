@@ -1,6 +1,6 @@
 /**
- * 登録後の router.refresh（RSC 再取得）中に出す明示ローディング。
- * ボタン側の pending は POST 中だけなので、一覧反映待ちはこちらで補う。
+ * 一覧の router.refresh（RSC 再取得）中に出す明示ローディング。
+ * スキャン／登録のどちらからも使うため items 配下ではなく ui に置く。
  */
 
 "use client";

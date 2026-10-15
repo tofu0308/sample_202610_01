@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * 読取 1 件分の行。照会結果（サムネ・商品名）と JANコードコピー・登録を出す。
- * 単体／連続で同じ見た目にして操作の齟齬を減らす。
+ * 読取 1 件分の行。サムネ・商品名・JANコピーまでを担う。
+ * 登録ボタンは items 側の関心なので、親から registerAction を差し込む。
  */
 
-import { RegisterItemButton } from "@/components/items/register-item-button";
+import type { ReactNode } from "react";
 import { CopyJanButton } from "@/components/scan/copy-jan-button";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import type { FoundProduct } from "@/lib/items/register-item-request";
@@ -16,7 +16,8 @@ type ScanEntryRowProps = {
   lookupStatus?: "pending" | "loading" | "done" | "error";
   lookupError?: string | null;
   product?: ProductLookupResult | null;
-  onRegistered?: () => void;
+  /** 照会成功時だけ親が渡す（例: RegisterItemButton） */
+  registerAction?: ReactNode;
 };
 
 export function ScanEntryRow({
@@ -24,7 +25,7 @@ export function ScanEntryRow({
   lookupStatus,
   lookupError = null,
   product = null,
-  onRegistered,
+  registerAction,
 }: ScanEntryRowProps) {
   const foundProduct: FoundProduct | null =
     product?.found === true ? product : null;
@@ -50,14 +51,8 @@ export function ScanEntryRow({
       <div className="flex flex-wrap items-center gap-2">
         <p className="font-mono text-sm text-zinc-800">{code}</p>
         <CopyJanButton jan={code} />
-        {foundProduct ? (
-          <div className="ml-auto">
-            <RegisterItemButton
-              product={foundProduct}
-              compact
-              onRegistered={onRegistered}
-            />
-          </div>
+        {foundProduct && registerAction ? (
+          <div className="ml-auto">{registerAction}</div>
         ) : null}
       </div>
       {lookupStatus === "loading" || lookupStatus === "pending" ? (

@@ -20,3 +20,8 @@ export const primaryOnLightButtonClass = {
 
 /** auth フォームの送信（全幅） */
 export const authPrimarySubmitClassName = `w-full ${primaryOnDarkButtonClassName}`;
+
+/** ライト地の副操作（枠線）。スキャンのコピー等でも使う */
+export const secondaryOnLightButtonClass = {
+  sm: `rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-800 hover:bg-zinc-50 ${disabled}`,
+} as const;

@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { itemSecondaryButtonClass } from "@/components/items/item-action-styles";
+import { secondaryOnLightButtonClass } from "@/components/ui/button-styles";
 
 type CopyJanButtonProps = {
   jan: string;
@@ -29,7 +29,7 @@ export function CopyJanButton({ jan }: CopyJanButtonProps) {
     <button
       type="button"
       onClick={() => void handleCopy()}
-      className={itemSecondaryButtonClass.sm}
+      className={secondaryOnLightButtonClass.sm}
     >
       {copied ? "コピー済み" : "JANコードをコピー"}
     </button>
