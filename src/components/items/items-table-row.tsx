@@ -165,26 +165,17 @@ export function ItemsTableRowView({
         <DateTimeTwoLine parts={updatedAt} />
       </td>
       <td className="whitespace-nowrap px-3 py-2">
-        <div className="flex flex-wrap gap-1">
+        {/* キャンセル分の幅を常に確保し、編集開始で表幅が伸びないようにする */}
+        <div className="flex flex-nowrap items-center gap-1">
           {editing ? (
-            <>
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={rowBusy}
-                className={itemPrimaryButtonClass.row}
-              >
-                {pending ? "保存中…" : "保存"}
-              </button>
-              <button
-                type="button"
-                onClick={onCancelEdit}
-                disabled={rowBusy}
-                className={itemSecondaryButtonClass.row}
-              >
-                キャンセル
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={rowBusy}
+              className={itemPrimaryButtonClass.row}
+            >
+              {pending ? "保存中…" : "保存"}
+            </button>
           ) : (
             <button
               type="button"
@@ -194,6 +185,27 @@ export function ItemsTableRowView({
             >
               編集
             </button>
+          )}
+          {editing ? (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              disabled={rowBusy}
+              className={itemSecondaryButtonClass.row}
+            >
+              キャンセル
+            </button>
+          ) : (
+            <span className="invisible" aria-hidden="true">
+              <button
+                type="button"
+                tabIndex={-1}
+                disabled
+                className={itemSecondaryButtonClass.row}
+              >
+                キャンセル
+              </button>
+            </span>
           )}
           <button
             type="button"
