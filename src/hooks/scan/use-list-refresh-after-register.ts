@@ -5,7 +5,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useTransition } from "react";
 import { scrollToElementId } from "@/lib/scan/scroll-to-element-id";
 
 type RefreshListOptions = {
@@ -16,18 +16,9 @@ type RefreshListOptions = {
 export function useListRefreshAfterRegister() {
   const router = useRouter();
   const [isListRefreshing, startListTransition] = useTransition();
-  /** 読取クリアでボタンが消えても、refresh 完了までバナーを出すための旗 */
-  const [listUpdating, setListUpdating] = useState(false);
-
-  useEffect(() => {
-    if (listUpdating && !isListRefreshing) {
-      setListUpdating(false);
-    }
-  }, [isListRefreshing, listUpdating]);
 
   const refreshListAndScroll = useCallback(
     (options?: RefreshListOptions) => {
-      setListUpdating(true);
       startListTransition(() => {
         router.refresh();
       });
@@ -37,7 +28,7 @@ export function useListRefreshAfterRegister() {
   );
 
   return {
-    listUpdating: listUpdating || isListRefreshing,
+    listUpdating: isListRefreshing,
     refreshListAndScroll,
   };
 }

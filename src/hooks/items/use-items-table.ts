@@ -3,7 +3,7 @@
  * 検索・ソート／単行編集／選択・一括を分け、ここは共有 error と接続だけ担う。
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useItemsTableEditing } from "@/hooks/items/use-items-table-editing";
 import { useItemsTableQuery } from "@/hooks/items/use-items-table-query";
 import { useItemsTableSelection } from "@/hooks/items/use-items-table-selection";
@@ -11,23 +11,26 @@ import type { ItemsTableRow } from "@/lib/items/items-table-sort";
 
 export function useItemsTable(items: ItemsTableRow[]) {
   const [error, setError] = useState<string | null>(null);
-  // 生成順の都合で、一括前キャンセルは ref 経由（循環 import を避ける）
-  const cancelEditRef = useRef<() => void>(() => {});
+  // 編集 → 選択の順で組み立てるため、削除後の選択解除だけ ref 経由（render 中は触らない）
+  const deselectIdRef = useRef<(id: string) => void>(() => {});
 
   const query = useItemsTableQuery(items);
+  const editing = useItemsTableEditing({
+    setError,
+    onItemDeleted: (id) => {
+      deselectIdRef.current(id);
+    },
+  });
   const selection = useItemsTableSelection({
     items,
     sorted: query.sorted,
     setError,
-    onBeforeBulk: () => {
-      cancelEditRef.current();
-    },
+    onBeforeBulk: editing.cancelEdit,
   });
-  const editing = useItemsTableEditing({
-    setError,
-    onItemDeleted: selection.deselectId,
-  });
-  cancelEditRef.current = editing.cancelEdit;
+
+  useEffect(() => {
+    deselectIdRef.current = selection.deselectId;
+  }, [selection.deselectId]);
 
   const busy = selection.bulkPending || editing.pendingId !== null;
 
