@@ -6,6 +6,7 @@
 import { LogoutButton } from "@/components/auth/logout-button";
 import { ItemsTable } from "@/components/items/items-table";
 import { BarcodeScanner } from "@/components/scan/barcode-scanner";
+import { APP_NAME } from "@/lib/app-name";
 import { requireUserForPage } from "@/lib/auth/require-user";
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +28,7 @@ export default async function Home() {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
-            消耗品インベントリ
+            {APP_NAME}
           </h1>
           <p className="text-zinc-400">
             バーコードで商品をスキャンし、所持状況・残量を管理できます。また、メモを残すことができます。

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+import { APP_DESCRIPTION, APP_NAME } from "@/lib/app-name";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,11 +14,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// ブラウザタブ・検索向け。画面上のプロダクト名（A5）と揃える想定
+// タブ表示。画面上のブランド（A5）と同じ定数を使う
 export const metadata: Metadata = {
-  title: "消耗品インベントリ",
-  description:
-    "バーコードでスキャンし、所持・残量・メモを管理する学習用アプリ",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
 };
 
 // LayoutProps は next typegen 生成型。CI では未生成のため ReactNode で受ける

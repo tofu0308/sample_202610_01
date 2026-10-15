@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { AppBrandLink } from "@/components/app-brand-link";
 import { getAppErrorPresentation } from "@/lib/errors/app-error";
 
 type ErrorPageProps = {
@@ -29,6 +30,9 @@ export default function ErrorPage({ error, reset, retry }: ErrorPageProps) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6 py-16">
       <header className="space-y-3">
+        <p>
+          <AppBrandLink />
+        </p>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
           {title}
         </h1>
