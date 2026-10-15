@@ -6,7 +6,7 @@
 
 進捗は本ファイルのチェックリストと学習メモで管理する。  
 学習メモ: `C:\Users\isisa\Downloads\ルトラ\docs\課題対応_20261014.md`  
-最終更新: 2026-10-15（§17 A1 metadata・A2 lang=ja 完了）
+最終更新: 2026-10-15（§17 A1 / A1b favicon / A2 完了）
 
 ---
 
@@ -1020,6 +1020,7 @@ UserItem
 | ID | タスク | 主な場所 | 規模 | 優先 |
 | --- | --- | --- | --- | --- |
 | A1 | `metadata` をアプリ向けに（title / description） | `src/app/layout.tsx` | S | P0 |
+| A1b | favicon（`icon.svg`）。細かいバーコード＋残量メーター | `src/app/icon.svg`（旧 `favicon.ico` 削除） | S | P0 |
 | A2 | `lang="ja"` に変更 | 同上 | S | P0 |
 | A3 | フォント統一（Geist 変数を `body` で使うか、Arial に寄せるか） | `src/app/globals.css` | S | P0 |
 | A4 | テーマを **ライト固定**（OS ダークで auth / error の白文字が消える問題を解消） | `globals.css` + auth / `error.tsx` | M | P0 |
@@ -1029,6 +1030,7 @@ UserItem
 チェック:
 
 - [x] A1 metadata
+- [x] A1b favicon（`icon.svg`）
 - [x] A2 lang=ja
 - [ ] A3 フォント統一
 - [ ] A4 ライト固定（auth / error コントラスト）
