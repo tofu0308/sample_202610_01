@@ -41,6 +41,21 @@ export function ScanOverlay({
   onFinishContinuous,
   onDismissToResults,
 }: ScanOverlayProps) {
+  const singleHasResult = !isContinuous && result !== null;
+  const headerActionLabel = isContinuous
+    ? "閉じる"
+    : singleHasResult
+      ? "閉じる"
+      : "キャンセル";
+  const onHeaderAction = isContinuous
+    ? onFinishContinuous
+    : singleHasResult
+      ? onDismissToResults
+      : onCancel;
+
+  const singleLookupDone =
+    singleHasResult && !lookupPending && (product !== null || lookupError !== null);
+
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col bg-black text-white"
@@ -54,7 +69,7 @@ export function ScanOverlay({
             ? "カメラ起動中…"
             : isContinuous
               ? `連続読取（${continuousEntries.length} 件）`
-                  : result
+              : result
                 ? lookupPending
                   ? "商品を照会しています…"
                   : "読取完了"
@@ -63,15 +78,11 @@ export function ScanOverlay({
         <button
           type="button"
           onClick={() => {
-            if (isContinuous) {
-              onFinishContinuous();
-            } else {
-              onCancel();
-            }
+            void onHeaderAction();
           }}
           className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
         >
-          {isContinuous ? "完了" : "キャンセル"}
+          {headerActionLabel}
         </button>
       </header>
 
@@ -119,16 +130,19 @@ export function ScanOverlay({
                 {continuousLookupActive ? "（照会中）" : ""}
               </p>
             ) : null}
+            {/* 主操作はフッタのみ（D5）。ヘッダは「閉じる」表記 */}
             <button
               type="button"
-              onClick={onFinishContinuous}
+              onClick={() => {
+                void onFinishContinuous();
+              }}
               className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
             >
               読取を終了（{continuousEntries.length} 件）
             </button>
           </div>
         ) : result ? (
-          <div className="space-y-1 text-sm">
+          <div className="space-y-2 text-sm">
             <p className="font-medium text-emerald-300">読み取りました</p>
             <p className="break-all font-mono text-white">{result.rawValue}</p>
             <p className="text-zinc-400">
@@ -142,24 +156,20 @@ export function ScanOverlay({
               <p className="text-white">{product.name}</p>
             ) : null}
             {product?.found === false ? (
-              <div className="space-y-2">
-                <p className="text-zinc-400">商品情報なし</p>
-                <button
-                  type="button"
-                  onClick={onDismissToResults}
-                  className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
-                >
-                  結果を見る
-                </button>
-              </div>
+              <p className="text-zinc-400">商品情報なし</p>
             ) : null}
             {lookupError ? (
+              <p className="text-red-300">{lookupError}</p>
+            ) : null}
+            {singleLookupDone ? (
               <button
                 type="button"
-                onClick={onDismissToResults}
-                className="rounded-md bg-white/15 px-3 py-2 text-sm font-medium text-white"
+                onClick={() => {
+                  void onDismissToResults();
+                }}
+                className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
               >
-                閉じる
+                結果を見る
               </button>
             ) : null}
           </div>

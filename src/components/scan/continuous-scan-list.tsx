@@ -7,12 +7,14 @@
 
 import { RegisterItemsButton } from "@/components/items/register-items-button";
 import { ScanEntryRow } from "@/components/scan/scan-entry-row";
+import { ScanListEmpty } from "@/components/scan/scan-list-empty";
 import type { FoundProduct } from "@/lib/items/register-item-request";
 import type { ContinuousScanEntry } from "@/lib/scan/types";
 
 type ContinuousScanListProps = {
   sectionId: string;
   entries: ContinuousScanEntry[];
+  showEmptyList?: boolean;
   onRegistered?: () => void;
 };
 
@@ -29,9 +31,19 @@ function collectFoundProducts(entries: ContinuousScanEntry[]): FoundProduct[] {
 export function ContinuousScanList({
   sectionId,
   entries,
+  showEmptyList = false,
   onRegistered,
 }: ContinuousScanListProps) {
   if (entries.length === 0) {
+    if (showEmptyList) {
+      return (
+        <ScanListEmpty
+          sectionId={sectionId}
+          headingId="continuous-list-heading"
+          title="読取リスト"
+        />
+      );
+    }
     return null;
   }
 

@@ -5,6 +5,7 @@
  */
 
 import { ScanEntryRow } from "@/components/scan/scan-entry-row";
+import { ScanListEmpty } from "@/components/scan/scan-list-empty";
 import type { ProductLookupResult, ScanResult } from "@/lib/scan/types";
 
 type SingleScanListProps = {
@@ -13,6 +14,7 @@ type SingleScanListProps = {
   product: ProductLookupResult | null;
   lookupPending: boolean;
   lookupError: string | null;
+  showEmptyList?: boolean;
   onRegistered?: () => void;
 };
 
@@ -22,9 +24,19 @@ export function SingleScanList({
   product,
   lookupPending,
   lookupError,
+  showEmptyList = false,
   onRegistered,
 }: SingleScanListProps) {
   if (!result && !lookupPending) {
+    if (showEmptyList) {
+      return (
+        <ScanListEmpty
+          sectionId={sectionId}
+          headingId="single-scan-list-heading"
+          title="読取リスト"
+        />
+      );
+    }
     return null;
   }
 

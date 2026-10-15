@@ -23,6 +23,8 @@ export function useBarcodeScanFlow() {
   const [scanMode, setScanMode] = useState<ScanMode>("single");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [manualValue, setManualValue] = useState("");
+  /** 登録後クリアなどでリスト枠だけ残す（初回表示では出さない） */
+  const [showEmptyList, setShowEmptyList] = useState(false);
 
   const {
     product,
@@ -93,9 +95,13 @@ export function useBarcodeScanFlow() {
   }, [closeOverlay, scrollToProductSection]);
 
   const finishContinuousScan = useCallback(async () => {
+    const hadNone = continuousEntries.length === 0;
     await closeOverlay();
+    if (hadNone) {
+      setShowEmptyList(true);
+    }
     scrollToContinuousList();
-  }, [closeOverlay, scrollToContinuousList]);
+  }, [closeOverlay, continuousEntries.length, scrollToContinuousList]);
 
   const applySingleResult = useCallback(
     async (rawValue: string, format: string | undefined, fromCamera: boolean) => {
@@ -113,22 +119,21 @@ export function useBarcodeScanFlow() {
       }
       lastRawRef.current = trimmed;
       lastAtRef.current = now;
+      setShowEmptyList(false);
       setResult({
         rawValue: trimmed,
         format,
         scannedAt: new Date().toISOString(),
       });
 
+      // ヒット時も自動クローズしない（D6）。結果を見てから「結果を見る」で閉じる
       if (fromCamera) {
         await stop();
       }
 
-      const lookedUp = await lookup(trimmed);
-      if (fromCamera && lookedUp?.found) {
-        await dismissOverlayToResults();
-      }
+      await lookup(trimmed);
     },
-    [dismissOverlayToResults, lookup, stop],
+    [lookup, stop],
   );
 
   const applyResult = useCallback(
@@ -165,6 +170,8 @@ export function useBarcodeScanFlow() {
         return;
       }
       setScanMode(mode);
+      // モード切替だけでは空リスト枠を出さない
+      setShowEmptyList(false);
     },
     [overlayOpen, starting],
   );
@@ -177,6 +184,7 @@ export function useBarcodeScanFlow() {
     lastRawRef.current = null;
     lastAtRef.current = 0;
     setCameraError(null);
+    setShowEmptyList(true);
   }, [resetContinuousBatch, resetProductLookup, setCameraError]);
 
   const afterRegistered = useCallback(() => {
@@ -217,6 +225,7 @@ export function useBarcodeScanFlow() {
     scanMode,
     selectScanMode,
     afterRegistered,
+    showEmptyList,
     continuousEntries,
     latestContinuousEntry,
     duplicateNotice,

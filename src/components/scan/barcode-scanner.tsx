@@ -47,6 +47,7 @@ export function BarcodeScanner() {
         <ContinuousScanList
           sectionId={flow.continuousListSectionId}
           entries={flow.continuousEntries}
+          showEmptyList={flow.showEmptyList}
           onRegistered={flow.afterRegistered}
         />
       ) : (
@@ -56,6 +57,7 @@ export function BarcodeScanner() {
           product={flow.product}
           lookupPending={flow.lookupPending}
           lookupError={flow.lookupError}
+          showEmptyList={flow.showEmptyList}
           onRegistered={flow.afterRegistered}
         />
       )}
