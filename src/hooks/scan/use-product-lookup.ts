@@ -1,39 +1,11 @@
 /**
  * POST /api/products/lookup を叩いて商品情報を state に載せる。
- * ヒット時の副作用（オーバーレイ閉鎖など）は呼び出し側に任せる。
+ * fetch 本体は lib。ヒット時の副作用（オーバーレイ閉鎖など）は呼び出し側に任せる。
  */
 
 import { useCallback, useState } from "react";
+import { fetchProductLookup } from "@/lib/products/product-lookup-request";
 import type { ProductLookupResult } from "@/lib/scan/types";
-
-type LookupJson = ProductLookupResult | { error: string };
-
-/** fetch 本体。state を更新しない版は連続スキャンのキュー用 */
-async function fetchProductLookup(
-  code: string,
-): Promise<{ data: ProductLookupResult | null; error: string | null }> {
-  try {
-    const response = await fetch("/api/products/lookup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({ code }),
-    });
-    const data = (await response.json()) as LookupJson;
-
-    if (!response.ok || "error" in data) {
-      const message =
-        "error" in data ? data.error : "商品情報の取得に失敗しました";
-      return { data: null, error: message };
-    }
-
-    return { data, error: null };
-  } catch {
-    return {
-      data: null,
-      error: "商品情報の取得中にネットワークエラーが発生しました",
-    };
-  }
-}
 
 export function useProductLookup() {
   const [product, setProduct] = useState<ProductLookupResult | null>(null);
@@ -57,6 +29,7 @@ export function useProductLookup() {
     return data;
   }, []);
 
+  /** state を更新しない版（連続スキャンのキュー用） */
   const lookupOnce = useCallback(async (code: string) => {
     return fetchProductLookup(code);
   }, []);

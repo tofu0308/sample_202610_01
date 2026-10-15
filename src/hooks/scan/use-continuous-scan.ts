@@ -4,19 +4,15 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ProductLookupRequestResult } from "@/lib/products/product-lookup-request";
 import { createEntryId } from "@/lib/scan/create-entry-id";
 import { normalizeBarcodeDigits } from "@/lib/scan/normalize-barcode";
-import type { ContinuousScanEntry, ProductLookupResult, ScanResult } from "@/lib/scan/types";
+import type { ContinuousScanEntry, ScanResult } from "@/lib/scan/types";
 
 const SAME_VALUE_COOLDOWN_MS = 2000;
 
-type LookupOnceResult = {
-  data: ProductLookupResult | null;
-  error: string | null;
-};
-
 type UseContinuousScanOptions = {
-  lookupOnce: (code: string) => Promise<LookupOnceResult>;
+  lookupOnce: (code: string) => Promise<ProductLookupRequestResult>;
   setCameraError: (message: string | null) => void;
   /** 新規追加時に直近読取結果を親へ同期する */
   onAccepted: (result: ScanResult) => void;
