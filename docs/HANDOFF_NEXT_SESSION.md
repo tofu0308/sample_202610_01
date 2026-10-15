@@ -32,7 +32,7 @@ GitHub: tofu0308/sample_202610_01（main）
   /forgot-password → /update-password、local-dev-user 削除済み
 - エラー: error.tsx + throwAppError（想定内はインライン）
 - Product: 照会成功時にマスタ表示用を更新（見つからなくても所持は消さない）
-- UI 改修: 体裁・文言、スキャン／登録の振る舞い、待ち表示、一括バー／主ボタン／行タッチ（学習メモ §22〜§25）
+- UI 改修・リファクタ・一括 API（学習メモ §22〜§24）
 
 【次にやること（優先は任意）】
 1. UI 改修の残り（余裕）: auth 導線・alert、overlay Escape／余白、未ヒット案内、削除確認、Logout／入力スタイルなど

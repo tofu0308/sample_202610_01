@@ -1,296 +1,71 @@
 /**
- * 登録一覧テーブルの state / 操作フロー。
- * 単行のインライン編集に加え、複数選択での残量一括・一覧からの削除を扱う。
+ * 登録一覧テーブル用 hook の組み立て。
+ * 検索・ソート／単行編集／選択・一括を分け、ここは共有 error と接続だけ担う。
  */
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  deleteItemsBulk,
-  patchItemsBulk,
-} from "@/lib/items/item-bulk-request";
-import {
-  deleteItem,
-  patchItem,
-} from "@/lib/items/item-mutation-request";
-import { filterItemsTableRows } from "@/lib/items/filter-items-table";
-import {
-  sortItemsTableRows,
-  type ItemsTableRow,
-  type ItemsTableSortDir,
-  type ItemsTableSortKey,
-} from "@/lib/items/items-table-sort";
+import { useRef, useState } from "react";
+import { useItemsTableEditing } from "@/hooks/items/use-items-table-editing";
+import { useItemsTableQuery } from "@/hooks/items/use-items-table-query";
+import { useItemsTableSelection } from "@/hooks/items/use-items-table-selection";
+import type { ItemsTableRow } from "@/lib/items/items-table-sort";
 
 export function useItemsTable(items: ItemsTableRow[]) {
-  const router = useRouter();
-  // 消耗品管理では残量でまとめて見ることが多いので既定ソートにする
-  const [sortKey, setSortKey] = useState<ItemsTableSortKey>("status1");
-  const [sortDir, setSortDir] = useState<ItemsTableSortDir>("asc");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchIncludeNote, setSearchIncludeNote] = useState(false);
-  const [searchIncludeJan, setSearchIncludeJan] = useState(false);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [bulkPending, setBulkPending] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftStatus1, setDraftStatus1] = useState("");
-  const [draftNote, setDraftNote] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
-  const [bulkStatus1, setBulkStatus1] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // 生成順の都合で、一括前キャンセルは ref 経由（循環 import を避ける）
+  const cancelEditRef = useRef<() => void>(() => {});
 
-  const filtered = useMemo(
-    () =>
-      filterItemsTableRows(items, searchQuery, {
-        includeNote: searchIncludeNote,
-        includeJan: searchIncludeJan,
-      }),
-    [items, searchQuery, searchIncludeNote, searchIncludeJan],
-  );
+  const query = useItemsTableQuery(items);
+  const selection = useItemsTableSelection({
+    items,
+    sorted: query.sorted,
+    setError,
+    onBeforeBulk: () => {
+      cancelEditRef.current();
+    },
+  });
+  const editing = useItemsTableEditing({
+    setError,
+    onItemDeleted: selection.deselectId,
+  });
+  cancelEditRef.current = editing.cancelEdit;
 
-  const sorted = useMemo(
-    () => sortItemsTableRows(filtered, sortKey, sortDir),
-    [filtered, sortKey, sortDir],
-  );
-
-  // 一覧更新後に消えた id を選択から落とす
-  const selectedIdList = useMemo(() => {
-    const valid = new Set(items.map((item) => item.id));
-    return [...selectedIds].filter((id) => valid.has(id));
-  }, [items, selectedIds]);
-
-  const selectedCount = selectedIdList.length;
-  const allVisibleSelected =
-    sorted.length > 0 && sorted.every((item) => selectedIds.has(item.id));
-
-  const busy = bulkPending || pendingId !== null;
-
-  function handleSort(key: ItemsTableSortKey) {
-    if (sortKey === key) {
-      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(key);
-    setSortDir("asc");
-  }
-
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  function toggleSelectAllVisible() {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allVisibleSelected) {
-        for (const item of sorted) {
-          next.delete(item.id);
-        }
-      } else {
-        for (const item of sorted) {
-          next.add(item.id);
-        }
-      }
-      return next;
-    });
-  }
-
-  function clearSelection() {
-    setSelectedIds(new Set());
-  }
-
-  function startEdit(item: ItemsTableRow) {
-    setError(null);
-    setEditingId(item.id);
-    setDraftStatus1(item.status1 ?? "");
-    setDraftNote(item.note ?? "");
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setDraftStatus1("");
-    setDraftNote("");
-    setError(null);
-  }
-
-  async function saveEdit(item: ItemsTableRow) {
-    setError(null);
-    setPendingId(item.id);
-
-    try {
-      const result = await patchItem(item.id, {
-        status1: draftStatus1,
-        note: draftNote,
-      });
-
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-
-      setEditingId(null);
-      router.refresh();
-    } catch {
-      setError("更新処理でエラーが発生しました");
-    } finally {
-      setPendingId(null);
-    }
-  }
-
-  async function removeItem(item: ItemsTableRow) {
-    if (!window.confirm(`「${item.product.name}」の登録を削除しますか？`)) {
-      return;
-    }
-
-    setError(null);
-    setPendingId(item.id);
-
-    try {
-      const result = await deleteItem(item.id);
-
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-
-      if (editingId === item.id) {
-        cancelEdit();
-      }
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(item.id);
-        return next;
-      });
-      router.refresh();
-    } catch {
-      setError("削除処理でエラーが発生しました");
-    } finally {
-      setPendingId(null);
-    }
-  }
-
-  /** 選択行へ同じ残量を一括適用（1 リクエスト） */
-  async function applyBulkStatus1() {
-    if (selectedIdList.length === 0) {
-      return;
-    }
-
-    setError(null);
-    setBulkPending(true);
-    cancelEdit();
-
-    try {
-      const result = await patchItemsBulk(selectedIdList, bulkStatus1);
-
-      // 適用後はパネルを閉じる（失敗があってもメッセージは残す）
-      clearSelection();
-
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-
-      if (result.skipped > 0) {
-        setError(
-          `残量の一括更新で対象外の行がありました（${result.skipped} 件）`,
-        );
-      }
-
-      if (result.affected > 0) {
-        router.refresh();
-      }
-    } catch {
-      setError("一括更新でエラーが発生しました");
-      clearSelection();
-    } finally {
-      setBulkPending(false);
-    }
-  }
-
-  /** 選択行を一括削除（1 リクエスト） */
-  async function removeSelected() {
-    if (selectedIdList.length === 0) {
-      return;
-    }
-
-    if (
-      !window.confirm(
-        `選択した ${selectedIdList.length} 件を削除しますか？`,
-      )
-    ) {
-      return;
-    }
-
-    setError(null);
-    setBulkPending(true);
-    cancelEdit();
-
-    try {
-      const result = await deleteItemsBulk(selectedIdList);
-
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-
-      if (result.affected > 0) {
-        clearSelection();
-        router.refresh();
-      }
-
-      if (result.skipped > 0) {
-        setError(
-          `削除できなかった行があります（${result.skipped} 件）`,
-        );
-      }
-    } catch {
-      setError("一括削除でエラーが発生しました");
-    } finally {
-      setBulkPending(false);
-    }
-  }
+  const busy = selection.bulkPending || editing.pendingId !== null;
 
   return {
-    sorted,
-    totalCount: items.length,
-    matchCount: filtered.length,
-    searchQuery,
-    setSearchQuery,
-    searchIncludeNote,
-    setSearchIncludeNote,
-    searchIncludeJan,
-    setSearchIncludeJan,
-    sortKey,
-    sortDir,
-    handleSort,
-    pendingId,
-    bulkPending,
+    sorted: query.sorted,
+    totalCount: query.totalCount,
+    matchCount: query.matchCount,
+    searchQuery: query.searchQuery,
+    setSearchQuery: query.setSearchQuery,
+    searchIncludeNote: query.searchIncludeNote,
+    setSearchIncludeNote: query.setSearchIncludeNote,
+    searchIncludeJan: query.searchIncludeJan,
+    setSearchIncludeJan: query.setSearchIncludeJan,
+    sortKey: query.sortKey,
+    sortDir: query.sortDir,
+    handleSort: query.handleSort,
+    pendingId: editing.pendingId,
+    bulkPending: selection.bulkPending,
     busy,
-    editingId,
-    draftStatus1,
-    setDraftStatus1,
-    draftNote,
-    setDraftNote,
-    selectedIds,
-    selectedCount,
-    allVisibleSelected,
-    bulkStatus1,
-    setBulkStatus1,
+    editingId: editing.editingId,
+    draftStatus1: editing.draftStatus1,
+    setDraftStatus1: editing.setDraftStatus1,
+    draftNote: editing.draftNote,
+    setDraftNote: editing.setDraftNote,
+    selectedIds: selection.selectedIds,
+    selectedCount: selection.selectedCount,
+    allVisibleSelected: selection.allVisibleSelected,
+    bulkStatus1: selection.bulkStatus1,
+    setBulkStatus1: selection.setBulkStatus1,
     error,
-    toggleSelect,
-    toggleSelectAllVisible,
-    clearSelection,
-    startEdit,
-    cancelEdit,
-    saveEdit,
-    removeItem,
-    applyBulkStatus1,
-    removeSelected,
+    toggleSelect: selection.toggleSelect,
+    toggleSelectAllVisible: selection.toggleSelectAllVisible,
+    clearSelection: selection.clearSelection,
+    startEdit: editing.startEdit,
+    cancelEdit: editing.cancelEdit,
+    saveEdit: editing.saveEdit,
+    removeItem: editing.removeItem,
+    applyBulkStatus1: selection.applyBulkStatus1,
+    removeSelected: selection.removeSelected,
   };
 }
