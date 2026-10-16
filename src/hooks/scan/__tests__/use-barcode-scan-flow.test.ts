@@ -7,6 +7,7 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const start = vi.fn(async () => undefined);
+const stop = vi.fn(async () => undefined);
 const cancelOverlay = vi.fn(async () => undefined);
 const closeOverlay = vi.fn(async () => undefined);
 const setCameraError = vi.fn();
@@ -17,19 +18,48 @@ const resetContinuousBatch = vi.fn();
 const refreshListAndScroll = vi.fn();
 const scrollToElementIdMock = vi.fn();
 
+const cameraState = {
+  overlayOpen: false,
+  starting: false,
+};
+
+const continuousState = {
+  entries: [] as { id: string }[],
+};
+
+const mediaListeners: Array<(event: MediaQueryListEvent) => void> = [];
+const mediaQuery = {
+  matches: false,
+  media: "(min-width: 768px)",
+  addEventListener: (
+    _type: string,
+    listener: (event: MediaQueryListEvent) => void,
+  ) => {
+    mediaListeners.push(listener);
+  },
+  removeEventListener: vi.fn(),
+};
+
 vi.mock("@/hooks/scan/use-barcode-camera", () => ({
-  useBarcodeCamera: () => ({
-    regionId: "reader",
-    overlayOpen: false,
-    scanning: false,
-    starting: false,
-    error: null,
-    setError: setCameraError,
-    start,
-    stop: vi.fn(async () => undefined),
-    cancelOverlay,
-    closeOverlay,
-  }),
+  useBarcodeCamera: (options: {
+    onDecode: (payload: { rawValue: string; format?: string }) => void;
+  }) => {
+    // テストから decode を起こせるよう保持
+    (globalThis as { __scanOnDecode?: typeof options.onDecode }).__scanOnDecode =
+      options.onDecode;
+    return {
+      regionId: "reader",
+      overlayOpen: cameraState.overlayOpen,
+      scanning: false,
+      starting: cameraState.starting,
+      error: null,
+      setError: setCameraError,
+      start,
+      stop,
+      cancelOverlay,
+      closeOverlay,
+    };
+  },
 }));
 
 vi.mock("@/hooks/scan/use-body-scroll-lock", () => ({
@@ -49,8 +79,8 @@ vi.mock("@/hooks/scan/use-product-lookup", () => ({
 
 vi.mock("@/hooks/scan/use-continuous-scan", () => ({
   useContinuousScan: () => ({
-    entries: [],
-    latestEntry: null,
+    entries: continuousState.entries,
+    latestEntry: continuousState.entries[0] ?? null,
     duplicateNotice: null,
     lookupActive: false,
     applyDecode: applyContinuousDecode,
@@ -71,10 +101,12 @@ vi.mock("@/lib/scan/scroll-to-element-id", () => ({
 
 import type { FormEvent } from "react";
 import { useBarcodeScanFlow } from "@/hooks/scan/use-barcode-scan-flow";
+import { SAME_VALUE_COOLDOWN_MS } from "@/lib/scan/constants";
 
 describe("useBarcodeScanFlow", () => {
   beforeEach(() => {
     start.mockClear();
+    stop.mockClear();
     cancelOverlay.mockClear();
     closeOverlay.mockClear();
     setCameraError.mockClear();
@@ -84,12 +116,12 @@ describe("useBarcodeScanFlow", () => {
     resetContinuousBatch.mockClear();
     refreshListAndScroll.mockClear();
     scrollToElementIdMock.mockClear();
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: false,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
+    cameraState.overlayOpen = false;
+    cameraState.starting = false;
+    continuousState.entries = [];
+    mediaListeners.length = 0;
+    mediaQuery.matches = false;
+    vi.stubGlobal("matchMedia", () => mediaQuery);
   });
 
   function submitEvent(): FormEvent<HTMLFormElement> {
@@ -162,5 +194,84 @@ describe("useBarcodeScanFlow", () => {
     });
     expect(resetContinuousBatch).toHaveBeenCalled();
     expect(start).toHaveBeenCalled();
+  });
+
+  it("overlay 中はモード切替しない。dismiss / finish / md 幅で閉じる", async () => {
+    const { result, rerender } = renderHook(() => useBarcodeScanFlow());
+
+    cameraState.overlayOpen = true;
+    rerender();
+    act(() => {
+      result.current.selectScanMode("continuous");
+    });
+    expect(result.current.scanMode).toBe("single");
+
+    cameraState.overlayOpen = false;
+    rerender();
+
+    await act(async () => {
+      await result.current.dismissOverlayToResults();
+    });
+    expect(closeOverlay).toHaveBeenCalled();
+    expect(scrollToElementIdMock).toHaveBeenCalledWith("product-lookup");
+
+    continuousState.entries = [];
+    rerender();
+    await act(async () => {
+      await result.current.finishContinuousScan();
+    });
+    expect(result.current.showEmptyList).toBe(true);
+    expect(scrollToElementIdMock).toHaveBeenCalledWith("continuous-scan-list");
+
+    continuousState.entries = [{ id: "1" }];
+    act(() => {
+      result.current.selectScanMode("continuous");
+    });
+    // showEmptyList はモード切替で false に戻る
+    expect(result.current.showEmptyList).toBe(false);
+    await act(async () => {
+      await result.current.finishContinuousScan();
+    });
+    expect(result.current.showEmptyList).toBe(false);
+
+    act(() => {
+      mediaQuery.matches = true;
+      for (const listener of mediaListeners) {
+        listener({ matches: true } as MediaQueryListEvent);
+      }
+    });
+    expect(cancelOverlay).toHaveBeenCalled();
+  });
+
+  it("単体のカメラ読取は stop+lookup。cooldown と空文字は無視", async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useBarcodeScanFlow());
+    const onDecode = (globalThis as {
+      __scanOnDecode?: (payload: { rawValue: string; format?: string }) => void;
+    }).__scanOnDecode;
+    expect(onDecode).toBeTypeOf("function");
+
+    await act(async () => {
+      onDecode?.({ rawValue: "   ", format: "EAN_13" });
+    });
+    expect(lookup).not.toHaveBeenCalled();
+
+    await act(async () => {
+      onDecode?.({ rawValue: "4901234567890", format: "EAN_13" });
+    });
+    expect(stop).toHaveBeenCalled();
+    expect(lookup).toHaveBeenCalledWith("4901234567890");
+
+    await act(async () => {
+      onDecode?.({ rawValue: "4901234567890", format: "EAN_13" });
+    });
+    expect(lookup).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(SAME_VALUE_COOLDOWN_MS);
+      onDecode?.({ rawValue: "4901234567890", format: "EAN_13" });
+    });
+    expect(lookup).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
   });
 });

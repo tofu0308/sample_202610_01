@@ -15,7 +15,7 @@
 【引き継ぎ】消耗品インベントリ学習アプリ
 
 リポ: C:\Users\isisa\worspace\sample_202610_01
-GitHub: tofu0308/sample_202610_01（main・origin と同期済み想定）
+GitHub: tofu0308/sample_202610_01（main）
 本番: https://sample-202610-01.vercel.app/
 設計: docs/DESIGN_BARCODE_SCAN.md（UI タスクは §17）
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応\課題対応_20261016.md
@@ -64,13 +64,13 @@ Next.js（App Router）+ Prisma 7 + Supabase でフルスタックを学習す�
 
 ## リポジトリ / 環境
 
-| 項目   | 内容                                                     |
-| ------ | -------------------------------------------------------- |
-| パス   | `C:\Users\isisa\worspace\sample_202610_01`               |
-| GitHub | `tofu0308/sample_202610_01`（`main`、origin と同期想定） |
-| 本番   | https://sample-202610-01.vercel.app/                     |
-| DB     | Supabase PostgreSQL（ローカルと Vercel で同一 DB）       |
-| 秘密   | `.env` のみ（値はチャットに出さない）                    |
+| 項目     | 内容                                                                 |
+| -------- | -------------------------------------------------------------------- |
+| パス     | `C:\Users\isisa\worspace\sample_202610_01`                           |
+| GitHub   | `tofu0308/sample_202610_01`（`main`、origin と同期想定）             |
+| 本番     | https://sample-202610-01.vercel.app/                                 |
+| DB       | Supabase PostgreSQL（ローカルと Vercel で同一 DB）                   |
+| 秘密     | `.env` のみ（値はチャットに出さない）                                |
 | 学習メモ | `C:\Users\isisa\Downloads\ルトラ\docs\課題対応\課題対応_20261016.md` |
 
 ### 必要な env（名前だけ）
@@ -97,28 +97,28 @@ npm run test:coverage
 
 ## 直近セッションでやったこと（2026-10-15〜16）
 
-| 領域 | 内容 | 学習メモ |
-| --- | --- | --- |
-| UI | ダーク＋Geist、スキャン操作、登録後スクロール／クリア、一覧更新バナー、一括バー／主ボタン／行タッチ | §22 |
-| リファクタ | overlay・行操作・サムネ分割、`useItemsTable` 分割、scan 葉は render prop、list-refresh 抽出 | §23 |
-| 一括 API | `/api/items/bulk`（PATCH 残量／DELETE／POST まとめて登録）。`createUserItemFromSnapshot` 共通化 | §24 |
-| UT / coverage | request・スキーマ・DTO・Prisma mock。`include: src/lib/**/*.ts` + exclude | §25 |
-| CI | `use-items-table` の ref、`use-list-refresh-after-register` の effect setState を修正 | §26 |
+| 領域          | 内容                                                                                                | 学習メモ |
+| ------------- | --------------------------------------------------------------------------------------------------- | -------- |
+| UI            | ダーク＋Geist、スキャン操作、登録後スクロール／クリア、一覧更新バナー、一括バー／主ボタン／行タッチ | §22      |
+| リファクタ    | overlay・行操作・サムネ分割、`useItemsTable` 分割、scan 葉は render prop、list-refresh 抽出         | §23      |
+| 一括 API      | `/api/items/bulk`（PATCH 残量／DELETE／POST まとめて登録）。`createUserItemFromSnapshot` 共通化     | §24      |
+| UT / coverage | request・スキーマ・DTO・Prisma mock。`include: src/lib/**/*.ts` + exclude                           | §25      |
+| CI            | `use-items-table` の ref、`use-list-refresh-after-register` の effect setState を修正               | §26      |
 
 主なコミット例（新しい順）: `fix lint error` → `テスト追加` → `scanとitemsの依存を緩和` → `hooksの分割` → `一括操作系のAPIリファクタ` → コンポーネント整理系。
 
 ## 完了済み（現状）
 
-| 領域       | 内容 |
-| ---------- | ---- |
-| 基盤       | Next.js 16 + Prisma 7 + Vercel + GitHub Actions CI |
-| スキャン   | 単体／連続、Yahoo 照会、読取リスト（JAN コピー＋登録） |
-| DB / API   | `Product` + `UserItem`。items CRUD + **`/api/items/bulk`** + lookup |
-| 一覧       | 残量（`status1`）・メモ・検索・一括・PC は枠内スクロール＋ sticky |
-| 認証       | `/signup`・確認メール・一般利用可・リセット・Profile・「○○さん」 |
-| エラー     | `error.tsx` / `throwAppError`。想定内失敗はインライン |
-| テスト     | Vitest。coverage は lib 純関数中心（Route / hooks / UI は対象外） |
-| 学習メモ   | `課題対応/課題対応_20261016.md` §14〜§26 |
+| 領域     | 内容                                                                |
+| -------- | ------------------------------------------------------------------- |
+| 基盤     | Next.js 16 + Prisma 7 + Vercel + GitHub Actions CI                  |
+| スキャン | 単体／連続、Yahoo 照会、読取リスト（JAN コピー＋登録）              |
+| DB / API | `Product` + `UserItem`。items CRUD + **`/api/items/bulk`** + lookup |
+| 一覧     | 残量（`status1`）・メモ・検索・一括・PC は枠内スクロール＋ sticky   |
+| 認証     | `/signup`・確認メール・一般利用可・リセット・Profile・「○○さん」    |
+| エラー   | `error.tsx` / `throwAppError`。想定内失敗はインライン               |
+| テスト   | Vitest。coverage は lib 純関数中心（Route / hooks / UI は対象外）   |
+| 学習メモ | `課題対応/課題対応_20261016.md` §14〜§26                            |
 
 設計の正本: `DESIGN_BARCODE_SCAN.md`（登録 §13、組織 §14、エラー §15、Product 鮮度 §16、UI §17）。
 
@@ -142,12 +142,12 @@ src/app/api/products/lookup/
 src/app/api/items/           # route.ts + bulk/route.ts
 ```
 
-| 画面ラベル | DB / コード |
-| ---------- | ----------- |
-| 残量       | `status1`（`STATUS1_OPTIONS`） |
-| メモ       | `note` |
-| ユーザー   | Auth uid → `UserItem.userId` |
-| 表示名     | `Profile.username`（「○○さん」） |
+| 画面ラベル | DB / コード                                     |
+| ---------- | ----------------------------------------------- |
+| 残量       | `status1`（`STATUS1_OPTIONS`）                  |
+| メモ       | `note`                                          |
+| ユーザー   | Auth uid → `UserItem.userId`                    |
+| 表示名     | `Profile.username`（「○○さん」）                |
 | 商品マスタ | `Product`（Table Editor で確認。Auth ではない） |
 
 ## 認証・データ方針（重要）

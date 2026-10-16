@@ -10,9 +10,13 @@ describe("toCallbackErrorMessage", () => {
     expect(toCallbackErrorMessage("auth_callback_failed")).toContain(
       "確認リンク",
     );
+    expect(toCallbackErrorMessage("profile_missing_username")).toContain(
+      "ユーザーIDの情報",
+    );
     expect(toCallbackErrorMessage("profile_username_taken")).toContain(
       "ユーザーID",
     );
+    expect(toCallbackErrorMessage("profile_unknown")).toContain("プロフィール");
   });
 
   it("未知・未指定は null", () => {

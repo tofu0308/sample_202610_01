@@ -266,6 +266,91 @@ describe("useContinuousScan", () => {
     expect(result.current.entries).toHaveLength(0);
     expect(result.current.duplicateNotice).toBeNull();
   });
+
+  it("照会中は lookupActive。複数 JAN を直列で積める", async () => {
+    let resolveFirst!: (value: unknown) => void;
+    const first = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+    const lookupOnce = vi
+      .fn()
+      .mockImplementationOnce(() => first)
+      .mockResolvedValueOnce({
+        data: {
+          found: true,
+          code: "4901111111111",
+          name: "B",
+          source: "yahoo_shopping",
+        },
+        error: null,
+      });
+
+    const { result } = renderContinuous(lookupOnce);
+    await act(async () => {
+      result.current.applyDecode("4901234567890", undefined);
+      result.current.applyDecode("4901111111111", undefined);
+    });
+    expect(result.current.lookupActive).toBe(true);
+    expect(result.current.entries).toHaveLength(2);
+
+    await act(async () => {
+      resolveFirst({
+        data: {
+          found: true,
+          code: "4901234567890",
+          name: "A",
+          source: "yahoo_shopping",
+        },
+        error: null,
+      });
+      await vi.runAllTimersAsync();
+    });
+    expect(result.current.entries.every((e) => e.lookupStatus === "done")).toBe(
+      true,
+    );
+    expect(result.current.lookupActive).toBe(false);
+  });
+
+  it("重複通知はタイマー後に消え、再通知で前タイマーを差し替える", async () => {
+    const lookupOnce = vi.fn().mockResolvedValue({
+      data: {
+        found: true,
+        code: "4901234567890",
+        name: "塗料",
+        source: "yahoo_shopping",
+      },
+      error: null,
+    });
+    const { result, unmount } = renderContinuous(lookupOnce);
+
+    await act(async () => {
+      result.current.applyDecode("4901234567890", undefined);
+      await vi.runAllTimersAsync();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(SAME_VALUE_COOLDOWN_MS);
+      result.current.applyDecode("4901234567890", undefined);
+    });
+    expect(result.current.duplicateNotice).toContain("重複");
+
+    act(() => {
+      vi.advanceTimersByTime(SAME_VALUE_COOLDOWN_MS);
+      result.current.applyDecode("4901234567890", undefined);
+    });
+    expect(result.current.duplicateNotice).toContain("重複");
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(result.current.duplicateNotice).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(SAME_VALUE_COOLDOWN_MS);
+      result.current.applyDecode("4901234567890", undefined);
+    });
+    unmount();
+  });
 });
 
 describe("useBarcodeCamera", () => {
@@ -277,48 +362,78 @@ describe("useBarcodeCamera", () => {
     stopMock.mockResolvedValue(undefined);
   });
 
-  it("start 成功で scanning。cancel で閉じる", async () => {
-    const { result } = renderHook(() =>
-      useBarcodeCamera({ onDecode: vi.fn() }),
-    );
-
+  async function startCamera(
+    onDecode: ReturnType<typeof vi.fn> = vi.fn(),
+  ) {
+    const hook = renderHook(() => useBarcodeCamera({ onDecode }));
     let startPromise: Promise<void>;
     act(() => {
-      startPromise = result.current.start();
+      startPromise = hook.result.current.start();
     });
     await flushFrames();
     await act(async () => {
       await startPromise!;
     });
+    return hook;
+  }
+
+  it("start 成功で scanning。cancel / close / stop(未起動) を扱う", async () => {
+    const { result } = await startCamera();
 
     expect(result.current.overlayOpen).toBe(true);
     expect(result.current.scanning).toBe(true);
     expect(startMock).toHaveBeenCalled();
 
+    const cameraConfig = startMock.mock.calls[0]?.[1] as {
+      qrbox: (w: number, h: number) => { width: number; height: number };
+    };
+    expect(cameraConfig.qrbox(400, 800)).toEqual({ width: 320, height: 200 });
+
     await act(async () => {
-      await result.current.cancelOverlay();
+      await result.current.closeOverlay();
     });
     expect(result.current.overlayOpen).toBe(false);
+
+    await act(async () => {
+      await result.current.stop();
+    });
     expect(result.current.scanning).toBe(false);
   });
 
-  it("環境カメラ失敗後にインカメも失敗すると友好エラー", async () => {
-    startMock.mockRejectedValue(new Error("NotAllowedError"));
-    const { result } = renderHook(() =>
-      useBarcodeCamera({ onDecode: vi.fn() }),
-    );
+  it("環境カメラ失敗後にインカメ成功／両方失敗／読取コールバック", async () => {
+    startMock
+      .mockRejectedValueOnce(new Error("no env"))
+      .mockResolvedValueOnce(undefined);
 
-    let startPromise: Promise<void>;
+    const onDecode = vi.fn();
+    const { result, unmount } = await startCamera(onDecode);
+    expect(result.current.scanning).toBe(true);
+    expect(startMock).toHaveBeenCalledTimes(2);
+
+    const onSuccess = startMock.mock.calls.at(-1)?.[2] as (
+      text: string,
+      decoded: { result: { format?: { formatName?: string } } },
+    ) => void;
     act(() => {
-      startPromise = result.current.start();
+      onSuccess("4901234567890", {
+        result: { format: { formatName: "EAN_13" } },
+      });
     });
-    await flushFrames();
-    await act(async () => {
-      await startPromise!;
+    expect(onDecode).toHaveBeenCalledWith({
+      rawValue: "4901234567890",
+      format: "EAN_13",
     });
 
-    expect(result.current.error).toContain("許可されませんでした");
-    expect(result.current.overlayOpen).toBe(false);
-    expect(result.current.scanning).toBe(false);
+    // フレーム未検出コールバック（空）も呼べる
+    const onFailure = startMock.mock.calls.at(-1)?.[3] as () => void;
+    onFailure();
+
+    unmount();
+
+    startMock.mockReset();
+    startMock.mockRejectedValue(new Error("NotAllowedError"));
+    const failed = await startCamera();
+    expect(failed.result.current.error).toContain("許可されませんでした");
+    expect(failed.result.current.overlayOpen).toBe(false);
   });
 });

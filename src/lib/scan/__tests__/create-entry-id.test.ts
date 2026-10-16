@@ -1,20 +1,32 @@
 /**
  * 連続スキャン行 ID 生成の UT。
+ * crypto.randomUUID がある場合と無い場合の両方を通す。
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createEntryId } from "@/lib/scan/create-entry-id";
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("createEntryId", () => {
-  it("空でない文字列を返す", () => {
-    const id = createEntryId();
-    expect(typeof id).toBe("string");
-    expect(id.length).toBeGreaterThan(0);
+  it("randomUUID があればそれを使う", () => {
+    vi.stubGlobal("crypto", {
+      randomUUID: () => "uuid-fixed",
+    });
+    expect(createEntryId()).toBe("uuid-fixed");
   });
 
-  it("連続呼び出しで異なる値になりやすい", () => {
-    const a = createEntryId();
-    const b = createEntryId();
-    expect(a).not.toBe(b);
+  it("randomUUID が無ければ Date+random のフォールバック", () => {
+    vi.stubGlobal("crypto", {});
+    const id = createEntryId();
+    expect(typeof id).toBe("string");
+    expect(id).toMatch(/^\d+-[a-z0-9]+$/i);
+  });
+
+  it("連続呼び出しで異なる値になりやすい（フォールバック）", () => {
+    vi.stubGlobal("crypto", {});
+    expect(createEntryId()).not.toBe(createEntryId());
   });
 });

@@ -63,6 +63,46 @@ describe("postRegisterItem", () => {
     const result = await postRegisterItem(product);
     expect(result).toMatchObject({ ok: false, kind: "network" });
   });
+
+  it("API エラーは本文の error、無ければ定型文。任意フィールドは省略可", async () => {
+    const minimal: FoundProduct = {
+      found: true,
+      code: "4900000000000",
+      name: "最小",
+      source: "yahoo_shopping",
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: "サーバエラー" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(postRegisterItem(minimal)).resolves.toEqual({
+      ok: false,
+      kind: "error",
+      message: "サーバエラー",
+    });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0]?.[1] as { body: string }).body,
+    ) as Record<string, unknown>;
+    expect(body).not.toHaveProperty("brandName");
+    expect(body).not.toHaveProperty("imageUrl");
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        json: async () => ({}),
+      }),
+    );
+    await expect(postRegisterItem(minimal)).resolves.toMatchObject({
+      ok: false,
+      kind: "error",
+      message: "登録に失敗しました",
+    });
+  });
 });
 
 describe("postRegisterItemsBulk", () => {
@@ -94,7 +134,7 @@ describe("postRegisterItemsBulk", () => {
     );
   });
 
-  it("API エラー時は message", async () => {
+  it("API エラー時は message。JSON 失敗時は定型文", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -106,6 +146,31 @@ describe("postRegisterItemsBulk", () => {
     await expect(postRegisterItemsBulk([product])).resolves.toEqual({
       ok: false,
       message: "一括登録できません",
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => {
+          throw new Error("bad json");
+        },
+      }),
+    );
+    await expect(postRegisterItemsBulk([product])).resolves.toEqual({
+      ok: false,
+      message: "一括登録に失敗しました",
+    });
+  });
+
+  it("ネットワーク失敗時は定型メッセージ", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("offline")),
+    );
+    await expect(postRegisterItemsBulk([product])).resolves.toEqual({
+      ok: false,
+      message: "ネットワークエラーが発生しました",
     });
   });
 });
