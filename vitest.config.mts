@@ -10,11 +10,14 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
  * Vitest はテスト実行用に Vite 基盤を内部利用できる。
  *
  * Vitest 5 は現状この環境で不安定だったため 3.x を使用。
- * 既定は node。hooks のテストファイル先頭で `@vitest-environment jsdom` を指定。
+ * 既定は node。hooks は `@vitest-environment happy-dom`（jsdom より起動が軽い）。
+ * hooks テストはドメイン単位でまとめ、DOM 環境の起動回数を抑える。
  */
 export default defineConfig({
   test: {
     environment: "node",
+    // Windows で DOM 環境を同時に大量起動しない
+    maxWorkers: 4,
     include: ["src/**/__tests__/**/*.test.ts", "src/**/*.test.ts"],
     coverage: {
       provider: "v8",

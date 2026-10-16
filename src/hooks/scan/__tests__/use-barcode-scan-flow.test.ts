@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+/** @vitest-environment happy-dom */
 /**
  * スキャン一連フロー。子 hook は mock し、モード切替・手動入力・登録後クリアを確認する。
  */

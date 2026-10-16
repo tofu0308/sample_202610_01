@@ -13,8 +13,14 @@ alwaysApply: true
 - Yahoo／DB／Supabase／カメラ SDK は **テスト側で mock**。本番へ DI しない
 - **第1弾では対象外:** Route Handler・UI コンポーネントの重いテスト、E2E
 
-テストファイルは `src/**/__tests__/**/*.test.ts`（実装と同階層に置かない）。  
-hooks のテスト先頭に `/** @vitest-environment jsdom */`。lib は既定の node。
+テストファイルは `src/**/__tests__/**/*.test.ts`（実装と同階層に置かない）。
+
+## hooks テストの置き方（起動コスト）
+
+- DOM 環境は **happy-dom**（先頭 `/** @vitest-environment happy-dom */`）
+- **ドメイン単位でまとめる**（例: `items-hooks.test.ts` / `scan-hooks.test.ts`）。ファイル数＝環境起動回数
+- 子 hook を `vi.mock` する統合テスト（例: `use-barcode-scan-flow`）は **別ファイル**（葉の実テストと mock が衝突するため）
+- `maxWorkers: 4`（Windows で DOM を同時に大量起動しない）
 
 ## coverage
 
