@@ -1,5 +1,5 @@
 ---
-description: Vitest は lib と hooks。coverage 対象と本番 DI 禁止
+description: Vitest は lib と hooks。coverage 除外は配線・型のみ
 alwaysApply: true
 ---
 
@@ -9,9 +9,9 @@ alwaysApply: true
 
 ## 何をテストするか
 
-- **優先:** `src/lib/**` の純関数・zod スキーマ・request/DTO 変換（Yahoo／DB 実接続なし。必要なら mock）
-- **hooks:** 分岐の多い一覧系から。`@testing-library/react` の `renderHook` + jsdom。`fetch` / `router` / confirm は **テスト側で mock**（本番へ DI しない）
-- **第1弾では対象外:** Route Handler・UI コンポーネントの重いテスト、E2E／カメラモック、`use-barcode-camera` / `use-barcode-scan-flow` などデバイス寄りの hook
+- **対象:** `src/lib/**` と `src/hooks/**`（純関数・スキーマ・request/DTO・hooks）
+- Yahoo／DB／Supabase／カメラ SDK は **テスト側で mock**。本番へ DI しない
+- **第1弾では対象外:** Route Handler・UI コンポーネントの重いテスト、E2E
 
 テストファイルは `src/**/__tests__/**/*.test.ts`（実装と同階層に置かない）。  
 hooks のテスト先頭に `/** @vitest-environment jsdom */`。lib は既定の node。
@@ -19,14 +19,19 @@ hooks のテスト先頭に `/** @vitest-environment jsdom */`。lib は既定�
 ## coverage
 
 - `include`: `src/lib/**/*.ts` と `src/hooks/**/*.ts`
-- I/O・認証境界・未整備ヘルパ・デバイス寄り hook は `exclude`（`prisma` / `supabase` / Yahoo ラッパ / `require-user` / `use-barcode-camera` など）。閾値を満たすためだけに本番コードへテスト用分岐を足さない
-- **本番コードにテスト用 DI（差し替え引数・グローバル差し替え）を入れない**
+- `all: false`（Windows でパス表記ゆれによる二重集計を避ける）
+- `exclude` は次だけに寄せる:
+  - テスト自身（`*.test.ts` / `__tests__`）と `node_modules`
+  - 実接続・SDK 初期化の配線（`prisma.ts`、`supabase/client|server|proxy`）
+  - ランタイム無しの型のみ（`scan/types.ts`）
+- 新しい lib / hook を足したら **exclude に逃がさずテストを書く**
+- **本番コードにテスト用 DI を入れない**
 
 ```typescript
 // ✅ lib のスキーマや変換を単体で検証
 const parsed = itemBulkRequestSchema.safeParse(body);
 
-// ✅ hook は renderHook + vi.mock（next/navigation・request 関数）
+// ✅ hook は renderHook + vi.mock（next/navigation・request・SDK）
 const { result } = renderHook(() => useItemsTableQuery(rows));
 
 // ❌ カバレッジのために Route / hook へ test-only の inject を足す

@@ -20,27 +20,22 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "./coverage",
-      // lib + hooks。デバイス寄り・未着手の hook は exclude（テスト方針と同じ）
+      // lib + hooks を測る。除外はテスト／依存配線／型のみに限定
       include: ["src/lib/**/*.ts", "src/hooks/**/*.ts"],
       exclude: [
         "src/**/*.test.ts",
         "src/**/__tests__/**",
-        "src/lib/prisma.ts",
-        "src/lib/supabase/**",
-        "src/lib/products/yahoo-shopping.ts",
-        "src/lib/auth/ensure-profile.ts",
-        "src/lib/auth/require-user.ts",
-        "src/lib/items/status1-meter.ts",
-        "src/lib/items/format-datetime-jst.ts",
-        "src/lib/scan/camera-errors.ts",
-        "src/lib/scan/types.ts",
-        "src/hooks/scan/use-barcode-camera.ts",
-        "src/hooks/scan/use-barcode-scan-flow.ts",
-        "src/hooks/scan/use-continuous-scan.ts",
-        "src/hooks/scan/use-body-scroll-lock.ts",
         "node_modules/**",
+        // import 時に実接続・SDK 初期化が走る配線（テスト側 mock の対象側）
+        "src/lib/prisma.ts",
+        "src/lib/supabase/client.ts",
+        "src/lib/supabase/server.ts",
+        "src/lib/supabase/proxy.ts",
+        // ランタイム無し（型定義のみ）
+        "src/lib/scan/types.ts",
       ],
-      // Windows でパス表記ゆれによる二重集計を避ける
+      // Windows でパス表記ゆれ（/ と \）による二重集計を避ける。
+      // 未実行ファイルを強制集計したい場合は all: true を検討（要検証）。
       all: false,
       thresholds: {
         lines: 80,
