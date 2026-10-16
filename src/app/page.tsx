@@ -8,7 +8,12 @@ import { ItemsTable } from "@/components/items/items-table";
 import { BarcodeScanner } from "@/components/scan/barcode-scanner";
 import { APP_NAME } from "@/lib/app-name";
 import { requireUserForPage } from "@/lib/auth/require-user";
+import { formatItemCountLabel } from "@/lib/items/item-limit-view";
 import { toItemsTableRow } from "@/lib/items/to-items-table-row";
+import {
+  getUserItemLimit,
+  isUserItemLimitExempt,
+} from "@/lib/items/user-item-limit";
 import { prisma } from "@/lib/prisma";
 
 // 一覧を毎回 DB から取り直す（キャッシュで古くならないようにする）
@@ -23,6 +28,13 @@ export default async function Home() {
     orderBy: { createdAt: "desc" },
     include: { product: true },
   });
+
+  const itemLimit = {
+    currentCount: items.length,
+    limit: getUserItemLimit(),
+    unlimited: isUserItemLimitExempt(user.email),
+    ownedJans: items.map((item) => item.product.jan),
+  };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-6 py-8 md:py-16">
@@ -52,7 +64,7 @@ export default async function Home() {
         <h2 id="scan-heading" className="text-lg font-medium text-zinc-100">
           スキャン / 登録
         </h2>
-        <BarcodeScanner />
+        <BarcodeScanner itemLimit={itemLimit} />
       </section>
 
       <section
@@ -64,7 +76,7 @@ export default async function Home() {
           id="item-list-heading"
           className="text-lg font-medium text-zinc-100"
         >
-          登録一覧（{items.length} 件）
+          登録一覧（{formatItemCountLabel(itemLimit)}）
         </h2>
         {items.length === 0 ? (
           <p className="text-zinc-400">

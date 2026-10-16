@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { requireUserForApi } from "@/lib/auth/require-user";
+import { assertUserItemLimit } from "@/lib/items/assert-user-item-limit";
 import { createUserItemFromSnapshot } from "@/lib/items/create-user-item-from-snapshot";
 import {
   bulkCreateItemsSchema,
@@ -119,6 +120,7 @@ export async function DELETE(request: Request) {
 /**
  * 複数商品をまとめて登録。
  * 1 件ずつと同じ upsert／重複判定をサーバー内で回し、往復だけ減らす。
+ * 新規増分が残り枠を超える場合は全体 403（部分登録しない）。
  */
 export async function POST(request: Request) {
   try {
@@ -135,6 +137,15 @@ export async function POST(request: Request) {
         { error: "Invalid request body", details: parsed.error.flatten() },
         { status: 400 },
       );
+    }
+
+    const limitCheck = await assertUserItemLimit({
+      userId: auth.user.id,
+      email: auth.user.email,
+      requestCodes: parsed.data.items.map((item) => item.code),
+    });
+    if (!limitCheck.ok) {
+      return NextResponse.json({ error: limitCheck.message }, { status: 403 });
     }
 
     let created = 0;

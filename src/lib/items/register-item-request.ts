@@ -10,7 +10,11 @@ export type FoundProduct = Extract<ProductLookupResult, { found: true }>;
 
 export type RegisterItemResult =
   | { ok: true }
-  | { ok: false; kind: "duplicate" | "error" | "network"; message: string };
+  | {
+      ok: false;
+      kind: "duplicate" | "limit" | "error" | "network";
+      message: string;
+    };
 
 type RegisterItemJson =
   | { item: unknown }
@@ -55,6 +59,17 @@ export async function postRegisterItem(
         ok: false,
         kind: "duplicate",
         message: "すでに登録済みのJANコードです",
+      };
+    }
+
+    if (response.status === 403) {
+      return {
+        ok: false,
+        kind: "limit",
+        message:
+          "error" in data && typeof data.error === "string" && data.error
+            ? data.error
+            : "登録上限に達しています",
       };
     }
 

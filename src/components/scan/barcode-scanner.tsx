@@ -15,10 +15,16 @@ import { ScanOverlay } from "@/components/scan/scan-overlay";
 import { SingleScanList } from "@/components/scan/single-scan-list";
 import { ListUpdatingBanner } from "@/components/ui/list-updating-banner";
 import { useBarcodeScanFlow } from "@/hooks/scan/use-barcode-scan-flow";
+import type { ItemLimitView } from "@/lib/items/item-limit-view";
 
 export type { ScanResult } from "@/lib/scan/types";
 
-export function BarcodeScanner() {
+type BarcodeScannerProps = {
+  /** 登録件数上限。ボタン disabled と文言に使う */
+  itemLimit: ItemLimitView;
+};
+
+export function BarcodeScanner({ itemLimit }: BarcodeScannerProps) {
   const flow = useBarcodeScanFlow();
   const isContinuous = flow.scanMode === "continuous";
   const onRegistered = flow.afterRegistered;
@@ -57,6 +63,7 @@ export function BarcodeScanner() {
             <RegisterItemsButton
               products={products}
               onRegistered={onRegistered}
+              itemLimit={itemLimit}
             />
           )}
           renderRegisterAction={(product) => (
@@ -64,6 +71,7 @@ export function BarcodeScanner() {
               product={product}
               compact
               onRegistered={onRegistered}
+              itemLimit={itemLimit}
             />
           )}
         />
@@ -80,6 +88,7 @@ export function BarcodeScanner() {
               product={product}
               compact
               onRegistered={onRegistered}
+              itemLimit={itemLimit}
             />
           )}
         />

@@ -54,6 +54,26 @@ describe("postRegisterItem", () => {
     }
   });
 
+  it("403 は limit（本文の error を使う）", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          error: "登録上限（10件）に達しています。不要な登録を削除してから追加してください。",
+        }),
+      }),
+    );
+
+    const result = await postRegisterItem(product);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.kind).toBe("limit");
+      expect(result.message).toContain("登録上限");
+    }
+  });
+
   it("ネットワーク失敗時は network", async () => {
     vi.stubGlobal(
       "fetch",

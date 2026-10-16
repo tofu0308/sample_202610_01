@@ -5,6 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { requireUserForApi } from "@/lib/auth/require-user";
+import { assertUserItemLimit } from "@/lib/items/assert-user-item-limit";
 import { createUserItemFromSnapshot } from "@/lib/items/create-user-item-from-snapshot";
 import { createItemSchema } from "@/lib/items/item-schemas";
 import { prisma } from "@/lib/prisma";
@@ -36,6 +37,7 @@ export async function GET() {
  * 商品照会の結果を受け取り、商品マスタを用意したうえで登録行を作る。
  * 同じ JAN のマスタがあれば表示用フィールドを更新する。
  * 同じユーザーで同じ JAN が登録済みなら 409。
+ * 登録件数上限超過は 403。
  */
 export async function POST(request: Request) {
   try {
@@ -52,6 +54,15 @@ export async function POST(request: Request) {
         { error: "Invalid request body", details: parsed.error.flatten() },
         { status: 400 },
       );
+    }
+
+    const limitCheck = await assertUserItemLimit({
+      userId: auth.user.id,
+      email: auth.user.email,
+      requestCodes: [parsed.data.code],
+    });
+    if (!limitCheck.ok) {
+      return NextResponse.json({ error: limitCheck.message }, { status: 403 });
     }
 
     const result = await createUserItemFromSnapshot(auth.user.id, parsed.data);
