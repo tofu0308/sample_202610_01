@@ -10,6 +10,7 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
  * Vitest はテスト実行用に Vite 基盤を内部利用できる。
  *
  * Vitest 5 は現状この環境で不安定だったため 3.x を使用。
+ * 既定は node。hooks のテストファイル先頭で `@vitest-environment jsdom` を指定。
  */
 export default defineConfig({
   test: {
@@ -19,8 +20,8 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "./coverage",
-      // lib 配下を測る。外部 I/O・認証境界・未整備の UI ヘルパは除外
-      include: ["src/lib/**/*.ts"],
+      // lib + hooks。デバイス寄り・未着手の hook は exclude（テスト方針と同じ）
+      include: ["src/lib/**/*.ts", "src/hooks/**/*.ts"],
       exclude: [
         "src/**/*.test.ts",
         "src/**/__tests__/**",
@@ -33,6 +34,10 @@ export default defineConfig({
         "src/lib/items/format-datetime-jst.ts",
         "src/lib/scan/camera-errors.ts",
         "src/lib/scan/types.ts",
+        "src/hooks/scan/use-barcode-camera.ts",
+        "src/hooks/scan/use-barcode-scan-flow.ts",
+        "src/hooks/scan/use-continuous-scan.ts",
+        "src/hooks/scan/use-body-scroll-lock.ts",
         "node_modules/**",
       ],
       // Windows でパス表記ゆれによる二重集計を避ける

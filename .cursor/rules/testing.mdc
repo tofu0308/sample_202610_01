@@ -1,0 +1,33 @@
+---
+description: Vitest は lib と hooks。coverage 対象と本番 DI 禁止
+alwaysApply: true
+---
+
+# Testing (Vitest)
+
+設定の正本は `vitest.config.mts`。
+
+## 何をテストするか
+
+- **優先:** `src/lib/**` の純関数・zod スキーマ・request/DTO 変換（Yahoo／DB 実接続なし。必要なら mock）
+- **hooks:** 分岐の多い一覧系から。`@testing-library/react` の `renderHook` + jsdom。`fetch` / `router` / confirm は **テスト側で mock**（本番へ DI しない）
+- **第1弾では対象外:** Route Handler・UI コンポーネントの重いテスト、E2E／カメラモック、`use-barcode-camera` / `use-barcode-scan-flow` などデバイス寄りの hook
+
+テストファイルは `src/**/__tests__/**/*.test.ts`（実装と同階層に置かない）。  
+hooks のテスト先頭に `/** @vitest-environment jsdom */`。lib は既定の node。
+
+## coverage
+
+- `include`: `src/lib/**/*.ts` と `src/hooks/**/*.ts`
+- I/O・認証境界・未整備ヘルパ・デバイス寄り hook は `exclude`（`prisma` / `supabase` / Yahoo ラッパ / `require-user` / `use-barcode-camera` など）。閾値を満たすためだけに本番コードへテスト用分岐を足さない
+- **本番コードにテスト用 DI（差し替え引数・グローバル差し替え）を入れない**
+
+```typescript
+// ✅ lib のスキーマや変換を単体で検証
+const parsed = itemBulkRequestSchema.safeParse(body);
+
+// ✅ hook は renderHook + vi.mock（next/navigation・request 関数）
+const { result } = renderHook(() => useItemsTableQuery(rows));
+
+// ❌ カバレッジのために Route / hook へ test-only の inject を足す
+```

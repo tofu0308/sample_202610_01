@@ -1,0 +1,20 @@
+---
+description: 想定内失敗はインライン、続行不可は throwAppError → error.tsx
+alwaysApply: true
+---
+
+# Error display
+
+設計の正本は `docs/DESIGN_BARCODE_SCAN.md` §15。実装の入口は `src/lib/errors/app-error.ts` と `src/app/error.tsx`。
+
+| 種類 | 出し方 |
+| --- | --- |
+| 想定内の操作失敗（ログイン失敗・API 4xx/5xx・登録済み JAN など） | **インライン**（同じ画面） |
+| 未ログイン | **リダイレクト** `/login`（proxy / `requireUserForPage`） |
+| 想定外の描画失敗 | **`src/app/error.tsx`** |
+| 不正操作など続行不可 | **`throwAppError(...)` → `error.tsx`** |
+
+- catch できる失敗をフルページにしない。インライン（または Result）で返す
+- ページ描画パスで続行させないときだけ `throwAppError`（`src/lib/errors/app-error.ts`）
+- **API Route Handler では JSON を返す**。ここに `throwAppError` しても `error.tsx` にはならない
+- 404 専用 UI・`global-error` は第1弾では必須にしない

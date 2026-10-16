@@ -1,5 +1,5 @@
 ---
-description: この学習リポジトリのスタックと秘密情報の扱い
+description: この学習リポジトリのスタック・秘密情報・認証とデータ所有
 alwaysApply: true
 ---
 
@@ -11,3 +11,9 @@ alwaysApply: true
 - MCP Supabase は read-only のまま（スキーマ変更やデータ書き込みに使わない）
 - DB 変更は Prisma migrate。`db push` を既定にしない
 - 生成クライアント `src/generated/prisma` は commit しない（`prisma generate` で再生成）
+
+## 認証・データ所有
+
+- アプリ利用ゲートは **確認済みログイン**。`ADMIN_EMAIL` はゲートに使わない（将来の管理用 env として残置）
+- `UserItem` など所持データは **Auth uid**（`userId`）で自分の行だけを読む・書く
+- 画面の表示名は `Profile.username`（「○○さん」）。ログイン ID や所有者キーに username を使わない
