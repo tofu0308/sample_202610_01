@@ -1,12 +1,12 @@
 /**
  * 1ユーザーあたりの UserItem 登録上限。
- * 検証中は既定 10。env USER_ITEM_LIMIT で上書き。ADMIN_EMAIL は無制限。
+ * 既定 100。env USER_ITEM_LIMIT で上書き。ADMIN_EMAIL は無制限。
  */
 
 import { getAdminEmail } from "@/lib/supabase/env";
 
-/** 検証用の既定。動作確認後は 100 に上げる想定 */
-export const DEFAULT_USER_ITEM_LIMIT = 10;
+/** 一般ユーザーの所持登録上限（未設定時） */
+export const DEFAULT_USER_ITEM_LIMIT = 100;
 
 /** env または既定の上限件数（1 未満は既定にフォールバック） */
 export function getUserItemLimit(): number {

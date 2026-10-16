@@ -31,14 +31,15 @@ afterEach(() => {
 });
 
 describe("getUserItemLimit", () => {
-  it("未設定なら既定 10", () => {
+  it("未設定なら既定 100", () => {
     delete process.env.USER_ITEM_LIMIT;
     expect(getUserItemLimit()).toBe(DEFAULT_USER_ITEM_LIMIT);
+    expect(DEFAULT_USER_ITEM_LIMIT).toBe(100);
   });
 
   it("env の正の整数を使う。不正値は既定", () => {
-    process.env.USER_ITEM_LIMIT = "100";
-    expect(getUserItemLimit()).toBe(100);
+    process.env.USER_ITEM_LIMIT = "10";
+    expect(getUserItemLimit()).toBe(10);
     process.env.USER_ITEM_LIMIT = "0";
     expect(getUserItemLimit()).toBe(DEFAULT_USER_ITEM_LIMIT);
     process.env.USER_ITEM_LIMIT = "abc";
