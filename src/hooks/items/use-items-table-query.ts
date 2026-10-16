@@ -43,6 +43,13 @@ export function useItemsTableQuery(items: ItemsTableRow[]) {
     setSortDir("asc");
   }
 
+  /** スキャン検索時に絞り込みが残るとハイライト行が表から消えるため解除する */
+  function clearFreewordSearch() {
+    setSearchQuery("");
+    setSearchIncludeNote(false);
+    setSearchIncludeJan(false);
+  }
+
   return {
     sorted,
     totalCount: items.length,
@@ -56,5 +63,6 @@ export function useItemsTableQuery(items: ItemsTableRow[]) {
     sortKey,
     sortDir,
     handleSort,
+    clearFreewordSearch,
   };
 }

@@ -48,7 +48,7 @@ export default async function Home() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {/* Profile 必須が正。無い既存管理者はメールにフォールバック（設計書 §13.3） */}
+          {/* Profile 必須が正。無い既存管理者はメールにフォールバック */}
           <p className="text-sm text-zinc-400">
             {user.username
               ? `${user.username} さん`
@@ -78,13 +78,10 @@ export default async function Home() {
         >
           登録一覧（{formatItemCountLabel(itemLimit)}）
         </h2>
-        {items.length === 0 ? (
-          <p className="text-zinc-400">
-            スキャンまたは手動入力で照会し、登録するとここに表示されます。
-          </p>
-        ) : (
-          <ItemsTable items={items.map(toItemsTableRow)} />
-        )}
+        <ItemsTable
+          items={items.map(toItemsTableRow)}
+          itemLimit={itemLimit}
+        />
       </section>
     </main>
   );

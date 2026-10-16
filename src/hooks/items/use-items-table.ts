@@ -44,6 +44,7 @@ export function useItemsTable(items: ItemsTableRow[]) {
     setSearchIncludeNote: query.setSearchIncludeNote,
     searchIncludeJan: query.searchIncludeJan,
     setSearchIncludeJan: query.setSearchIncludeJan,
+    clearFreewordSearch: query.clearFreewordSearch,
     sortKey: query.sortKey,
     sortDir: query.sortDir,
     handleSort: query.handleSort,

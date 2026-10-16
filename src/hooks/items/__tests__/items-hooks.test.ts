@@ -7,6 +7,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { itemsTableRow } from "@/hooks/__tests__/items-table-row-fixture";
+import { useFindRegisteredItem } from "@/hooks/items/use-find-registered-item";
 import { useItemsTable } from "@/hooks/items/use-items-table";
 import { useItemsTableEditing } from "@/hooks/items/use-items-table-editing";
 import { useItemsTableQuery } from "@/hooks/items/use-items-table-query";
@@ -15,6 +16,7 @@ import {
   useRegisterItem,
   useRegisterItems,
 } from "@/hooks/items/use-register-item";
+import type { ItemLimitView } from "@/lib/items/item-limit-view";
 
 const refresh = vi.fn();
 const patchItemsBulk = vi.fn();
@@ -23,6 +25,8 @@ const patchItem = vi.fn();
 const deleteItem = vi.fn();
 const postRegisterItem = vi.fn();
 const postRegisterItemsBulk = vi.fn();
+const fetchProductLookup = vi.fn();
+const scrollToElementIdMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh }),
@@ -41,6 +45,14 @@ vi.mock("@/lib/items/item-mutation-request", () => ({
 vi.mock("@/lib/items/register-item-request", () => ({
   postRegisterItem: (...args: unknown[]) => postRegisterItem(...args),
   postRegisterItemsBulk: (...args: unknown[]) => postRegisterItemsBulk(...args),
+}));
+
+vi.mock("@/lib/products/product-lookup-request", () => ({
+  fetchProductLookup: (...args: unknown[]) => fetchProductLookup(...args),
+}));
+
+vi.mock("@/lib/scan/scroll-to-element-id", () => ({
+  scrollToElementId: (...args: unknown[]) => scrollToElementIdMock(...args),
 }));
 
 const queryRows = [
@@ -127,6 +139,23 @@ describe("useItemsTableQuery", () => {
     expect(result.current.sortKey).toBe("name");
     expect(result.current.sortDir).toBe("asc");
     expect(result.current.sorted.map((r) => r.id)).toEqual(["1", "2", "3"]);
+  });
+
+  it("clearFreewordSearch でクエリと対象フラグを戻す", () => {
+    const { result } = renderHook(() => useItemsTableQuery(queryRows));
+
+    act(() => {
+      result.current.setSearchQuery("赤");
+      result.current.setSearchIncludeNote(true);
+      result.current.setSearchIncludeJan(true);
+    });
+    act(() => {
+      result.current.clearFreewordSearch();
+    });
+    expect(result.current.searchQuery).toBe("");
+    expect(result.current.searchIncludeNote).toBe(false);
+    expect(result.current.searchIncludeJan).toBe(false);
+    expect(result.current.matchCount).toBe(3);
   });
 
   it("検索は名前のみが既定。note / jan フラグで対象が増える", () => {
@@ -679,5 +708,117 @@ describe("useRegisterItems", () => {
       await result.current.registerMany([registerProduct]);
     });
     expect(result.current.error).toBe("登録できる商品がありませんでした");
+  });
+});
+
+describe("useFindRegisteredItem", () => {
+  const findItems = [{ id: "owned", jan: "4901111111111" }];
+  const itemLimit: ItemLimitView = {
+    currentCount: 1,
+    limit: 100,
+    unlimited: false,
+    ownedJans: ["4901111111111"],
+  };
+
+  beforeEach(() => {
+    refresh.mockReset();
+    fetchProductLookup.mockReset();
+    postRegisterItem.mockReset();
+    scrollToElementIdMock.mockReset();
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+  });
+
+  it("所持済み JAN ならハイライトし照会しない", async () => {
+    const onClearFreeword = vi.fn();
+    const { result } = renderHook(() =>
+      useFindRegisteredItem({
+        items: findItems,
+        itemLimit,
+        onClearFreeword,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.runFind("4901111111111");
+    });
+
+    expect(onClearFreeword).toHaveBeenCalled();
+    expect(result.current.highlightId).toBe("owned");
+    expect(scrollToElementIdMock).toHaveBeenCalledWith("item-row-owned");
+    expect(fetchProductLookup).not.toHaveBeenCalled();
+  });
+
+  it("未所持なら照会→確認→登録→refresh", async () => {
+    const onClearFreeword = vi.fn();
+    fetchProductLookup.mockResolvedValue({
+      data: {
+        found: true,
+        code: "4909999999999",
+        name: "新規",
+        source: "yahoo_shopping",
+      },
+      error: null,
+    });
+    postRegisterItem.mockResolvedValue({ ok: true });
+
+    const { result, rerender } = renderHook(
+      ({ items }) =>
+        useFindRegisteredItem({
+          items,
+          itemLimit,
+          onClearFreeword,
+        }),
+      { initialProps: { items: findItems } },
+    );
+
+    await act(async () => {
+      await result.current.runFind("4909999999999");
+    });
+
+    expect(fetchProductLookup).toHaveBeenCalledWith("4909999999999");
+    expect(postRegisterItem).toHaveBeenCalled();
+    expect(refresh).toHaveBeenCalled();
+
+    act(() => {
+      rerender({
+        items: [...findItems, { id: "new", jan: "4909999999999" }],
+      });
+    });
+
+    expect(result.current.highlightId).toBe("new");
+  });
+
+  it("確認キャンセルなら登録しない", async () => {
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => false),
+    );
+    fetchProductLookup.mockResolvedValue({
+      data: {
+        found: true,
+        code: "4909999999999",
+        name: "新規",
+        source: "yahoo_shopping",
+      },
+      error: null,
+    });
+
+    const { result } = renderHook(() =>
+      useFindRegisteredItem({
+        items: findItems,
+        itemLimit,
+        onClearFreeword: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.runFind("4909999999999");
+    });
+
+    expect(postRegisterItem).not.toHaveBeenCalled();
+    expect(result.current.message).toContain("キャンセル");
   });
 });

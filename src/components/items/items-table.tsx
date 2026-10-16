@@ -3,39 +3,65 @@
 /**
  * 登録一覧テーブル（Client Component）。
  * 並べ替え・編集・選択一括は useItemsTable、行 UI は ItemsTableRowView に委譲する。
+ * 検索はフリーワード／スキャン検索のアコーディオン。
  */
 
+import { ItemsFindScanForm } from "@/components/items/items-find-scan-form";
+import { ItemsSearchAccordion } from "@/components/items/items-search-accordion";
 import { ItemsTableBulkToolbar } from "@/components/items/items-table-bulk-toolbar";
 import { ItemsTableRowView } from "@/components/items/items-table-row";
 import { ItemsTableSearch } from "@/components/items/items-table-search";
 import { ItemsTableSortHeader } from "@/components/items/items-table-sort-header";
 import { itemsTableThClassName } from "@/components/items/items-table-styles";
+import { useFindRegisteredItem } from "@/hooks/items/use-find-registered-item";
 import { useItemsTable } from "@/hooks/items/use-items-table";
+import type { ItemLimitView } from "@/lib/items/item-limit-view";
 import type { ItemsTableRow } from "@/lib/items/items-table-sort";
 
 export type { ItemsTableRow };
 
 type ItemsTableProps = {
   items: ItemsTableRow[];
+  itemLimit: ItemLimitView;
 };
 
-export function ItemsTable({ items }: ItemsTableProps) {
+export function ItemsTable({ items, itemLimit }: ItemsTableProps) {
   const table = useItemsTable(items);
+  const find = useFindRegisteredItem({
+    items: items.map((item) => ({ id: item.id, jan: item.product.jan })),
+    itemLimit,
+    onClearFreeword: table.clearFreewordSearch,
+  });
 
   return (
     <div className="space-y-2">
       <p className="text-xs text-zinc-400">
         列見出しで並べ替え。行を選ぶと一括バーが出ます。メモは「編集」から。
       </p>
-      <ItemsTableSearch
-        query={table.searchQuery}
-        includeNote={table.searchIncludeNote}
-        includeJan={table.searchIncludeJan}
-        matchCount={table.matchCount}
-        totalCount={table.totalCount}
-        onQueryChange={table.setSearchQuery}
-        onIncludeNoteChange={table.setSearchIncludeNote}
-        onIncludeJanChange={table.setSearchIncludeJan}
+      <ItemsSearchAccordion
+        freeword={
+          <ItemsTableSearch
+            embedded
+            query={table.searchQuery}
+            includeNote={table.searchIncludeNote}
+            includeJan={table.searchIncludeJan}
+            matchCount={table.matchCount}
+            totalCount={table.totalCount}
+            onQueryChange={table.setSearchQuery}
+            onIncludeNoteChange={table.setSearchIncludeNote}
+            onIncludeJanChange={table.setSearchIncludeJan}
+          />
+        }
+        scan={
+          <ItemsFindScanForm
+            value={find.manualValue}
+            pending={find.pending}
+            message={find.message}
+            messageTone={find.messageTone}
+            onChange={find.setManualValue}
+            onSubmit={(raw) => void find.runFind(raw)}
+          />
+        }
       />
       <ItemsTableBulkToolbar
         selectedCount={table.selectedCount}
@@ -134,6 +160,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
                   key={item.id}
                   item={item}
                   selected={table.selectedIds.has(item.id)}
+                  highlighted={find.highlightId === item.id}
                   pending={
                     table.pendingId === item.id ||
                     (table.bulkPending && table.selectedIds.has(item.id))

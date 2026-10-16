@@ -35,6 +35,8 @@ type ItemsTableRowViewProps = {
   selected: boolean;
   pending: boolean;
   editing: boolean;
+  /** スキャン検索などで一時強調 */
+  highlighted?: boolean;
   /** 一括処理中など、行操作を止めるとき */
   actionsDisabled: boolean;
   draftStatus1: string;
@@ -53,6 +55,7 @@ export function ItemsTableRowView({
   selected,
   pending,
   editing,
+  highlighted = false,
   actionsDisabled,
   draftStatus1,
   draftNote,
@@ -68,11 +71,16 @@ export function ItemsTableRowView({
   const updatedAt = formatDateTimeJstParts(item.updatedAt);
   const rowBusy = pending || actionsDisabled;
 
+  const rowTone = highlighted
+    ? "bg-amber-100 ring-2 ring-inset ring-amber-400"
+    : selected
+      ? "bg-sky-50/70"
+      : "";
+
   return (
     <tr
-      className={`border-b border-zinc-100 last:border-b-0 ${
-        selected ? "bg-sky-50/70" : ""
-      }`}
+      id={`item-row-${item.id}`}
+      className={`border-b border-zinc-100 last:border-b-0 ${rowTone}`}
     >
       <td className="px-3 py-2">
         <input

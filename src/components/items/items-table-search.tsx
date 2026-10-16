@@ -16,6 +16,8 @@ type ItemsTableSearchProps = {
   onQueryChange: (value: string) => void;
   onIncludeNoteChange: (value: boolean) => void;
   onIncludeJanChange: (value: boolean) => void;
+  /** アコーディオン内など、外枠を親に任せるとき */
+  embedded?: boolean;
 };
 
 export function ItemsTableSearch({
@@ -27,12 +29,12 @@ export function ItemsTableSearch({
   onQueryChange,
   onIncludeNoteChange,
   onIncludeJanChange,
+  embedded = false,
 }: ItemsTableSearchProps) {
   const filtering = query.trim() !== "";
 
-  // 表ラッパと同じ -mx-1 にして横幅を揃える
-  return (
-    <div className="-mx-1 space-y-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
+  const body = (
+    <>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-zinc-600">
           <span className="font-medium text-zinc-800">フリーワード検索</span>
@@ -76,6 +78,17 @@ export function ItemsTableSearch({
           </label>
         </div>
       </fieldset>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-2">{body}</div>;
+  }
+
+  // 表ラッパと同じ -mx-1 にして横幅を揃える
+  return (
+    <div className="-mx-1 space-y-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
+      {body}
     </div>
   );
 }
