@@ -1,10 +1,13 @@
 /**
  * 登録一覧向け「スキャン検索」の流れ。
  * 所持ヒット → ハイライト。未所持 → 照会 → 確認 → 登録 → refresh 後ハイライト。
+ * スマホはカメラ読取、PC は手動 JAN（カメラ UI は md 未満で出す）。
  */
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBarcodeCamera } from "@/hooks/scan/use-barcode-camera";
+import { useBodyScrollLock } from "@/hooks/scan/use-body-scroll-lock";
 import { findRegisteredItemByJan } from "@/lib/items/find-registered-item";
 import {
   isRegisterBlockedByLimit,
@@ -13,6 +16,7 @@ import {
 } from "@/lib/items/item-limit-view";
 import { postRegisterItem } from "@/lib/items/register-item-request";
 import { fetchProductLookup } from "@/lib/products/product-lookup-request";
+import { SAME_VALUE_COOLDOWN_MS } from "@/lib/scan/constants";
 import { normalizeBarcodeDigits } from "@/lib/scan/normalize-barcode";
 import { scrollToElementId } from "@/lib/scan/scroll-to-element-id";
 
@@ -41,6 +45,11 @@ export function useFindRegisteredItem({
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const pendingHighlightJanRef = useRef<string | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const runFindRef = useRef<(raw: string) => Promise<void>>(async () => {});
+  const closeCameraRef = useRef<() => Promise<void>>(async () => {});
+  const lastCameraCodeRef = useRef<string | null>(null);
+  const lastCameraAtRef = useRef(0);
+  const cameraBusyRef = useRef(false);
 
   const clearHighlightTimer = useCallback(() => {
     if (highlightTimerRef.current) {
@@ -158,6 +167,60 @@ export function useFindRegisteredItem({
     [applyHighlight, itemLimit, items, onClearFreeword, router],
   );
 
+  useEffect(() => {
+    runFindRef.current = runFind;
+  }, [runFind]);
+
+  const camera = useBarcodeCamera({
+    onDecode: ({ rawValue }) => {
+      if (cameraBusyRef.current) {
+        return;
+      }
+      const code = normalizeBarcodeDigits(rawValue);
+      if (!code) {
+        return;
+      }
+      const now = Date.now();
+      if (
+        code === lastCameraCodeRef.current &&
+        now - lastCameraAtRef.current < SAME_VALUE_COOLDOWN_MS
+      ) {
+        return;
+      }
+      lastCameraCodeRef.current = code;
+      lastCameraAtRef.current = now;
+      cameraBusyRef.current = true;
+
+      void (async () => {
+        try {
+          await closeCameraRef.current();
+          await runFindRef.current(rawValue);
+        } finally {
+          cameraBusyRef.current = false;
+        }
+      })();
+    },
+  });
+
+  useEffect(() => {
+    closeCameraRef.current = camera.closeOverlay;
+  }, [camera.closeOverlay]);
+
+  useBodyScrollLock(camera.overlayOpen);
+
+  const startCameraFind = useCallback(async () => {
+    if (pending || camera.overlayOpen || camera.starting) {
+      return;
+    }
+    setMessage(null);
+    await camera.start();
+  }, [camera.overlayOpen, camera.starting, camera.start, pending]);
+
+  const cancelCameraFind = useCallback(async () => {
+    cameraBusyRef.current = false;
+    await camera.cancelOverlay();
+  }, [camera.cancelOverlay]);
+
   return {
     manualValue,
     setManualValue,
@@ -166,5 +229,12 @@ export function useFindRegisteredItem({
     messageTone,
     highlightId,
     runFind,
+    // カメラ（スマホ向け UI から使う）
+    cameraRegionId: camera.regionId,
+    cameraOverlayOpen: camera.overlayOpen,
+    cameraStarting: camera.starting,
+    cameraError: camera.error,
+    startCameraFind,
+    cancelCameraFind,
   };
 }

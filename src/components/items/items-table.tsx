@@ -6,7 +6,9 @@
  * 検索はフリーワード／スキャン検索のアコーディオン。
  */
 
+import { createPortal } from "react-dom";
 import { ItemsFindScanForm } from "@/components/items/items-find-scan-form";
+import { ItemsFindScanOverlay } from "@/components/items/items-find-scan-overlay";
 import { ItemsSearchAccordion } from "@/components/items/items-search-accordion";
 import { ItemsTableBulkToolbar } from "@/components/items/items-table-bulk-toolbar";
 import { ItemsTableRowView } from "@/components/items/items-table-row";
@@ -58,8 +60,11 @@ export function ItemsTable({ items, itemLimit }: ItemsTableProps) {
             pending={find.pending}
             message={find.message}
             messageTone={find.messageTone}
+            cameraStarting={find.cameraStarting}
+            cameraOverlayOpen={find.cameraOverlayOpen}
             onChange={find.setManualValue}
             onSubmit={(raw) => void find.runFind(raw)}
+            onStartCamera={() => void find.startCameraFind()}
           />
         }
       />
@@ -185,6 +190,17 @@ export function ItemsTable({ items, itemLimit }: ItemsTableProps) {
       {table.error ? (
         <p className="text-sm text-red-400">{table.error}</p>
       ) : null}
+      {typeof document !== "undefined" && find.cameraOverlayOpen
+        ? createPortal(
+            <ItemsFindScanOverlay
+              regionId={find.cameraRegionId}
+              starting={find.cameraStarting}
+              cameraError={find.cameraError}
+              onCancel={() => void find.cancelCameraFind()}
+            />,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

@@ -55,6 +55,21 @@ vi.mock("@/lib/scan/scroll-to-element-id", () => ({
   scrollToElementId: (...args: unknown[]) => scrollToElementIdMock(...args),
 }));
 
+vi.mock("@/hooks/scan/use-barcode-camera", () => ({
+  useBarcodeCamera: () => ({
+    regionId: "find-reader",
+    overlayOpen: false,
+    scanning: false,
+    starting: false,
+    error: null,
+    setError: vi.fn(),
+    start: vi.fn(),
+    stop: vi.fn(),
+    cancelOverlay: vi.fn(),
+    closeOverlay: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 const queryRows = [
   itemsTableRow({
     id: "1",
