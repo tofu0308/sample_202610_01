@@ -10,12 +10,14 @@ import { updateSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 静的資産などは matcher で除外。ログイン・登録・リセット依頼・auth コールバックは公開
+  // 静的資産などは matcher で除外。ログイン・登録・リセット・auth・logout は公開
+  // /logout を公開にしないと未ログイン時に ?next=/logout が付き、再ログイン直後にまた /logout へ飛ぶ
   const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/auth");
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/logout");
 
   try {
     const { supabaseResponse, user } = await updateSession(request);
@@ -24,7 +26,8 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", pathname);
-      return NextResponse.redirect(url);
+      // 303: 元が POST でも次は GET（307 だと POST が残りページで 405 になりうる）
+      return NextResponse.redirect(url, 303);
     }
 
     // ログイン済みなら login / signup / リセット依頼には留めない
@@ -37,7 +40,7 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       url.search = "";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(url, 303);
     }
 
     return supabaseResponse;
@@ -46,7 +49,7 @@ export async function proxy(request: NextRequest) {
     if (!isPublic) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(url, 303);
     }
     return NextResponse.next({ request });
   }

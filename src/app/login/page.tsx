@@ -6,6 +6,7 @@
 import { AuthPageHeader } from "@/components/auth/auth-page-header";
 import { LoginForm } from "@/components/auth/login-form";
 import { toCallbackErrorMessage } from "@/lib/auth/callback-error-message";
+import { safeNextPath } from "@/lib/auth/safe-next-path";
 
 type LoginPageProps = {
   searchParams: Promise<{ next?: string; error?: string }>;
@@ -13,8 +14,7 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const nextPath =
-    params.next && params.next.startsWith("/") ? params.next : "/";
+  const nextPath = safeNextPath(params.next);
   const bannerError = toCallbackErrorMessage(params.error);
   const formInitialError =
     params.error && !bannerError ? params.error : null;
