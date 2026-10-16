@@ -19,7 +19,7 @@ GitHub: tofu0308/sample_202610_01（main）
 本番: https://sample-202610-01.vercel.app/
 設計: docs/DESIGN_BARCODE_SCAN.md（UI タスクは §17）
 学習メモ: C:\Users\isisa\Downloads\ルトラ\docs\課題対応\課題対応_20261016.md
-  （同フォルダに日ごと過去分あり。§14〜§26 が Auth〜UT〜lint）
+  （同フォルダに日ごと過去分あり。§14〜§28 が Auth〜UT〜上限／スキャン検索）
 作業単位 Auth: docs/AUTH_SIGNUP_WORK_UNITS.md（U1〜U13 完了・削除可）
 この引き継ぎ: docs/HANDOFF_NEXT_SESSION.md
 
@@ -35,12 +35,16 @@ GitHub: tofu0308/sample_202610_01（main）
 - UI 改修（体裁・スキャン操作・待ちバナー・一括バー／主ボタン／行タッチ）
 - リファクタ: コンポーネント分割、useItemsTable 分割、scan↔items 依存緩和、
   list-refresh 抽出、定数・DTO・文言の lib 寄せ
-- 一括 API: PATCH/DELETE/POST /api/items/bulk（件数上限・自分の行のみ）
-- UT: lib 境界を拡充。coverage は src/lib/**/*.ts + exclude。本番へ DI しない
-- CI: react-hooks lint（ref / setState-in-effect）修正済み（main）
+- 一括 API: PATCH/DELETE/POST /api/items/bulk（自分の行のみ）
+- UT: lib + hooks。coverage は lib/hooks。happy-dom・ファイル統合・maxWorkers
+- CI: react-hooks lint 修正済み
+- 登録件数上限: 既定 100（USER_ITEM_LIMIT）。ADMIN 除外。403 vs 409
+- スキャン検索: 一覧アコーディオン。所持ハイライト／未所持は確認後登録。スマホカメラ
+- ログイン戻り先: safeNextPath。/logout 公開。303（next=/logout の 405 対策）
 
 【次にやること（優先は任意）】
-1. UI 改修の残り（設計書 §17）: B4/B5、D7–D11、E5、F2–F4 など
+1. UI 改修の残り（設計書 §17）: B4/B5、D7/D9–D11、F2–F4 など
+   ※ E5・D8 は見送り済み（理由は DESIGN §17）
 2. （区切り検討）登録の体感短縮（楽観的更新）。失敗時ロールバック方針を決めてから
 3. （任意）ページネーション、`status2`/`3`（一括 API は済み）
 4. （将来）組織単位。第1弾では触らない
@@ -51,6 +55,7 @@ GitHub: tofu0308/sample_202610_01（main）
 - 秘密は .env のみ。MCP Supabase は read-only のまま
 - 変更は依頼範囲に限定。Next は AGENTS.md と node_modules/next/dist/docs/ を優先
 - 学習メモは 課題対応_20261016.md に追記（確認してから。勝手に長く書かない）
+- 一時設計書の節番号（§18 など）はコードコメントに残さない
 - 返答は日本語・簡潔。学習モードなので選定理由を短く
 ```
 
@@ -79,7 +84,8 @@ Next.js（App Router）+ Prisma 7 + Supabase でフルスタックを学習す�
 - Yahoo: `YAHOO_APP_ID`
 - Auth: `NEXT_PUBLIC_SUPABASE_URL`（`https://xxx.supabase.co` まで。`/rest/v1` は付けない）
 - Auth: `NEXT_PUBLIC_SUPABASE_ANON_KEY`（Publishable / anon）
-- Auth: `ADMIN_EMAIL`（将来の管理用。**アプリ利用ゲートには使わない**）
+- Auth: `ADMIN_EMAIL`（将来の管理用。**アプリ利用ゲートには使わない**。登録上限の除外にも使用）
+- 任意: `USER_ITEM_LIMIT`（未設定時は既定 100）
 
 ## 起動・チェック
 
@@ -104,6 +110,12 @@ npm run test:coverage
 | 一括 API      | `/api/items/bulk`（PATCH 残量／DELETE／POST まとめて登録）。`createUserItemFromSnapshot` 共通化     | §24      |
 | UT / coverage | request・スキーマ・DTO・Prisma mock。`include: src/lib/**/*.ts` + exclude                           | §25      |
 | CI            | `use-items-table` の ref、`use-list-refresh-after-register` の effect setState を修正               | §26      |
+| UT 高速化     | hooks ファイル統合・happy-dom・maxWorkers。rules/testing.mdc                                        | §27      |
+| ルール        | auth／uid・エラー出し分け・Vitest（`.cursor/rules`）                                                | —        |
+| UI P2 取捨    | E5・D8 見送り（DESIGN §17 に理由）。1 ID ずつ差分確認                                              | §28      |
+| 登録上限      | 検証 10 → **100**。403／UI disabled／ADMIN 除外。`USER_ITEM_LIMIT`                                  | §28      |
+| スキャン検索  | アコーディオン。所持ハイライト／未所持は確認後登録。スマホカメラ                                    | §28      |
+| ログイン戻り  | `safeNextPath`・`/logout` 公開・303（`next=/logout` の 405 対策）                                   | §28      |
 
 主なコミット例（新しい順）: `fix lint error` → `テスト追加` → `scanとitemsの依存を緩和` → `hooksの分割` → `一括操作系のAPIリファクタ` → コンポーネント整理系。
 
@@ -114,13 +126,13 @@ npm run test:coverage
 | 基盤     | Next.js 16 + Prisma 7 + Vercel + GitHub Actions CI                  |
 | スキャン | 単体／連続、Yahoo 照会、読取リスト（JAN コピー＋登録）              |
 | DB / API | `Product` + `UserItem`。items CRUD + **`/api/items/bulk`** + lookup |
-| 一覧     | 残量（`status1`）・メモ・検索・一括・PC は枠内スクロール＋ sticky   |
+| 一覧     | 残量・メモ・フリーワード／スキャン検索・一括・ハイライト・件数上限表示 |
 | 認証     | `/signup`・確認メール・一般利用可・リセット・Profile・「○○さん」    |
 | エラー   | `error.tsx` / `throwAppError`。想定内失敗はインライン               |
-| テスト   | Vitest。coverage は lib 純関数中心（Route / hooks / UI は対象外）   |
-| 学習メモ | `課題対応/課題対応_20261016.md` §14〜§26                            |
+| テスト   | Vitest。coverage は lib + hooks（Route / UI の重いテストは対象外）  |
+| 学習メモ | `課題対応/課題対応_20261016.md` §14〜§28                            |
 
-設計の正本: `DESIGN_BARCODE_SCAN.md`（登録 §13、組織 §14、エラー §15、Product 鮮度 §16、UI §17）。
+設計の正本: `DESIGN_BARCODE_SCAN.md`（登録 §13、組織 §14、エラー §15、Product 鮮度 §16、UI §17、機能案 §18）。
 
 ## 構成（触るとき）
 
@@ -162,7 +174,7 @@ src/app/api/items/           # route.ts + bulk/route.ts
 
 ## 次にやること
 
-1. UI 改修の残り（設計書 §17）: B4/B5、D7–D11、E5、F2–F4 など
+1. UI 改修の残り（設計書 §17）: B4/B5、D7/D9–D11、F2–F4 など（E5・D8 は見送り済み）
 2. （区切り検討）登録の体感短縮。失敗時に一覧を戻すケアを決めてから
 3. （任意）ページネーション、`status2`/`3`（一括 API は `/api/items/bulk` 済み）
 4. （将来）組織単位。第1弾では触らない
@@ -171,7 +183,8 @@ src/app/api/items/           # route.ts + bulk/route.ts
 
 - **commit / push は「commit して」「push して」など明示時だけ**
 - 秘密情報をチャット・commit に出さない。MCP Supabase は read-only
-- 変更は依頼範囲に限定
+- 変更は依頼範囲に限定。UI は 1 項目ずつ差分確認しやすい粒度で
+- 一時設計書の節番号はコードコメントに書かない
 - Next.js 16 → `AGENTS.md` と `node_modules/next/dist/docs/`（Proxy は `src/proxy.ts`）
 - 学習メモは **`課題対応_20261016.md`** に追記（確認のうえ）。返答は日本語・簡潔。選定理由は短く
 
